@@ -1,94 +1,110 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod commands;
+mod selected_text;
 pub mod providers;
-use providers::{base::Provider, ollama::OllamaProvider};
-use tauri::CustomMenuItem;
+use commands::{correct, refine, save_api_key, translate};
 use tauri::Manager;
-use tauri::SystemTray;
-use tauri::SystemTrayEvent;
-use tauri::SystemTrayMenu;
-use tauri::SystemTrayMenuItem;
-use tauri_plugin_positioner::Position;
-use tauri_plugin_positioner::WindowExt;
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::ClickType,
+    App,
+};
+use tauri_plugin_positioner::{Position, WindowExt};
 
-fn main() {
-  let quit = CustomMenuItem::new("quit".to_string(), "Quit");
-  let hide = CustomMenuItem::new("hide".to_string(), "Hide");
-  let tray_menu = SystemTrayMenu::new()
-    .add_item(quit)
-    .add_native_item(SystemTrayMenuItem::Separator)
-    .add_item(hide);
+use crate::selected_text::get_selected_text;
 
-
-  tauri::Builder::default()
-    .plugin(tauri_plugin_positioner::init())
-    .system_tray(SystemTray::new().with_menu(tray_menu))
-    .on_system_tray_event(|app, event| {
-      tauri_plugin_positioner::on_tray_event(app, &event);
-            match event {
-                SystemTrayEvent::LeftClick {
-                    position: _,
-                    size: _,
-                    ..
-                } => {
-                    let window = app.get_window("main").unwrap();
-                    let _ = window.move_window(Position::TrayCenter);
-
-                    if window.is_visible().unwrap() {
-                        window.hide().unwrap();
-                    } else {
-                        window.show().unwrap();
-                        window.set_focus().unwrap();
-                    }
-                }
-                SystemTrayEvent::RightClick {
-                    position: _,
-                    size: _,
-                    ..
-                } => {
-                    println!("system tray received a right click");
-                }
-                SystemTrayEvent::DoubleClick {
-                    position: _,
-                    size: _,
-                    ..
-                } => {
-                    println!("system tray received a double click");
-                }
-                SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
-                    "quit" => {
-                        std::process::exit(0);
-                    }
-                    "hide" => {
-                        let window = app.get_window("main").unwrap();
-                        window.hide().unwrap();
-                    }
-                    _ => {}
-                },
-                _ => {}
-            }
-    })
-    .on_window_event(|event| match event.event() {
-        tauri::WindowEvent::Focused(is_focused) => {
-            // detect click outside of the focused window and hide the app
-            if !is_focused {
-                event.window().hide().unwrap();
-            }
+fn setup_tray(app: &App) -> Result<(), String> {
+    let app_handler = app.app_handle();
+    let tray = app_handler.tray_by_id("refiner").unwrap();
+    let menu = Menu::with_items(
+        app_handler,
+        &[&MenuItem::with_id(app_handler, "quit", "Quit", true, None::<String>).unwrap()],
+    )
+    .unwrap();
+    tray.set_menu(Some(menu).clone()).unwrap();
+    tray.on_menu_event(move |handler, event| match event.id.as_ref() {
+        "quit" => {
+            handler.exit(0);
         }
         _ => {}
-    })
-    .invoke_handler(tauri::generate_handler![translate])
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
+    });
+    app.on_tray_icon_event(move |handler, event| {
+        // Move the window to the top right corner
+        let win = handler.get_webview_window("main").unwrap();
+        let _ = win.as_ref().window().move_window(Position::TopRight);
+        // Handle the tray icon click event
+        handler.show().unwrap();
+        tauri_plugin_positioner::on_tray_event(&handler, &event);
+        if event.click_type == ClickType::Left {
+            if let Some(webview_window) = handler.get_webview_window("main") {
+                let _ = webview_window.show();
+                let _ = webview_window.set_focus();
+            }
+        }
+    });
+    Ok(())
 }
 
-#[tauri::command]
-async fn translate(provider: &str, model: &str, text: &str) -> Result<String, String> {
-  let provider = match provider {
-    "ollama" => OllamaProvider::new(None, None, Some(model.to_string())),
-    _ => panic!("Invalid provider"),
-  };
-  let res = provider.completion(text).await;
-  return Ok(res);
+fn main() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
+        // .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_positioner::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_store::Builder::default().build())
+        .setup(move |app| {
+            #[cfg(desktop)]
+            {
+                use tauri_plugin_global_shortcut::{Code, Modifiers};
+
+                app.handle()
+                    .plugin(
+                        tauri_plugin_global_shortcut::Builder::new()
+                            .with_shortcuts(["super+e"])?
+                            .with_handler(|app, shortcut| { // Add 'async' here
+                                if shortcut.matches(Modifiers::SUPER, Code::KeyE) {
+                                    // Trigger get selected text
+                                    let selected_text = tauri::async_runtime::block_on(async {
+                                        get_selected_text(app).await
+                                    });
+                                    if let Ok(selected_text) = selected_text {
+                                        let _ = app.emit("shortcut-quickTranslate", selected_text);
+                                    }
+                                    let window = app.clone().get_webview_window("main").unwrap();
+                                    window.show().unwrap();
+                                    window.set_focus().unwrap();
+                                    // let _ = app.emit("shortcut-quickTranslate", selected_text);
+                                    
+                                }
+                            })
+                            .build(),
+                    )?;
+            }
+
+            setup_tray(app).unwrap();
+
+            Ok(())
+        })
+        .on_window_event(|window, event| {
+            match event {
+                tauri::WindowEvent::Focused(is_focused) => {
+                    // detect click outside of the focused window and hide the app
+                    if !is_focused {
+                        window.hide().unwrap();
+                    }
+                }
+                _ => {}
+            }
+        })
+        .invoke_handler(tauri::generate_handler![
+            translate,
+            correct,
+            refine,
+            save_api_key
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }

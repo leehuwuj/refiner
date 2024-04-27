@@ -1,7 +1,7 @@
 use crate::providers::base::Provider;
 use ollama_rs::{generation::completion::request::GenerationRequest, Ollama};
 
-pub(crate) struct OllamaProvider {
+pub struct OllamaProvider {
     client: Ollama,
     model: String,
 }
@@ -20,19 +20,15 @@ impl OllamaProvider {
             model: model.unwrap_or(default_model),
         }
     }
-
-    pub fn inject_translation_prompt(&self, prompt: &str) -> String {
-        let translator_prompt =
-            "You're a good translator. Please translate the text above to Vietnamese, only answer the translated text without explanation: ";
-        return format!("{}{}", translator_prompt, prompt);
-    }
 }
 
 impl Provider for OllamaProvider {
-    async fn completion(&self, prompt: &str) -> String {
-        let request =
-            GenerationRequest::new(self.model.clone(), self.inject_translation_prompt(prompt));
-        let res = self.client.generate(request).await.unwrap();
-        return res.response;
+    async fn completion(&self, text: &str) -> Result<String, String> {
+        let request = GenerationRequest::new(self.model.clone(), text.to_string());
+        let res = self.client.generate(request).await;
+        match res {
+            Ok(res) => Ok(res.response),
+            Err(err) => Err(err.to_string()),
+        }
     }
 }

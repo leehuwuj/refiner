@@ -1,22 +1,26 @@
-interface Provider {
+export interface Provider {
   name: string;
   label: string;
   models?: string[];
 }
 
-const providers: Provider[] = [
-  { name: "ollama", label: "Ollama" },
-  { name: "openai", label: "OpenAI" },
-];
+export const providerMap: Record<string, Provider> = {
+  ollama: { name: "ollama", label: "Ollama", models: ["phi3", "llama3"] },
+  openai: {
+    name: "openai",
+    label: "OpenAI",
+    models: ["gpt-3.5-turbo", "gpt-4"],
+  },
+};
 
-type promptTypes = ["translate", "refine", "refineFormal"];
+export type promptTypes = ["translate", "correct", "refine"];
 
-interface Prompts {
+export interface Prompts {
   type: promptTypes;
   value?: string;
 }
 
-interface AppSettings {
+export interface AppSettings {
   provider?: Provider;
   model?: string;
   prompt?: Prompts;

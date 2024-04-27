@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useContext, useEffect } from "react";
 import {
   Tabs,
   Tab,
@@ -10,6 +10,8 @@ import {
   Skeleton,
 } from "@nextui-org/react";
 import { LuClipboardCopy } from "react-icons/lu";
+import { TranslateContext } from "../providers/translate";
+import { MdClear } from "react-icons/md";
 
 const TextCard = ({
   title,
@@ -21,6 +23,7 @@ const TextCard = ({
   isTranslating?: boolean;
 }) => {
   const [copied, setCopied] = React.useState(false);
+  const homeContext = useContext(TranslateContext);
 
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content);
@@ -34,22 +37,27 @@ const TextCard = ({
     <Card className="relative h-56 border-2 p-2" shadow="none">
       <CardBody>
         {content && content.length > 0 ? (
-          <Tooltip isOpen={copied} content="Copied!">
+          <div className="absolute right-0 top-0 flex w-4 flex-col space-y-3">
             <button
-              className="absolute right-0 top-0"
-              onClick={() => handleCopy(content)}
+              onClick={() =>
+                homeContext.changeResult({ [title.toLowerCase()]: "" })
+              }
             >
-              <LuClipboardCopy className="text-gray-500" size={18} />
+              <MdClear className="text-gray-500" size={18} />
             </button>
-          </Tooltip>
+            <Tooltip isOpen={copied} content="Copied!">
+              <button onClick={() => handleCopy(content)}>
+                <LuClipboardCopy className="text-gray-500" size={18} />
+              </button>
+            </Tooltip>
+          </div>
         ) : (
           <p className="text-sm text-gray-400">
             {/* Input the text and press <strong>Ctrl + Enter</strong> or <strong>Cmd + Enter</strong> to translate. */}
             Click chose a mode above that you want me to do: <br />-{" "}
             <strong>Translated</strong> to translate the text. <br />-{" "}
-            <strong>Refine</strong> to refine the translation. <br />-{" "}
-            <strong>Refine (Formal)</strong> to refine the translation in a
-            formal way.
+            <strong>Correct</strong> to correct grammar. <br />-{" "}
+            <strong>Refine</strong> to refine the translation in a formal way.
           </p>
         )}
         {isTranslating && (
@@ -74,32 +82,37 @@ const TextCard = ({
 const Result = ({
   result,
   isTranslating,
+  mode,
 }: {
   result?: ResultTexts;
   isTranslating?: boolean;
+  mode?: Mode;
 }) => {
+  const homeContext = useContext(TranslateContext);
   const data = [
     {
-      title: "Translated",
-      content: result?.translated ?? "",
+      title: "Translate",
+      content: result?.translate ?? "",
+    },
+    {
+      title: "Correct",
+      content: result?.correct ?? "",
     },
     {
       title: "Refine",
       content: result?.refine ?? "",
     },
-    {
-      title: "Refine (Formal)",
-      content: result?.refineFormal ?? "",
-    },
   ];
-
-  useEffect(() => {
-    console.log("Result:", result);
-  }, [result]);
 
   return (
     <div className="flex w-full flex-col">
-      <Tabs aria-label="Options">
+      <Tabs
+        aria-label="Mode"
+        onSelectionChange={(index) => {
+          const mode = data[index as number].title as Mode;
+          homeContext.setCurrentMode(mode);
+        }}
+      >
         {data.map((item, index) => (
           <Tab key={index} title={item.title}>
             <TextCard

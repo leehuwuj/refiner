@@ -9,12 +9,6 @@ const BottomBar = () => {
   const [openSettings, setOpenSettings] = React.useState(false);
   const settingContext = useContext(SettingContext);
 
-  const updateModel = (model: string) => {
-    if (settingContext) {
-      settingContext.setModel(model);
-    }
-  };
-
   return (
     <div className="fixed bottom-0 left-0 flex h-12 w-full items-center justify-between rounded-b-extra bg-gray-200 pl-3 pr-3">
       <div className="flex items-center space-x-3">
@@ -23,17 +17,16 @@ const BottomBar = () => {
         </button>
         <Select
           size="sm"
-          placeholder="Llama 3"
-          value="llama3"
           className="w-40"
-          onChange={(event) => updateModel(event.target.value)}
+          placeholder={settingContext.model || "Select a model"}
+          value={settingContext.model || ""}
+          onChange={(event) => settingContext.setModel(event.target.value)}
         >
-          <SelectItem value="phi3" key="phi3">
-            Phi 3
-          </SelectItem>
-          <SelectItem value="llama3" key="llama3">
-            Llama 3
-          </SelectItem>
+          {settingContext.provider?.models?.map((model) => (
+            <SelectItem value={model} key={model} id={model}>
+              {model}
+            </SelectItem>
+          )) || []}
         </Select>
       </div>
       <p className="flex items-center text-sm text-gray-500">
