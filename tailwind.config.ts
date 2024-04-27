@@ -15,6 +15,9 @@ const config: Config = {
         "gradient-conic":
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
+      borderRadius: {
+        'extra': '1rem', // or any other value that you want
+      }
     },
   },
   plugins: [nextui()],

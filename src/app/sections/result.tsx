@@ -2,6 +2,7 @@
 
 import React, { useEffect } from "react";
 import { Tabs, Tab, Card, CardBody, Tooltip } from "@nextui-org/react";
+import { LuClipboardCopy } from "react-icons/lu";
 
 const TextCard = ({ title, content }: { title: string; content: string }) => {
   const [copied, setCopied] = React.useState(false);
@@ -15,28 +16,29 @@ const TextCard = ({ title, content }: { title: string; content: string }) => {
   };
 
   return (
-    <Card>
+    <Card className="relative h-56 p-2 border-2" shadow="none">
       <CardBody>
-        <div className="relative h-40">
-          <Tooltip isOpen={copied} content="Copied!">
-            <button
-              className="absolute right-0 top-0"
-              onClick={() => handleCopy(content)}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                viewBox="0 0 24 24"
+        {
+          content && content.length > 0 ? (
+            <Tooltip isOpen={copied} content="Copied!">
+              <button
+                className="absolute right-0 top-0"
+                onClick={() => handleCopy(content)}
               >
-                <path d="M0 0h24v24H0z" fill="none" />
-                <path d="M18 9H6v2h12V9zm0-4H6v2h12V5zm0 8H6v2h12v-2zm-3 4H6v2h9v-2z" />
-              </svg>
-            </button>
-          </Tooltip>
-          <p className="pr-5 text-sm">{content}</p>
-        </div>
+                <LuClipboardCopy className="text-gray-500" size={18} />
+              </button>
+            </Tooltip>
+          ) : <p className="text-gray-400 text-sm">
+            {/* Input the text and press <strong>Ctrl + Enter</strong> or <strong>Cmd + Enter</strong> to translate. */}
+            Click chose a mode above that you want me to do: <br />
+            - <strong>Translated</strong> to translate the text. <br />
+            - <strong>Refine</strong> to refine the translation. <br />
+            - <strong>Refine (Formal)</strong> to refine the translation in a formal way.
+          </p>
+        }
+        <p className="pr-5 text-sm">{content}</p>
       </CardBody>
-    </Card>
+    </Card >
   );
 };
 

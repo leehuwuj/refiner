@@ -1,7 +1,5 @@
-use ollama_rs::{generation::completion::request::GenerationRequest, Ollama};
 use crate::providers::base::Provider;
-
-
+use ollama_rs::{generation::completion::request::GenerationRequest, Ollama};
 
 pub(crate) struct OllamaProvider {
     client: Ollama,
@@ -17,24 +15,23 @@ impl OllamaProvider {
         // Init client
         let client = Ollama::new(host.unwrap_or(default_host), port.unwrap_or(default_port));
 
-        Self { 
+        Self {
             client,
             model: model.unwrap_or(default_model),
         }
     }
 
     pub fn inject_translation_prompt(&self, prompt: &str) -> String {
-        let translator_prompt = "You're a good translator. Please translate the following text to Vietnamese: ";
+        let translator_prompt =
+            "You're a good translator. Please translate the text above to Vietnamese, only answer the translated text without explanation: ";
         return format!("{}{}", translator_prompt, prompt);
     }
 }
 
 impl Provider for OllamaProvider {
     async fn completion(&self, prompt: &str) -> String {
-        let request = GenerationRequest::new(
-            self.model.clone(), 
-            self.inject_translation_prompt(prompt)
-        );
+        let request =
+            GenerationRequest::new(self.model.clone(), self.inject_translation_prompt(prompt));
         let res = self.client.generate(request).await.unwrap();
         return res.response;
     }

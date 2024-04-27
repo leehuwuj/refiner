@@ -4,10 +4,12 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { Button, Select, SelectItem } from "@nextui-org/react";
 import { TextInput } from "./sections/input";
 import { Result } from "./sections/result";
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { TranslateContext } from "./providers/translate";
 import { BottomBar } from "./sections/bottomBar";
 import { SettingContext } from "./providers/settings";
+import { FaRegArrowAltCircleRight, FaTimes } from "react-icons/fa";
+import { IoStopCircleOutline } from "react-icons/io5";
 
 async function tauri_translateText(
   text: string,
@@ -85,41 +87,60 @@ export default function Home() {
   const homeContext = useContext(TranslateContext);
   const appSettings = useContext(SettingContext);
 
+  useEffect(() => {
+    const handleKeyDown = (event: { ctrlKey: any; metaKey: any; key: string; }) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+        homeContext.setTranslating(true);
+        tauri_translateText(
+          homeContext.inputText ?? "",
+          appSettings.provider?.name ?? "ollama",
+          appSettings.model ?? "llama3",
+          homeContext.languageConfig.targetLang ?? "vi",
+        ).then((translated) => {
+          homeContext.changeResult({ translated: translated });
+        }).catch((error) => {
+          console.error("Failed to translate text:", error);
+        }).finally(() => {
+          homeContext.setTranslating(false);
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup on unmount
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [homeContext, appSettings]);
+
   return (
-    <div>
-      <div className="flex h-60 max-h-60 flex-col p-2 sm:flex-row">
-        <div className="m-2 w-full sm:w-1/2">
+    <div className="flex flex-col">
+      <div className="flex w-full h-80 flex-col p-2 sm:flex-row">
+        <div className="flex flex-col m-2 w-full sm:w-1/2 h-full">
           <LanguageSelections
             selectedLang={homeContext.languageConfig}
             changeLangConfig={homeContext.changeLangConfig}
           />
-          <TextInput changeText={homeContext.changeInputText} />
+          <div className="h-80 mb-0 overflow-clip">
+            <TextInput changeText={homeContext.changeInputText} />
+          </div>
         </div>
-        <div className="m-2 w-full sm:w-1/2">
+        <div className="flex pt-10 flex-col w-8 justify-center items-center space-y-5">
+          {
+            homeContext.translating
+              ? <IoStopCircleOutline className="icon text-gray-500" size={24} onClick={() => {
+                homeContext.setTranslating(false);
+
+              }} />
+              : <FaRegArrowAltCircleRight className="icon text-gray-500" size={24} onClick={() => homeContext.setTranslating(true)} />
+          }
+        </div>
+        <div className="mt-2 w-full sm:w-1/2">
           <Result result={homeContext.result} />
         </div>
       </div>
-      <div className="ml-4 mt-10">
-        <Button
-          onClick={() => {
-            tauri_translateText(
-              homeContext.inputText ?? "",
-              appSettings.provider?.name ?? "ollama",
-              appSettings.model ?? "phi3",
-              homeContext.languageConfig.targetLang ?? "vi",
-            )
-              .then((translated) => {
-                homeContext.changeResult({ translated: translated });
-              })
-              .catch((error) => {
-                console.error("Failed to translate text:", error);
-              });
-          }}
-        >
-          Translate
-        </Button>
-      </div>
       <BottomBar />
-    </div>
+    </div >
   );
 }

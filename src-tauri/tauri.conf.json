@@ -29,7 +29,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.dev",
+      "identifier": "dev.leehuwuj.refine",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -53,14 +53,27 @@
     "updater": {
       "active": false
     },
+    "macOSPrivateApi": true,
     "windows": [
       {
         "fullscreen": false,
-        "height": 600,
-        "resizable": true,
-        "title": "refiner",
-        "width": 800
+        "height": 400,
+        "resizable": false,
+        "title": "Refiner",
+        "width": 800,
+        "visible": false,
+        "hiddenTitle": true,
+        "decorations": false,
+        "focus": false,
+        "transparent": true,
+        "skipTaskbar": true,
+        "alwaysOnTop": true
       }
-    ]
+    ],
+    "systemTray": {
+      "iconPath": "icons/32x32.png",
+      "iconAsTemplate": true,
+      "menuOnLeftClick": false
+    }
   }
 }

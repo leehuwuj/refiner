@@ -7,13 +7,15 @@ const TextInput = ({ changeText }: { changeText: (text: string) => void }) => {
   return (
     <Textarea
       variant="bordered"
-      placeholder="Input your text here to see the magic happen!"
       disableAutosize
-      classNames={{
-        input: "h-40", // Increase the height here
-      }}
+      placeholder="Input your text here and press Cmd + Enter to see the magic happen!"
       onChange={(e) => changeText(e.target.value)}
       aria-label="Input text area"
+      classNames={{
+        base: "h-56",
+        input: "h-56",
+        inputWrapper: "",
+      }}
     />
   );
 };
