@@ -1,10 +1,25 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { Tabs, Tab, Card, CardBody, Tooltip } from "@nextui-org/react";
+import {
+  Tabs,
+  Tab,
+  Card,
+  CardBody,
+  Tooltip,
+  Skeleton,
+} from "@nextui-org/react";
 import { LuClipboardCopy } from "react-icons/lu";
 
-const TextCard = ({ title, content }: { title: string; content: string }) => {
+const TextCard = ({
+  title,
+  content,
+  isTranslating,
+}: {
+  title: string;
+  content: string;
+  isTranslating?: boolean;
+}) => {
   const [copied, setCopied] = React.useState(false);
 
   const handleCopy = (content: string) => {
@@ -16,33 +31,53 @@ const TextCard = ({ title, content }: { title: string; content: string }) => {
   };
 
   return (
-    <Card className="relative h-56 p-2 border-2" shadow="none">
+    <Card className="relative h-56 border-2 p-2" shadow="none">
       <CardBody>
-        {
-          content && content.length > 0 ? (
-            <Tooltip isOpen={copied} content="Copied!">
-              <button
-                className="absolute right-0 top-0"
-                onClick={() => handleCopy(content)}
-              >
-                <LuClipboardCopy className="text-gray-500" size={18} />
-              </button>
-            </Tooltip>
-          ) : <p className="text-gray-400 text-sm">
+        {content && content.length > 0 ? (
+          <Tooltip isOpen={copied} content="Copied!">
+            <button
+              className="absolute right-0 top-0"
+              onClick={() => handleCopy(content)}
+            >
+              <LuClipboardCopy className="text-gray-500" size={18} />
+            </button>
+          </Tooltip>
+        ) : (
+          <p className="text-sm text-gray-400">
             {/* Input the text and press <strong>Ctrl + Enter</strong> or <strong>Cmd + Enter</strong> to translate. */}
-            Click chose a mode above that you want me to do: <br />
-            - <strong>Translated</strong> to translate the text. <br />
-            - <strong>Refine</strong> to refine the translation. <br />
-            - <strong>Refine (Formal)</strong> to refine the translation in a formal way.
+            Click chose a mode above that you want me to do: <br />-{" "}
+            <strong>Translated</strong> to translate the text. <br />-{" "}
+            <strong>Refine</strong> to refine the translation. <br />-{" "}
+            <strong>Refine (Formal)</strong> to refine the translation in a
+            formal way.
           </p>
-        }
+        )}
+        {isTranslating && (
+          <div className="space-y-3">
+            <Skeleton className="w-3/5 rounded-lg">
+              <div className="h-3 w-3/5 rounded-lg bg-default-200"></div>
+            </Skeleton>
+            <Skeleton className="w-4/5 rounded-lg">
+              <div className="h-3 w-4/5 rounded-lg bg-default-200"></div>
+            </Skeleton>
+            <Skeleton className="w-2/5 rounded-lg">
+              <div className="h-3 w-2/5 rounded-lg bg-default-300"></div>
+            </Skeleton>
+          </div>
+        )}
         <p className="pr-5 text-sm">{content}</p>
       </CardBody>
-    </Card >
+    </Card>
   );
 };
 
-const Result = ({ result }: { result?: ResultTexts }) => {
+const Result = ({
+  result,
+  isTranslating,
+}: {
+  result?: ResultTexts;
+  isTranslating?: boolean;
+}) => {
   const data = [
     {
       title: "Translated",
@@ -67,7 +102,11 @@ const Result = ({ result }: { result?: ResultTexts }) => {
       <Tabs aria-label="Options">
         {data.map((item, index) => (
           <Tab key={index} title={item.title}>
-            <TextCard title={item.title} content={item.content} />
+            <TextCard
+              title={item.title}
+              content={item.content}
+              isTranslating={isTranslating}
+            />
           </Tab>
         ))}
       </Tabs>

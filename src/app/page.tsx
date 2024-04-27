@@ -50,7 +50,10 @@ const LanguageSelections = ({
 
   return (
     <div className="mb-3 flex flex-wrap gap-2 md:flex-nowrap">
-      <Select value={selectedLang?.sourceLang} placeholder={selectedLang?.sourceLang} >
+      <Select
+        value={selectedLang?.sourceLang}
+        placeholder={selectedLang?.sourceLang}
+      >
         {sourceLangues.map((lang) => (
           <SelectItem
             key={lang.value}
@@ -65,7 +68,10 @@ const LanguageSelections = ({
         ))}
       </Select>
       <p className="self-center text-center text-gray-500">{" => "}</p>
-      <Select value={selectedLang?.targetLang} placeholder={selectedLang?.targetLang}>
+      <Select
+        value={selectedLang?.targetLang}
+        placeholder={selectedLang?.targetLang}
+      >
         {targetLangues.map((lang) => (
           <SelectItem
             key={lang.value}
@@ -87,60 +93,87 @@ export default function Home() {
   const homeContext = useContext(TranslateContext);
   const appSettings = useContext(SettingContext);
 
+  const triggerTranslation = () => {
+    homeContext.setTranslating(true);
+    // Clear result
+    homeContext.changeResult({});
+    tauri_translateText(
+      homeContext.inputText ?? "",
+      appSettings.provider?.name ?? "ollama",
+      appSettings.model ?? "llama3",
+      homeContext.languageConfig.targetLang ?? "vi",
+    )
+      .then((translated) => {
+        homeContext.changeResult({ translated: translated });
+      })
+      .catch((error) => {
+        console.error("Failed to translate text:", error);
+      })
+      .finally(() => {
+        homeContext.setTranslating(false);
+      });
+  };
+
   useEffect(() => {
-    const handleKeyDown = (event: { ctrlKey: any; metaKey: any; key: string; }) => {
-      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
-        homeContext.setTranslating(true);
-        tauri_translateText(
-          homeContext.inputText ?? "",
-          appSettings.provider?.name ?? "ollama",
-          appSettings.model ?? "llama3",
-          homeContext.languageConfig.targetLang ?? "vi",
-        ).then((translated) => {
-          homeContext.changeResult({ translated: translated });
-        }).catch((error) => {
-          console.error("Failed to translate text:", error);
-        }).finally(() => {
-          homeContext.setTranslating(false);
-        });
+    const handleKeyDown = (event: {
+      ctrlKey: any;
+      metaKey: any;
+      key: string;
+    }) => {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.key === "Enter" &&
+        !homeContext.translating
+      ) {
+        triggerTranslation();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
 
     // Cleanup on unmount
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [homeContext, appSettings]);
 
   return (
     <div className="flex flex-col">
-      <div className="flex w-full h-80 flex-col p-2 sm:flex-row">
-        <div className="flex flex-col m-2 w-full sm:w-1/2 h-full">
+      <div className="flex h-80 w-full flex-col p-2 sm:flex-row">
+        <div className="m-2 flex h-full w-full flex-col sm:w-1/2">
           <LanguageSelections
             selectedLang={homeContext.languageConfig}
             changeLangConfig={homeContext.changeLangConfig}
           />
-          <div className="h-80 mb-0 overflow-clip">
+          <div className="mb-0 h-80 overflow-clip">
             <TextInput changeText={homeContext.changeInputText} />
           </div>
         </div>
-        <div className="flex pt-10 flex-col w-8 justify-center items-center space-y-5">
-          {
-            homeContext.translating
-              ? <IoStopCircleOutline className="icon text-gray-500" size={24} onClick={() => {
+        <div className="flex w-8 flex-col items-center justify-center space-y-5 pt-10">
+          {homeContext.translating ? (
+            <IoStopCircleOutline
+              className="icon text-gray-500"
+              size={24}
+              onClick={() => {
                 homeContext.setTranslating(false);
-
-              }} />
-              : <FaRegArrowAltCircleRight className="icon text-gray-500" size={24} onClick={() => homeContext.setTranslating(true)} />
-          }
+              }}
+            />
+          ) : (
+            <FaRegArrowAltCircleRight
+              className="icon text-gray-500"
+              size={24}
+              onClick={() => triggerTranslation()}
+            />
+          )}
         </div>
         <div className="mt-2 w-full sm:w-1/2">
-          <Result result={homeContext.result} />
+          <Result
+            result={homeContext.result}
+            isTranslating={homeContext.translating}
+          />
         </div>
       </div>
       <BottomBar />
-    </div >
+    </div>
   );
 }

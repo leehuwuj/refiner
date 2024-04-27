@@ -10,6 +10,8 @@ import {
   SelectItem,
   Textarea,
 } from "@nextui-org/react";
+import { useContext } from "react";
+import { SettingContext } from "../providers/settings";
 
 const Settings = ({
   isOpen,
@@ -20,13 +22,15 @@ const Settings = ({
   onOpen: () => void;
   onOpenChange: () => void;
 }) => {
+  const settingContext = useContext(SettingContext);
+
   return (
     <>
       <Modal
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         placement="top-center"
-        size="lg"
+        size="sm"
       >
         <ModalContent>
           {(onClose) => (
@@ -39,7 +43,7 @@ const Settings = ({
                   <Select
                     autoFocus
                     label="Provider"
-                    placeholder="Select a LLM provider "
+                    placeholder={settingContext.provider?.name ?? "Ollama"}
                     variant="bordered"
                     className="w-1/2"
                   >
@@ -52,17 +56,17 @@ const Settings = ({
                   </Select>
                   <Select
                     label="Model"
-                    placeholder="Select a model"
                     variant="bordered"
                     className="w-1/2"
                     aria-label="Select a model"
+                    value={settingContext.model}
+                    placeholder={settingContext.model}
                   >
-                    <SelectItem value="Phi 3" key="phi3" id="phi3">
-                      Phi 3
-                    </SelectItem>
-                    <SelectItem value="Ollama 3" key="ollama3" id="phi3">
-                      Ollama 3
-                    </SelectItem>
+                    {settingContext.provider?.models?.map((model) => (
+                      <SelectItem value={model} key={model} id={model}>
+                        {model}
+                      </SelectItem>
+                    )) || []}
                   </Select>
                 </div>
                 <div className="justify-between px-1 py-2">
@@ -71,10 +75,10 @@ const Settings = ({
                   </Checkbox>
                   <Textarea
                     variant="bordered"
-                    placeholder="Input your custom prompt here"
+                    placeholder="Ex: You're a nice translator!"
                     disableAutosize
                     classNames={{
-                      input: "h-40", // Increase the height here
+                      input: "h-20", // Increase the height here
                     }}
                   />
                 </div>

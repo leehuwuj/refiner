@@ -1,27 +1,27 @@
 interface Provider {
-    name: string;
-    label: string;
-    models?: string[];
+  name: string;
+  label: string;
+  models?: string[];
 }
 
 const providers: Provider[] = [
-    { name: "ollama", label: "Ollama" },
-    { name: "openai", label: "OpenAI" },
+  { name: "ollama", label: "Ollama" },
+  { name: "openai", label: "OpenAI" },
 ];
 
 type promptTypes = ["translate", "refine", "refineFormal"];
 
 interface Prompts {
-    type: promptTypes;
-    value?: string;
+  type: promptTypes;
+  value?: string;
 }
 
 interface AppSettings {
-    provider?: Provider;
-    model?: string;
-    prompt?: Prompts;
+  provider?: Provider;
+  model?: string;
+  prompt?: Prompts;
 
-    setProvider?: (provider: Provider) => void;
-    setModel?: (model: string) => void;
-    setPrompt?: (prompt: Prompts) => void;
+  setProvider: (provider: Provider) => void;
+  setModel: (model: string) => void;
+  setPrompt: (prompt: Prompts) => void;
 }

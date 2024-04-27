@@ -15,6 +15,7 @@
     "@nextui-org/modal": "^2.0.33",
     "@nextui-org/react": "^2.3.6",
     "@nextui-org/select": "^2.1.27",
+    "@nextui-org/skeleton": "^2.0.27",
     "@nextui-org/system": "^2.1.2",
     "@nextui-org/tabs": "^2.0.29",
     "@nextui-org/theme": "^2.2.3",
