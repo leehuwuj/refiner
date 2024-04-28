@@ -47,9 +47,8 @@ const TextCard = ({
             {/* Input the text and press <strong>Ctrl + Enter</strong> or <strong>Cmd + Enter</strong> to translate. */}
             Click chose a mode above that you want me to do: <br />-{" "}
             <strong>Translated</strong> to translate the text. <br />-{" "}
-            <strong>Refine</strong> to refine the translation. <br />-{" "}
-            <strong>Refine (Formal)</strong> to refine the translation in a
-            formal way.
+            <strong>Correct</strong> to correct grammar. <br />-{" "}
+            <strong>Refine</strong> to refine the translation in a formal way.
           </p>
         )}
         {isTranslating && (
@@ -84,12 +83,12 @@ const Result = ({
       content: result?.translated ?? "",
     },
     {
-      title: "Refine",
-      content: result?.refine ?? "",
+      title: "Correct",
+      content: result?.correct ?? "",
     },
     {
-      title: "Refine (Formal)",
-      content: result?.refineFormal ?? "",
+      title: "Refine",
+      content: result?.refine ?? "",
     },
   ];
 

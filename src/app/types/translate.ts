@@ -5,8 +5,8 @@ interface Language {
 
 interface ResultTexts {
   translated?: string;
+  correct?: string;
   refine?: string;
-  refineFormal?: string;
 }
 
 interface TranslateContextType {
