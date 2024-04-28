@@ -1,7 +1,7 @@
 use crate::providers::base::Provider;
 use ollama_rs::{generation::completion::request::GenerationRequest, Ollama};
 
-pub(crate) struct OllamaProvider {
+pub struct OllamaProvider {
     client: Ollama,
     model: String,
 }

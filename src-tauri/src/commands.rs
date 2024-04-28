@@ -1,5 +1,6 @@
-use providers::{base::Provider, ollama::OllamaProvider};
-use crate::providers;
+use crate::providers::{self, base::get_provider };
+use providers::base::Provider;
+
 
 const DEFAULT_TRANSLATION_PROMPT: &str = "
     You're a good translator. 
@@ -42,12 +43,10 @@ pub async fn translate(provider: &str, model: &str, text: &str, prompt: Option<&
     let new_prompt = prompt
         .replace("{original_lang}", source_lang.unwrap_or("English"))
         .replace("{target_lang}", target_lang.unwrap_or("English"));
-    let provider = match provider {
-        "ollama" => OllamaProvider::new(None, None, Some(model.to_string())),
-        _ => panic!("Invalid provider"),
-    };
-    let res = provider.completion(format!("{}<text>{}<text>. Your answer: ", new_prompt, text).as_str()).await;
-    // Retrieve the answer from the response
+    // Init provider based on the provider name
+    let provider_obj = get_provider(provider, model);
+
+    let res = provider_obj.completion(format!("{}<text>{}<text>. Your answer: ", new_prompt, text).as_str()).await;
     let ans = res.split("<ans>").collect::<Vec<&str>>()[1].split("</ans>").collect::<Vec<&str>>()[0].replace("<text>", "").replace("</text>", "");
     return Ok(ans);
 }
@@ -59,10 +58,7 @@ pub async fn correct(provider: &str, model: &str, text: &str, prompt: Option<&st
     let new_prompt = prompt
         .replace("{original_lang}", source_lang.unwrap_or("English"))
         .replace("{target_lang}", target_lang.unwrap_or("English"));
-    let provider = match provider {
-        "ollama" => OllamaProvider::new(None, None, Some(model.to_string())),
-        _ => panic!("Invalid provider"),
-    };
+    let provider = get_provider(provider, model);
     let res = provider.completion(format!("{}<text>{}<text>. Your answer: ", new_prompt, text).as_str()).await;
     // Retrieve the answer from the response
     let ans = res.split("<ans>").collect::<Vec<&str>>()[1].split("</ans>").collect::<Vec<&str>>()[0].replace("<text>", "").replace("</text>", "");
@@ -76,12 +72,17 @@ pub async fn refine(provider: &str, model: &str, text: &str, prompt: Option<&str
     let new_prompt = prompt
         .replace("{original_lang}", source_lang.unwrap_or("English"))
         .replace("{target_lang}", target_lang.unwrap_or("English"));
-    let provider = match provider {
-        "ollama" => OllamaProvider::new(None, None, Some(model.to_string())),
-        _ => panic!("Invalid provider"),
-    };
+    let provider = get_provider(provider, model);
     let res = provider.completion(format!("{}<text>{}<text>. Your answer: ", new_prompt, text).as_str()).await;
     // Retrieve the answer from the response and remove all other xml tag in ans
     let ans = res.split("<ans>").collect::<Vec<&str>>()[1].split("</ans>").collect::<Vec<&str>>()[0].replace("<text>", "").replace("</text>", "");
     return Ok(ans);
+}
+
+
+// Save API key to environment variable
+#[tauri::command]
+pub fn save_api_key(provider: &str, api_key: &str) -> Result<(), String> {
+    std::env::set_var(format!("{}_API_KEY", "OPENAI"), api_key);
+    Ok(())
 }

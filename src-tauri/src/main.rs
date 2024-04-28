@@ -3,7 +3,7 @@
 
 pub mod providers;
 mod commands;
-use commands::{correct, refine, translate};
+use commands::{correct, refine, translate, save_api_key};
 use tauri::{menu::{Menu, MenuItem}, tray::ClickType, App};
 use tauri_plugin_positioner::{WindowExt, Position};
 use tauri::Manager;
@@ -55,7 +55,7 @@ fn main() {
         _ => {}
       }
     })
-    .invoke_handler(tauri::generate_handler![translate, correct, refine])
+    .invoke_handler(tauri::generate_handler![translate, correct, refine, save_api_key])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
