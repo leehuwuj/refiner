@@ -1,6 +1,6 @@
 "use client";
 
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from '@tauri-apps/api/core';
 import { Button, Select, SelectItem } from "@nextui-org/react";
 import { TextInput } from "./sections/input";
 import { Result } from "./sections/result";
