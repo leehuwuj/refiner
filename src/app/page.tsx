@@ -15,18 +15,24 @@ async function tauri_get_result(
   text: string,
   provider: string,
   model: string,
-  targetLanguage: string,
   mode: Mode,
+  sourceLanguage?: string,
+  targetLanguage?: string,
 ): Promise<string> {
   const invoke_function = mode.toString().toLowerCase();
   console.log("Invoke function:", invoke_function);
 
   try {
-    const result = (await invoke(invoke_function, {
+    const payload = {
       provider: provider,
       model: model,
       text: text,
-    })) as string;
+      source_language: sourceLanguage ?? null,
+      target_language: targetLanguage ?? null,
+    };
+    console.log("Payload:", payload);
+
+    const result = (await invoke(invoke_function, payload)) as string;
     console.log("Result text:", result);
     return result;
   } catch (error) {
@@ -39,8 +45,8 @@ const LanguageSelections = ({
   selectedLang,
   changeLangConfig,
 }: {
-  selectedLang?: Language;
-  changeLangConfig: (lang: Language) => void;
+  selectedLang?: LanguageConfig;
+  changeLangConfig: (lang: LanguageConfig) => void;
 }) => {
   const sourceLangues = [
     { value: "en", label: "English" },
@@ -48,22 +54,29 @@ const LanguageSelections = ({
     { value: "fr", label: "French" },
   ];
   const targetLangues = [
-    { value: "vi", label: "Vietnamese" },
+    { value: "vi", label: "Tiếng Việt" },
     { value: "en", label: "English" },
   ];
 
   return (
     <div className="mb-3 flex flex-wrap gap-2 md:flex-nowrap">
       <Select
-        value={selectedLang?.sourceLang}
-        placeholder={selectedLang?.sourceLang}
+        value={selectedLang?.sourceLang.label}
+        placeholder={selectedLang?.sourceLang.label}
       >
         {sourceLangues.map((lang) => (
           <SelectItem
             key={lang.value}
-            value={selectedLang?.sourceLang}
+            value={selectedLang?.sourceLang.label}
             onClick={() => {
-              changeLangConfig({ ...selectedLang, sourceLang: lang.value });
+              const newConfig = selectedLang;
+              if (newConfig) {
+                newConfig.sourceLang = {
+                  code: lang.value,
+                  label: lang.label,
+                };
+                changeLangConfig(newConfig);
+              }
             }}
             id={lang.label}
           >
@@ -73,15 +86,22 @@ const LanguageSelections = ({
       </Select>
       <p className="self-center text-center text-gray-500">{" => "}</p>
       <Select
-        value={selectedLang?.targetLang}
-        placeholder={selectedLang?.targetLang}
+        value={selectedLang?.targetLang.label}
+        placeholder={selectedLang?.targetLang.label}
       >
         {targetLangues.map((lang) => (
           <SelectItem
             key={lang.value}
-            value={selectedLang?.targetLang}
+            value={selectedLang?.targetLang.label}
             onClick={() => {
-              changeLangConfig({ ...selectedLang, targetLang: lang.value });
+              const newConfig = selectedLang;
+              if (newConfig) {
+                newConfig.targetLang = {
+                  code: lang.value,
+                  label: lang.label,
+                };
+                changeLangConfig(newConfig);
+              }
             }}
             id={lang.label}
           >
@@ -89,7 +109,7 @@ const LanguageSelections = ({
           </SelectItem>
         ))}
       </Select>
-    </div>
+    </div >
   );
 };
 
@@ -105,8 +125,9 @@ export default function Home() {
       homeContext.inputText ?? "",
       appSettings.provider?.name ?? "ollama",
       appSettings.model ?? "llama3",
-      homeContext.languageConfig.targetLang ?? "vi",
       homeContext.currentMode,
+      homeContext.languageConfig.sourceLang.label ?? "English",
+      homeContext.languageConfig.targetLang.label ?? "Tiếng Việt",
     )
       .then((answer) => {
         // Change the mode result
