@@ -1,32 +1,36 @@
 "use client";
 
-import { invoke } from '@tauri-apps/api/core';
-import { Button, Select, SelectItem } from "@nextui-org/react";
+import { invoke } from "@tauri-apps/api/core";
+import { Select, SelectItem } from "@nextui-org/react";
 import { TextInput } from "./sections/input";
 import { Result } from "./sections/result";
 import React, { useContext, useEffect } from "react";
 import { TranslateContext } from "./providers/translate";
 import { BottomBar } from "./sections/bottomBar";
 import { SettingContext } from "./providers/settings";
-import { FaRegArrowAltCircleRight, FaTimes } from "react-icons/fa";
+import { FaRegArrowAltCircleRight } from "react-icons/fa";
 import { IoStopCircleOutline } from "react-icons/io5";
 
-async function tauri_translateText(
+async function tauri_get_result(
   text: string,
   provider: string,
   model: string,
   targetLanguage: string,
+  mode: Mode,
 ): Promise<string> {
+  const invoke_function = mode.toString().toLowerCase();
+  console.log("Invoke function:", invoke_function);
+
   try {
-    const result = (await invoke("translate", {
+    const result = (await invoke(invoke_function, {
       provider: provider,
       model: model,
       text: text,
     })) as string;
-    console.log("Translated text:", result);
+    console.log("Result text:", result);
     return result;
   } catch (error) {
-    console.error("Failed to translate text:", error);
+    console.error("Failed to invoke LLM:", error);
     throw error;
   }
 }
@@ -97,14 +101,18 @@ export default function Home() {
     homeContext.setTranslating(true);
     // Clear result
     homeContext.changeResult({});
-    tauri_translateText(
+    tauri_get_result(
       homeContext.inputText ?? "",
       appSettings.provider?.name ?? "ollama",
       appSettings.model ?? "llama3",
       homeContext.languageConfig.targetLang ?? "vi",
+      homeContext.currentMode,
     )
-      .then((translated) => {
-        homeContext.changeResult({ translated: translated });
+      .then((answer) => {
+        // Change the mode result
+        homeContext.changeResult({
+          [homeContext.currentMode.toLocaleLowerCase()]: answer,
+        });
       })
       .catch((error) => {
         console.error("Failed to translate text:", error);
@@ -170,6 +178,7 @@ export default function Home() {
           <Result
             result={homeContext.result}
             isTranslating={homeContext.translating}
+            mode={homeContext.currentMode}
           />
         </div>
       </div>

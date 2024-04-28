@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useContext, useEffect } from "react";
 import {
   Tabs,
   Tab,
@@ -10,6 +10,7 @@ import {
   Skeleton,
 } from "@nextui-org/react";
 import { LuClipboardCopy } from "react-icons/lu";
+import { TranslateContext } from "../providers/translate";
 
 const TextCard = ({
   title,
@@ -73,14 +74,17 @@ const TextCard = ({
 const Result = ({
   result,
   isTranslating,
+  mode,
 }: {
   result?: ResultTexts;
   isTranslating?: boolean;
+  mode?: Mode;
 }) => {
+  const homeContext = useContext(TranslateContext);
   const data = [
     {
-      title: "Translated",
-      content: result?.translated ?? "",
+      title: "Translate",
+      content: result?.translate ?? "",
     },
     {
       title: "Correct",
@@ -92,13 +96,15 @@ const Result = ({
     },
   ];
 
-  useEffect(() => {
-    console.log("Result:", result);
-  }, [result]);
-
   return (
     <div className="flex w-full flex-col">
-      <Tabs aria-label="Options">
+      <Tabs
+        aria-label="Mode"
+        onSelectionChange={(index) => {
+          const mode = data[index as number].title as Mode;
+          homeContext.setCurrentMode(mode);
+        }}
+      >
         {data.map((item, index) => (
           <Tab key={index} title={item.title}>
             <TextCard
