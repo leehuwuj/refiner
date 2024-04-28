@@ -18,16 +18,21 @@
         "width": 800,
         "visible": true,
         "hiddenTitle": true,
-        "decorations": true,
+        "decorations": false,
+        "focus": false,
         "transparent": true,
-        "skipTaskbar": true
+        "skipTaskbar": true,
+        "alwaysOnTop": true,
+        "visibleOnAllWorkspaces": true
       }
     ],
     "security": {
       "csp": null
     },
+    "macOSPrivateApi": true,
     "trayIcon": {
-      "iconPath": "icons/32x32.png",
+      "id": "refiner",
+      "iconPath": "icons/icon.png",
       "iconAsTemplate": true,
       "menuOnLeftClick": false
     }
