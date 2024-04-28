@@ -9,7 +9,7 @@ const providers: Provider[] = [
   { name: "openai", label: "OpenAI" },
 ];
 
-type promptTypes = ["translate", "refine", "refineFormal"];
+type promptTypes = ["translate", "correct", "refine"];
 
 interface Prompts {
   type: promptTypes;

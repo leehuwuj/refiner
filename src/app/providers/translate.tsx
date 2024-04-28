@@ -10,6 +10,9 @@ const TranslateProvider = ({ children }: { children: React.ReactNode }) => {
   const [inputText, setInputText] = React.useState<string>("");
   const [result, setResult] = React.useState<ResultTexts>({});
   const [translating, setTranslating] = React.useState<boolean>(false);
+  const [currentMode, setCurrentMode] = React.useState<Mode>(
+    "Translate" as Mode,
+  );
 
   return (
     <TranslateContext.Provider
@@ -18,11 +21,13 @@ const TranslateProvider = ({ children }: { children: React.ReactNode }) => {
         inputText,
         result,
         translating,
+        currentMode,
         changeLangConfig: (lang: Language) => setLanguageConfig(lang),
         changeInputText: (text: string) => setInputText(text),
         changeResult: (res: ResultTexts) => setResult(res),
         setTranslating: (isTranslating: boolean) =>
           setTranslating(isTranslating),
+        setCurrentMode: (mode: Mode) => setCurrentMode(mode),
       }}
     >
       {children}
