@@ -3,9 +3,15 @@ import React from "react";
 const TranslateContext = React.createContext({} as TranslateContextType);
 
 const TranslateProvider = ({ children }: { children: React.ReactNode }) => {
-  const [languageConfig, setLanguageConfig] = React.useState<Language>({
-    sourceLang: "en",
-    targetLang: "vi",
+  const [languageConfig, setLanguageConfig] = React.useState<LanguageConfig>({
+    sourceLang: {
+      code: "en",
+      label: "English"
+    },
+    targetLang: {
+      code: "vn",
+      label: "Tiếng Việt"
+    },
   });
   const [inputText, setInputText] = React.useState<string>("");
   const [result, setResult] = React.useState<ResultTexts>({});
@@ -22,7 +28,7 @@ const TranslateProvider = ({ children }: { children: React.ReactNode }) => {
         result,
         translating,
         currentMode,
-        changeLangConfig: (lang: Language) => setLanguageConfig(lang),
+        changeLangConfig: (lang: LanguageConfig) => setLanguageConfig(lang),
         changeInputText: (text: string) => setInputText(text),
         changeResult: (res: ResultTexts) => setResult(res),
         setTranslating: (isTranslating: boolean) =>

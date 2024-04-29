@@ -1,7 +1,7 @@
 use crate::providers::base::Provider;
 use ollama_rs::{generation::completion::request::GenerationRequest, Ollama};
 
-pub(crate) struct OllamaProvider {
+pub struct OllamaProvider {
     client: Ollama,
     model: String,
 }
@@ -20,13 +20,11 @@ impl OllamaProvider {
             model: model.unwrap_or(default_model),
         }
     }
-
 }
 
 impl Provider for OllamaProvider {
     async fn completion(&self, text: &str) -> String {
-        let request =
-            GenerationRequest::new(self.model.clone(), text.to_string());
+        let request = GenerationRequest::new(self.model.clone(), text.to_string());
         let res = self.client.generate(request).await.unwrap();
         return res.response;
     }

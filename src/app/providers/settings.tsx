@@ -1,8 +1,9 @@
 import React from "react";
+import { AppSettings, Prompts, Provider, providerMap } from "../types/settings";
 const SettingContext = React.createContext({} as AppSettings);
 
 const SettingProvider = ({ children }: { children: React.ReactNode }) => {
-  const [provider, setProvider] = React.useState<Provider>();
+  const [provider, setProvider] = React.useState<Provider>(providerMap["openai"]);
   const [model, setModel] = React.useState<string>();
   const [prompt, setPrompt] = React.useState<Prompts>();
 

@@ -1,6 +1,11 @@
 interface Language {
-  sourceLang?: string;
-  targetLang?: string;
+  code: string;
+  label: string;
+}
+
+type LanguageConfig = {
+  sourceLang: Language;
+  targetLang: Language;
 }
 
 interface ResultTexts {
@@ -12,13 +17,13 @@ interface ResultTexts {
 type Mode = "Translate" | "Correct" | "Refine";
 
 interface TranslateContextType {
-  languageConfig: Language;
+  languageConfig: LanguageConfig;
   inputText?: string;
   result?: ResultTexts;
   translating?: boolean;
   currentMode: Mode;
 
-  changeLangConfig: (lang: Language) => void;
+  changeLangConfig: (lang: LanguageConfig) => void;
   changeInputText: (text: string) => void;
   changeResult: (result: ResultTexts) => void;
   setTranslating: (isTranslating: boolean) => void;

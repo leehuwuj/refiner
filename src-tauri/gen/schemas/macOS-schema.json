@@ -388,6 +388,27 @@
           ]
         },
         {
+          "description": "log:default -> Allows the log command",
+          "type": "string",
+          "enum": [
+            "log:default"
+          ]
+        },
+        {
+          "description": "log:allow-log -> Enables the log command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "log:allow-log"
+          ]
+        },
+        {
+          "description": "log:deny-log -> Denies the log command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "log:deny-log"
+          ]
+        },
+        {
           "description": "menu:default -> Default permissions for the plugin.",
           "type": "string",
           "enum": [
@@ -861,6 +882,340 @@
           "type": "string",
           "enum": [
             "resources:deny-close"
+          ]
+        },
+        {
+          "type": "string",
+          "enum": [
+            "store:default"
+          ]
+        },
+        {
+          "description": "store:allow-clear -> Enables the clear command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-clear"
+          ]
+        },
+        {
+          "description": "store:allow-delete -> Enables the delete command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-delete"
+          ]
+        },
+        {
+          "description": "store:allow-entries -> Enables the entries command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-entries"
+          ]
+        },
+        {
+          "description": "store:allow-get -> Enables the get command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-get"
+          ]
+        },
+        {
+          "description": "store:allow-has -> Enables the has command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-has"
+          ]
+        },
+        {
+          "description": "store:allow-keys -> Enables the keys command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-keys"
+          ]
+        },
+        {
+          "description": "store:allow-length -> Enables the length command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-length"
+          ]
+        },
+        {
+          "description": "store:allow-load -> Enables the load command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-load"
+          ]
+        },
+        {
+          "description": "store:allow-reset -> Enables the reset command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-reset"
+          ]
+        },
+        {
+          "description": "store:allow-save -> Enables the save command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-save"
+          ]
+        },
+        {
+          "description": "store:allow-set -> Enables the set command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-set"
+          ]
+        },
+        {
+          "description": "store:allow-values -> Enables the values command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-values"
+          ]
+        },
+        {
+          "description": "store:deny-clear -> Denies the clear command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-clear"
+          ]
+        },
+        {
+          "description": "store:deny-delete -> Denies the delete command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-delete"
+          ]
+        },
+        {
+          "description": "store:deny-entries -> Denies the entries command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-entries"
+          ]
+        },
+        {
+          "description": "store:deny-get -> Denies the get command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-get"
+          ]
+        },
+        {
+          "description": "store:deny-has -> Denies the has command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-has"
+          ]
+        },
+        {
+          "description": "store:deny-keys -> Denies the keys command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-keys"
+          ]
+        },
+        {
+          "description": "store:deny-length -> Denies the length command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-length"
+          ]
+        },
+        {
+          "description": "store:deny-load -> Denies the load command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-load"
+          ]
+        },
+        {
+          "description": "store:deny-reset -> Denies the reset command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-reset"
+          ]
+        },
+        {
+          "description": "store:deny-save -> Denies the save command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-save"
+          ]
+        },
+        {
+          "description": "store:deny-set -> Denies the set command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-set"
+          ]
+        },
+        {
+          "description": "store:deny-values -> Denies the values command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-values"
+          ]
+        },
+        {
+          "type": "string",
+          "enum": [
+            "stronghold:default"
+          ]
+        },
+        {
+          "description": "stronghold:allow-create-client -> Enables the create_client command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-create-client"
+          ]
+        },
+        {
+          "description": "stronghold:allow-destroy -> Enables the destroy command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-destroy"
+          ]
+        },
+        {
+          "description": "stronghold:allow-execute-procedure -> Enables the execute_procedure command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-execute-procedure"
+          ]
+        },
+        {
+          "description": "stronghold:allow-get-store-record -> Enables the get_store_record command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-get-store-record"
+          ]
+        },
+        {
+          "description": "stronghold:allow-initialize -> Enables the initialize command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-initialize"
+          ]
+        },
+        {
+          "description": "stronghold:allow-load-client -> Enables the load_client command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-load-client"
+          ]
+        },
+        {
+          "description": "stronghold:allow-remove-secret -> Enables the remove_secret command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-remove-secret"
+          ]
+        },
+        {
+          "description": "stronghold:allow-remove-store-record -> Enables the remove_store_record command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-remove-store-record"
+          ]
+        },
+        {
+          "description": "stronghold:allow-save -> Enables the save command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-save"
+          ]
+        },
+        {
+          "description": "stronghold:allow-save-secret -> Enables the save_secret command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-save-secret"
+          ]
+        },
+        {
+          "description": "stronghold:allow-save-store-record -> Enables the save_store_record command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-save-store-record"
+          ]
+        },
+        {
+          "description": "stronghold:deny-create-client -> Denies the create_client command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-create-client"
+          ]
+        },
+        {
+          "description": "stronghold:deny-destroy -> Denies the destroy command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-destroy"
+          ]
+        },
+        {
+          "description": "stronghold:deny-execute-procedure -> Denies the execute_procedure command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-execute-procedure"
+          ]
+        },
+        {
+          "description": "stronghold:deny-get-store-record -> Denies the get_store_record command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-get-store-record"
+          ]
+        },
+        {
+          "description": "stronghold:deny-initialize -> Denies the initialize command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-initialize"
+          ]
+        },
+        {
+          "description": "stronghold:deny-load-client -> Denies the load_client command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-load-client"
+          ]
+        },
+        {
+          "description": "stronghold:deny-remove-secret -> Denies the remove_secret command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-remove-secret"
+          ]
+        },
+        {
+          "description": "stronghold:deny-remove-store-record -> Denies the remove_store_record command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-remove-store-record"
+          ]
+        },
+        {
+          "description": "stronghold:deny-save -> Denies the save command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-save"
+          ]
+        },
+        {
+          "description": "stronghold:deny-save-secret -> Denies the save_secret command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-save-secret"
+          ]
+        },
+        {
+          "description": "stronghold:deny-save-store-record -> Denies the save_store_record command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-save-store-record"
           ]
         },
         {
