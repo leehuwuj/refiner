@@ -1,3 +1,6 @@
+use tauri::AppHandle;
+use tauri_plugin_store::StoreBuilder;
+
 use super::{ollama::OllamaProvider, openai::OpenAIProvider};
 
 pub trait Provider {
@@ -18,10 +21,17 @@ impl Provider for ProviderEnum {
     }
 }
 
-pub fn get_provider(provider: &str, model: &str) -> ProviderEnum {
+pub fn get_provider(app_handler: AppHandle, provider: &str, model: &str) -> ProviderEnum {
     match provider {
-        "ollama" => ProviderEnum::OllamaProvider(OllamaProvider::new(None, None, Some(model.to_string()))),
-        "openai" => ProviderEnum::OpenAIProvider(OpenAIProvider::new(None, Some(model.to_string()))),
+        "ollama" => {
+            ProviderEnum::OllamaProvider(OllamaProvider::new(None, None, Some(model.to_string())))
+        }
+        "openai" => {
+            let mut store = StoreBuilder::new("store.bin").build(app_handler.clone());
+            store.load().unwrap();
+            let api_key = store.get("OPENAI_API_KEY").unwrap().as_str();
+            ProviderEnum::OpenAIProvider(OpenAIProvider::new(api_key, Some(model)))
+        }
         _ => panic!("Invalid provider"),
     }
 }

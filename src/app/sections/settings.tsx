@@ -9,10 +9,19 @@ import {
   SelectItem,
   Input,
 } from "@nextui-org/react";
-import { invoke } from "@tauri-apps/api/core";
+import { Store } from '@tauri-apps/plugin-store';
 import { useContext } from "react";
 import { SettingContext } from "../providers/settings";
 import { providerMap } from "../types/settings";
+
+const store_api_key = async (api_key: string) => {
+  const store = new Store('store.bin');
+  store.set('OPENAI_API_KEY', api_key);
+  await store.save();
+  console.log("Stored API key");
+  let duma = await store.get('OPENAI_API_KEY');
+  console.log("Stored key: ", duma);
+}
 
 const Settings = ({
   isOpen,
@@ -83,29 +92,15 @@ const Settings = ({
                   </Select>
                 </div>
                 <Input id="apiKey" type="secret" label="API Key" variant="bordered" />
-                {/* <div className="justify-between px-1 py-2">
-                  <Checkbox disabled classNames={{ label: "text-small" }}>
-                    Use my custom prompt
-                  </Checkbox>
-                  <Textarea
-                    disabled
-                    variant="bordered"
-                    placeholder="This feature is in development."
-                    disableAutosize
-                    classNames={{
-                      input: "h-20", // Increase the height here
-                    }}
-                  />
-                </div> */}
               </ModalBody>
               <ModalFooter>
                 {/* call api to save api key */}
-                <Button color="primary" onClick={() => {
+                <Button color="primary" onClick={async () => {
                   // Get the API key
-                  const apiKey = document.getElementById("apiKey") as HTMLInputElement;
-                  console.log(apiKey.value);
-                  // Save the API key
-                  invoke("save_api_key", { apiKey: apiKey.value });
+                  // const inputtedApiKey = document.getElementById("apiKey") as HTMLInputElement;
+                  // const apiKey = inputtedApiKey.value.trim();
+                  // Store the API key
+                  await store_api_key("sk-proj-zN6jsMCRZk0VlvuEeuFKT3BlbkFJRqko5hV39cUtwdJUPafb");
                   onClose();
                 }}>
                   Save

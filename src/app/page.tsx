@@ -27,8 +27,9 @@ async function tauri_get_result(
       provider: provider,
       model: model,
       text: text,
-      source_language: sourceLanguage ?? null,
-      target_language: targetLanguage ?? null,
+      sourceLang: sourceLanguage,
+      targetLang: targetLanguage,
+      prompt: null,
     };
     console.log("Payload:", payload);
 

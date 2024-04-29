@@ -12,6 +12,10 @@
     "app:default",
     "resources:default",
     "menu:default",
-    "tray:default"
+    "tray:default",
+    "store:default",
+    "store:allow-set",
+    "store:allow-get",
+    "store:allow-save"
   ]
 }

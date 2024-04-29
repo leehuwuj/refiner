@@ -41,6 +41,7 @@ fn setup_tray(app: &App) -> Result<(), String> {
 fn main() {
   tauri::Builder::default()
     .plugin(tauri_plugin_positioner::init())
+    .plugin(tauri_plugin_store::Builder::default().build())
     .setup(move |app| Ok({
       setup_tray(app).unwrap();
     }))

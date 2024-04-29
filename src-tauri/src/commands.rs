@@ -1,6 +1,5 @@
-use crate::providers::{self, base::get_provider };
+use crate::providers::{self, base::get_provider};
 use providers::base::Provider;
-
 
 const DEFAULT_TRANSLATION_PROMPT: &str = "
     You're a good translator. 
@@ -23,7 +22,7 @@ const DEFAULT_CORRECTION_PROMPT: &str = "
     Example:
         Input: I running
         Your answer: <ans>I'm running</ans>
-    Please check grammar correct it in the text block below and answer in {target_lang} language: ";
+    Please check grammar correct it in the text block below and answer in {original_lang} language: ";
 const DEFAULT_REFINE_PROMPT: &str = "
     You're a good editor. 
     Only answer the translated text without explanation, 
@@ -31,54 +30,94 @@ const DEFAULT_REFINE_PROMPT: &str = "
     Example:
         Input: Hello, how are you?
         Your answer: <ans>What's up!</ans>
-    Please refine the text in text block below with conversational style in {target_lang} language: 
+    Please refine the text in text block below with conversational style in {original_lang} language: 
 "
 ;
 
-
 #[tauri::command]
-pub async fn translate(provider: &str, model: &str, text: &str, prompt: Option<&str>, source_lang: Option<&str>, target_lang: Option<&str>) -> Result<String, String> {
-    let prompt = prompt.unwrap_or(DEFAULT_TRANSLATION_PROMPT);
+pub async fn translate(
+    app_handle: tauri::AppHandle,
+    provider: &str,
+    model: &str,
+    text: &str,
+    source_lang: Option<&str>,
+    target_lang: Option<&str>,
+    prompt: Option<&str>,
+) -> Result<String, String> {
     // Format the prompt with the original and target language
+    let prompt = prompt.unwrap_or(DEFAULT_TRANSLATION_PROMPT);
     let new_prompt = prompt
         .replace("{original_lang}", source_lang.unwrap_or("English"))
         .replace("{target_lang}", target_lang.unwrap_or("English"));
     // Init provider based on the provider name
-    let provider_obj = get_provider(provider, model);
+    let provider_obj = get_provider(app_handle, provider, model);
 
-    let res = provider_obj.completion(format!("{}<text>{}<text>. Your answer: ", new_prompt, text).as_str()).await;
-    let ans = res.split("<ans>").collect::<Vec<&str>>()[1].split("</ans>").collect::<Vec<&str>>()[0].replace("<text>", "").replace("</text>", "");
+    let res = provider_obj
+        .completion(format!("{}<text>{}<text>. Your answer: ", new_prompt, text).as_str())
+        .await;
+    let ans = res.split("<ans>").collect::<Vec<&str>>()[1]
+        .split("</ans>")
+        .collect::<Vec<&str>>()[0]
+        .replace("<text>", "")
+        .replace("</text>", "");
     return Ok(ans);
 }
 
 #[tauri::command]
-pub async fn correct(provider: &str, model: &str, text: &str, prompt: Option<&str>, source_lang: Option<&str>, target_lang: Option<&str>) -> Result<String, String> {
+pub async fn correct(
+    app_handle: tauri::AppHandle,
+    provider: &str,
+    model: &str,
+    text: &str,
+    prompt: Option<&str>,
+    source_lang: Option<&str>,
+    target_lang: Option<&str>,
+) -> Result<String, String> {
     let prompt = prompt.unwrap_or(DEFAULT_CORRECTION_PROMPT);
     // Format the prompt with the original and target language
     let new_prompt = prompt
         .replace("{original_lang}", source_lang.unwrap_or("English"))
         .replace("{target_lang}", target_lang.unwrap_or("English"));
-    let provider = get_provider(provider, model);
-    let res = provider.completion(format!("{}<text>{}<text>. Your answer: ", new_prompt, text).as_str()).await;
+    let provider = get_provider(app_handle, provider, model);
+    let res = provider
+        .completion(format!("{}<text>{}<text>. Your answer: ", new_prompt, text).as_str())
+        .await;
     // Retrieve the answer from the response
-    let ans = res.split("<ans>").collect::<Vec<&str>>()[1].split("</ans>").collect::<Vec<&str>>()[0].replace("<text>", "").replace("</text>", "");
+    let ans = res.split("<ans>").collect::<Vec<&str>>()[1]
+        .split("</ans>")
+        .collect::<Vec<&str>>()[0]
+        .replace("<text>", "")
+        .replace("</text>", "");
     return Ok(ans);
 }
 
 #[tauri::command]
-pub async fn refine(provider: &str, model: &str, text: &str, prompt: Option<&str>, source_lang: Option<&str>, target_lang: Option<&str>) -> Result<String, String> {
+pub async fn refine(
+    app_handle: tauri::AppHandle,
+    provider: &str,
+    model: &str,
+    text: &str,
+    prompt: Option<&str>,
+    source_lang: Option<&str>,
+    target_lang: Option<&str>,
+) -> Result<String, String> {
     let prompt = prompt.unwrap_or(DEFAULT_REFINE_PROMPT);
     // Format the prompt with the original and target language
     let new_prompt = prompt
         .replace("{original_lang}", source_lang.unwrap_or("English"))
         .replace("{target_lang}", target_lang.unwrap_or("English"));
-    let provider = get_provider(provider, model);
-    let res = provider.completion(format!("{}<text>{}<text>. Your answer: ", new_prompt, text).as_str()).await;
+    let provider = get_provider(app_handle, provider, model);
+    let res = provider
+        .completion(format!("{}<text>{}<text>. Your answer: ", new_prompt, text).as_str())
+        .await;
     // Retrieve the answer from the response and remove all other xml tag in ans
-    let ans = res.split("<ans>").collect::<Vec<&str>>()[1].split("</ans>").collect::<Vec<&str>>()[0].replace("<text>", "").replace("</text>", "");
+    let ans = res.split("<ans>").collect::<Vec<&str>>()[1]
+        .split("</ans>")
+        .collect::<Vec<&str>>()[0]
+        .replace("<text>", "")
+        .replace("</text>", "");
     return Ok(ans);
 }
-
 
 // Save API key to environment variable
 #[tauri::command]

@@ -41,8 +41,14 @@ dependencies:
   '@tauri-apps/api':
     specifier: 2.0.0-beta.9
     version: 2.0.0-beta.9
+  '@tauri-apps/plugin-log':
+    specifier: 2.0.0-beta.3
+    version: 2.0.0-beta.3
   '@tauri-apps/plugin-positioner':
     specifier: 2.0.0-beta.2
+    version: 2.0.0-beta.2
+  '@tauri-apps/plugin-store':
+    specifier: ^2.0.0-beta.2
     version: 2.0.0-beta.2
   '@tauri-apps/plugin-stronghold':
     specifier: 2.0.0-beta.2
@@ -2849,6 +2855,11 @@ packages:
     engines: {node: '>= 18', npm: '>= 6.6.0', yarn: '>= 1.19.1'}
     dev: false
 
+  /@tauri-apps/api@2.0.0-beta.8:
+    resolution: {integrity: sha512-fN5u+9HsSfhRaXGOdD2kPGbqDgyX+nkm1XF/4d/LNuM4WiNfvHjjRAqWQYBhQsg1aF9nsTPmSW+tmy+Yn5T5+A==}
+    engines: {node: '>= 18', npm: '>= 6.6.0', yarn: '>= 1.19.1'}
+    dev: false
+
   /@tauri-apps/api@2.0.0-beta.9:
     resolution: {integrity: sha512-WFwFsqvvQBwGFL26eHoM+zaSF3wzAin3Itcl/KBGdCtPrconjUtOGcIJdg8jCyBqoU9bznhwF51TsRssw6SZwA==}
     engines: {node: '>= 18', npm: '>= 6.6.0', yarn: '>= 1.19.1'}
@@ -2961,8 +2972,20 @@ packages:
       '@tauri-apps/cli-win32-x64-msvc': 2.0.0-beta.13
     dev: true
 
+  /@tauri-apps/plugin-log@2.0.0-beta.3:
+    resolution: {integrity: sha512-WXPzwOeGVn4RK30hODtvvuMF8EmJr7uSW/U4LMzThPgJtVlZRR0VrJLNpu4mBMsHQsDppM5q9AWuGbeMWNhiFg==}
+    dependencies:
+      '@tauri-apps/api': 2.0.0-beta.8
+    dev: false
+
   /@tauri-apps/plugin-positioner@2.0.0-beta.2:
     resolution: {integrity: sha512-U/UyopEpxUP5gGHKaVzAfbIg2T1BoBNEtTPtxs8alMkk0ZPjr18EmnGKY8UjooSZOpDXtxynqKyBnD9tVuyw4g==}
+    dependencies:
+      '@tauri-apps/api': 2.0.0-beta.4
+    dev: false
+
+  /@tauri-apps/plugin-store@2.0.0-beta.2:
+    resolution: {integrity: sha512-9TdMLLYEPqRSABRX3GtwFNWiulfW+SUHdi+5dVgdk73B8PtGf457gdtwvgrP/O2k9Vt/ET2X6Nurimx1185AzA==}
     dependencies:
       '@tauri-apps/api': 2.0.0-beta.4
     dev: false
