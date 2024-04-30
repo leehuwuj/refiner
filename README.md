@@ -22,7 +22,7 @@ Features:
 
 
 ## Installation
-1. Download the released file (.dmg for MacOS) in the Released tab
+1. Download the released file (.dmg for MacOS) in the [Released page](https://github.com/leehuwuj/refiner/releases)
 2. Install the app.
 3. Setting API key (required for OpenAI provider).
    - Click the Setting button in the bottom right cornor of the app.
