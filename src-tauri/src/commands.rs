@@ -2,8 +2,8 @@ use crate::providers::{self, base::get_provider};
 use providers::base::Provider;
 
 const DEFAULT_TRANSLATION_PROMPT: &str = "
-    You're a good translator. 
-    Only answer the translated text with the following rules and do not showing your thought: 
+    You're a good translator.
+    Only answer the translated text with the following rules and do not showing your thought:
     - put your answer in <ans></ans> block and do not include anything else because only the text inside <ans></ans> block will be extracted.
     Example 1:
         Original langue: English, Target language: Tiếng Việt
@@ -13,24 +13,24 @@ const DEFAULT_TRANSLATION_PROMPT: &str = "
         Original langue: English, Target language: Español
         Input: I'm running
         Your answer: <ans>Estoy corriendo</ans>
-    Please translate the text in original language {original_lang} in the the text block below to {target_lang}: 
+    Please translate the text in original language {original_lang} in the the text block below to {target_lang}:
 ";
 const DEFAULT_CORRECTION_PROMPT: &str = "
-    You're a teacher and you're correcting a student's homework. 
-    Only answer the correct text without explanation, 
+    You're a teacher and you're correcting a student's homework.
+    Only answer the correct text without explanation,
     put your answer in <ans></ans> block and do not include anything else because only the text inside <ans></ans> block will be extracted.
     Example:
         Input: I running
         Your answer: <ans>I'm running</ans>
-    Please check grammar correct it in the text block below and answer in {original_lang} language: ";
+    Please check grammar correct it in the text block below and answer in {target_lang} language: ";
 const DEFAULT_REFINE_PROMPT: &str = "
-    You're a good editor. 
-    Only answer the translated text without explanation, 
+    You're a good editor.
+    Only answer without explanation,
     put your answer in <ans></ans> block and do not include anything else because only the text inside <ans></ans> block will be extracted.
     Example:
         Input: Hello, how are you?
         Your answer: <ans>What's up!</ans>
-    Please refine the text in text block below with conversational style in {original_lang} language: 
+    Please rewrite the text in text block below with conversational style in {target_lang} language:
 "
 ;
 
@@ -56,7 +56,10 @@ pub async fn translate(
         .completion(format!("{}<text>{}<text>. Your answer: ", new_prompt, text).as_str())
         .await;
     if res.is_err() {
-        return Ok("Something wrong with LLM provider API. Please check the config and try again!".to_string());
+        return Ok(
+            "Something wrong with LLM provider API. Please check the config and try again!"
+                .to_string(),
+        );
     } else {
         let res = res.unwrap();
         let ans = res.split("<ans>").collect::<Vec<&str>>()[1]
@@ -88,7 +91,10 @@ pub async fn correct(
         .completion(format!("{}<text>{}<text>. Your answer: ", new_prompt, text).as_str())
         .await;
     if res.is_err() {
-        return Ok("Something wrong with LLM provider API. Please check the config and try again!".to_string());
+        return Ok(
+            "Something wrong with LLM provider API. Please check the config and try again!"
+                .to_string(),
+        );
     } else {
         let res = res.unwrap();
         let ans = res.split("<ans>").collect::<Vec<&str>>()[1]
@@ -121,7 +127,10 @@ pub async fn refine(
         .await;
     // Retrieve the answer from the response and remove all other xml tag in ans
     if res.is_err() {
-        return Ok("Something wrong with LLM provider API. Please check the config and try again!".to_string());
+        return Ok(
+            "Something wrong with LLM provider API. Please check the config and try again!"
+                .to_string(),
+        );
     } else {
         let res = res.unwrap();
         let ans = res.split("<ans>").collect::<Vec<&str>>()[1]
@@ -131,11 +140,4 @@ pub async fn refine(
             .replace("</text>", "");
         return Ok(ans);
     }
-}
-
-// Save API key to environment variable
-#[tauri::command]
-pub fn save_api_key(provider: &str, api_key: &str) -> Result<(), String> {
-    std::env::set_var(format!("{}_API_KEY", "OPENAI"), api_key);
-    Ok(())
 }

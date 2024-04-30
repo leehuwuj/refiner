@@ -2,9 +2,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
-mod selected_text;
 pub mod providers;
-use commands::{correct, refine, save_api_key, translate};
+mod selected_text;
+use commands::{correct, refine, translate};
 use tauri::Manager;
 use tauri::{
     menu::{Menu, MenuItem},
@@ -60,28 +60,27 @@ fn main() {
             {
                 use tauri_plugin_global_shortcut::{Code, Modifiers};
 
-                app.handle()
-                    .plugin(
-                        tauri_plugin_global_shortcut::Builder::new()
-                            .with_shortcuts(["super+e"])?
-                            .with_handler(|app, shortcut| { // Add 'async' here
-                                if shortcut.matches(Modifiers::SUPER, Code::KeyE) {
-                                    // Trigger get selected text
-                                    let selected_text = tauri::async_runtime::block_on(async {
-                                        get_selected_text(app).await
-                                    });
-                                    if let Ok(selected_text) = selected_text {
-                                        let _ = app.emit("shortcut-quickTranslate", selected_text);
-                                    }
-                                    let window = app.clone().get_webview_window("main").unwrap();
-                                    window.show().unwrap();
-                                    window.set_focus().unwrap();
-                                    // let _ = app.emit("shortcut-quickTranslate", selected_text);
-                                    
+                app.handle().plugin(
+                    tauri_plugin_global_shortcut::Builder::new()
+                        .with_shortcuts(["super+e"])?
+                        .with_handler(|app, shortcut| {
+                            // Add 'async' here
+                            if shortcut.matches(Modifiers::SUPER, Code::KeyE) {
+                                // Trigger get selected text
+                                let selected_text = tauri::async_runtime::block_on(async {
+                                    get_selected_text(app).await
+                                });
+                                if let Ok(selected_text) = selected_text {
+                                    let _ = app.emit("shortcut-quickTranslate", selected_text);
                                 }
-                            })
-                            .build(),
-                    )?;
+                                let window = app.clone().get_webview_window("main").unwrap();
+                                window.show().unwrap();
+                                window.set_focus().unwrap();
+                                // let _ = app.emit("shortcut-quickTranslate", selected_text);
+                            }
+                        })
+                        .build(),
+                )?;
             }
 
             setup_tray(app).unwrap();
@@ -99,12 +98,7 @@ fn main() {
                 _ => {}
             }
         })
-        .invoke_handler(tauri::generate_handler![
-            translate,
-            correct,
-            refine,
-            save_api_key
-        ])
+        .invoke_handler(tauri::generate_handler![translate, correct, refine])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

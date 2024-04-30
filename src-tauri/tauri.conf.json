@@ -1,6 +1,6 @@
 {
   "productName": "Refiner",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "identifier": "github.leehuwuj.refiner",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -12,10 +12,10 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 400,
+        "height": 360,
         "resizable": false,
         "title": "Refiner",
-        "width": 800,
+        "width": 750,
         "visible": true,
         "hiddenTitle": true,
         "decorations": false,
@@ -35,7 +35,8 @@
       "iconPath": "icons/icon.png",
       "iconAsTemplate": true,
       "menuOnLeftClick": false
-    }
+    },
+    "withGlobalTauri": true
   },
   "bundle": {
     "active": true,

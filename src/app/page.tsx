@@ -2,7 +2,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { Select, SelectItem } from "@nextui-org/react";
-import { emit, listen } from "@tauri-apps/api/event";
+import { listen } from "@tauri-apps/api/event";
 import { TextInput } from "./sections/input";
 import { Result } from "./sections/result";
 import React, { useCallback, useContext, useEffect, useState } from "react";
@@ -92,44 +92,23 @@ const LanguageSelections = ({
   selectedLang?: LanguageConfig;
   changeLangConfig: (lang: LanguageConfig) => void;
 }) => {
-  const sourceLangues = [
-    { value: "en", label: "English" },
-    { value: "es", label: "Spanish" },
-    { value: "fr", label: "French" },
-  ];
+  // const sourceLangues = [
+  //   { value: "en", label: "English" },
+  //   { value: "es", label: "Spanish" },
+  //   { value: "fr", label: "French" },
+  // ];
   const targetLangues = [
     { value: "vi", label: "Tiếng Việt" },
     { value: "en", label: "English" },
   ];
 
   return (
-    <div className="mb-3 flex flex-wrap gap-2 md:flex-nowrap">
+    <div className="mb-3 flex flex-row gap-2 align-middle items-center">
+      <p className="w-3/6 text-gray-500 text-sm">
+        Output language:
+      </p>
       <Select
-        value={selectedLang?.sourceLang.label}
-        placeholder={selectedLang?.sourceLang.label}
-      >
-        {sourceLangues.map((lang) => (
-          <SelectItem
-            key={lang.value}
-            value={selectedLang?.sourceLang.label}
-            onClick={() => {
-              const newConfig = selectedLang;
-              if (newConfig) {
-                newConfig.sourceLang = {
-                  code: lang.value,
-                  label: lang.label,
-                };
-                changeLangConfig(newConfig);
-              }
-            }}
-            id={lang.label}
-          >
-            {lang.label}
-          </SelectItem>
-        ))}
-      </Select>
-      <p className="self-center text-center text-gray-500">{" => "}</p>
-      <Select
+        className="w-3/6"
         value={selectedLang?.targetLang.label}
         placeholder={selectedLang?.targetLang.label}
       >
@@ -188,6 +167,20 @@ export default function Home() {
     window.addEventListener("shortcut-quickTranslate", handleShortcut);
     return () => {
       window.removeEventListener("shortcut-quickTranslate", handleShortcut);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = async (event: any) => {
+      if (event.key === "Escape") {
+        console.log("Press escape key");
+
+        await window.__TAURI__.window.getCurrent().hide();
+      };
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
