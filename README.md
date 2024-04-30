@@ -12,6 +12,8 @@ Features:
  - [] Windows support.
  - [WIP] Custom prompt: Adjust the translation or text refining in different style.
 
+***Note***: This app is still in development
+
 ## Screenshots:
 - Home:
 ![Refiner Home](./docs/images/home_sc.png)
@@ -21,8 +23,13 @@ Features:
 
 ## Installation
 1. Download the released file (.dmg for MacOS) in the Released tab
-2. Install the app
-3. If you use `Hot key` feature that pressing `Cmd + E` to quick translate the selected text then Accessibility permission for Refiner app must be enable. Here are the steps to enable Accessibility permissions for an app on a Mac:
+2. Install the app.
+3. Setting API key (required for OpenAI provider).
+   - Click the Setting button in the bottom right cornor of the app.
+   - Chose OpenAI provider and select a model.
+   - Add your OpenAI's API key
+   - Click `Save` to save the settings.
+5. If you use `Hot key` feature that pressing `Cmd + E` to quick translate the selected text then Accessibility permission for Refiner app must be enable. Here are the steps to enable Accessibility permissions for an app on a Mac:
     - Open System Preferences (you can do this by clicking on the Apple logo in the top-left corner of your screen and selecting "System Preferences").
     - Click on "Security & Privacy".
     - Click on the "Privacy" tab.
@@ -33,3 +40,8 @@ Features:
     - Click the lock again to prevent further changes.
     Remember to only grant Accessibility permissions to apps you trust, as they will have increased control over your system.
 
+
+
+> MacOS users may encounter this problem: "Refiner.app" is damaged and can't be opened. You should move it to the Trash.
+ open terminal and execute:
+ `xattr -c /Applications/Refiner.app`
