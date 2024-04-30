@@ -1,5 +1,6 @@
 ## Introduction
-![Refiner icon](./src-tauri/icons/32x32.png)
+<img src="src-tauri/icons/128x128.png" width=128 height=128>
+
 ***Refiner***: A simple AI-powered application for translating or refining text.
 
 Features:
