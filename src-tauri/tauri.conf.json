@@ -1,7 +1,7 @@
 {
   "productName": "Refiner",
   "version": "0.0.1",
-  "identifier": "dev.leehuwuj.refiner",
+  "identifier": "github.leehuwuj.refiner",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:3000",
