@@ -16,6 +16,11 @@
     "store:default",
     "store:allow-set",
     "store:allow-get",
-    "store:allow-save"
+    "store:allow-save",
+    "global-shortcut:default",
+    "global-shortcut:allow-is-registered",
+    "global-shortcut:allow-register",
+    "global-shortcut:allow-unregister",
+    "shell:default"
   ]
 }

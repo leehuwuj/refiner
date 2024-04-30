@@ -22,13 +22,11 @@ const BottomBar = () => {
           value={settingContext.model || ""}
           onChange={(event) => settingContext.setModel(event.target.value)}
         >
-          {
-            settingContext.provider?.models?.map((model) => (
-              <SelectItem value={model} key={model} id={model}>
-                {model}
-              </SelectItem>
-            )) || []
-          }
+          {settingContext.provider?.models?.map((model) => (
+            <SelectItem value={model} key={model} id={model}>
+              {model}
+            </SelectItem>
+          )) || []}
         </Select>
       </div>
       <p className="flex items-center text-sm text-gray-500">

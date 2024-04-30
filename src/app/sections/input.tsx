@@ -3,12 +3,20 @@
 import React from "react";
 import { Textarea } from "@nextui-org/react";
 
-const TextInput = ({ changeText }: { changeText: (text: string) => void }) => {
+const TextInput = ({
+  inputText,
+  changeText,
+}: {
+  inputText?: string;
+  changeText: (text: string) => void;
+}) => {
   return (
     <Textarea
+      id="input-text"
       variant="bordered"
       disableAutosize
       placeholder="Input your text here and press Cmd + Enter to see the magic happen!"
+      value={inputText}
       onChange={(e) => changeText(e.target.value)}
       aria-label="Input text area"
       classNames={{

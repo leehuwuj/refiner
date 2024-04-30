@@ -9,19 +9,19 @@ import {
   SelectItem,
   Input,
 } from "@nextui-org/react";
-import { Store } from '@tauri-apps/plugin-store';
+import { Store } from "@tauri-apps/plugin-store";
 import { useContext } from "react";
 import { SettingContext } from "../providers/settings";
 import { providerMap } from "../types/settings";
 
 const store_api_key = async (api_key: string) => {
-  const store = new Store('store.bin');
-  store.set('OPENAI_API_KEY', api_key);
+  const store = new Store("store.bin");
+  store.set("OPENAI_API_KEY", api_key);
   await store.save();
   console.log("Stored API key");
-  let duma = await store.get('OPENAI_API_KEY');
+  let duma = await store.get("OPENAI_API_KEY");
   console.log("Stored key: ", duma);
-}
+};
 
 const Settings = ({
   isOpen,
@@ -91,18 +91,28 @@ const Settings = ({
                     )) || []}
                   </Select>
                 </div>
-                <Input id="apiKey" type="secret" label="API Key" variant="bordered" />
+                <Input
+                  id="apiKey"
+                  type="secret"
+                  label="API Key"
+                  variant="bordered"
+                />
               </ModalBody>
               <ModalFooter>
                 {/* call api to save api key */}
-                <Button color="primary" onClick={async () => {
-                  // Get the API key
-                  // const inputtedApiKey = document.getElementById("apiKey") as HTMLInputElement;
-                  // const apiKey = inputtedApiKey.value.trim();
-                  // Store the API key
-                  await store_api_key("sk-proj-zN6jsMCRZk0VlvuEeuFKT3BlbkFJRqko5hV39cUtwdJUPafb");
-                  onClose();
-                }}>
+                <Button
+                  color="primary"
+                  onClick={async () => {
+                    // Get the API key
+                    const inputtedApiKey = document.getElementById("apiKey") as HTMLInputElement;
+                    const apiKey = inputtedApiKey.value.trim();
+                    // Store the API key
+                    await store_api_key(
+                      apiKey,
+                    );
+                    onClose();
+                  }}
+                >
                   Save
                 </Button>
               </ModalFooter>

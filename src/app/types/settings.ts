@@ -5,9 +5,13 @@ export interface Provider {
 }
 
 export const providerMap: Record<string, Provider> = {
-  "ollama": { name: "ollama", label: "Ollama", models: ["phi3", "llama3"]},
-  "openai": { name: "openai", label: "OpenAI", models: ["gpt-3.5-turbo", "gpt-4"]},
-}
+  ollama: { name: "ollama", label: "Ollama", models: ["phi3", "llama3"] },
+  openai: {
+    name: "openai",
+    label: "OpenAI",
+    models: ["gpt-3.5-turbo", "gpt-4"],
+  },
+};
 
 export type promptTypes = ["translate", "correct", "refine"];
 

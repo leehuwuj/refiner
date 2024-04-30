@@ -6,11 +6,11 @@ const TranslateProvider = ({ children }: { children: React.ReactNode }) => {
   const [languageConfig, setLanguageConfig] = React.useState<LanguageConfig>({
     sourceLang: {
       code: "en",
-      label: "English"
+      label: "English",
     },
     targetLang: {
       code: "vn",
-      label: "Tiếng Việt"
+      label: "Tiếng Việt",
     },
   });
   const [inputText, setInputText] = React.useState<string>("");

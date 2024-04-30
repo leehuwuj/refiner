@@ -1,9 +1,11 @@
 use crate::providers::base::Provider;
 use async_openai::{
-    config::OpenAIConfig, types::{
+    config::OpenAIConfig,
+    types::{
         ChatCompletionRequestAssistantMessageArgs, ChatCompletionRequestSystemMessageArgs,
         ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs,
-    }, Client
+    },
+    Client,
 };
 
 pub struct OpenAIProvider {
@@ -31,16 +33,19 @@ impl Provider for OpenAIProvider {
         let client = self.client.clone();
         let request = CreateChatCompletionRequestArgs::default()
             .model("gpt-3.5-turbo-0125")
-            .messages([
-                ChatCompletionRequestUserMessageArgs::default()
-                    .content(prompt)
-                    .build()
-                    .unwrap()
-                    .into()
-            ])
-            .build().unwrap();
-        
-        let ans = client.chat().create(request).await.unwrap().choices[0].message.clone().content.unwrap();
+            .messages([ChatCompletionRequestUserMessageArgs::default()
+                .content(prompt)
+                .build()
+                .unwrap()
+                .into()])
+            .build()
+            .unwrap();
+
+        let ans = client.chat().create(request).await.unwrap().choices[0]
+            .message
+            .clone()
+            .content
+            .unwrap();
         println!("OpenAI response: {}", ans);
         ans
     }

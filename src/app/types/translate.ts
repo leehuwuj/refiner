@@ -6,7 +6,7 @@ interface Language {
 type LanguageConfig = {
   sourceLang: Language;
   targetLang: Language;
-}
+};
 
 interface ResultTexts {
   translate?: string;
