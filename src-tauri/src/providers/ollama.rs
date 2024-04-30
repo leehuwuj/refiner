@@ -23,9 +23,12 @@ impl OllamaProvider {
 }
 
 impl Provider for OllamaProvider {
-    async fn completion(&self, text: &str) -> String {
+    async fn completion(&self, text: &str) -> Result<String, String> {
         let request = GenerationRequest::new(self.model.clone(), text.to_string());
-        let res = self.client.generate(request).await.unwrap();
-        return res.response;
+        let res = self.client.generate(request).await;
+        match res {
+            Ok(res) => Ok(res.response),
+            Err(err) => Err(err.to_string()),
+        }
     }
 }

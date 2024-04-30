@@ -28,7 +28,7 @@ impl OpenAIProvider {
 }
 
 impl Provider for OpenAIProvider {
-    async fn completion(&self, prompt: &str) -> String {
+    async fn completion(&self, prompt: &str) -> Result<String, String> {
         println!("Prompt: {}", prompt);
         let client = self.client.clone();
         let request = CreateChatCompletionRequestArgs::default()
@@ -40,13 +40,13 @@ impl Provider for OpenAIProvider {
                 .into()])
             .build()
             .unwrap();
-
-        let ans = client.chat().create(request).await.unwrap().choices[0]
-            .message
-            .clone()
-            .content
-            .unwrap();
-        println!("OpenAI response: {}", ans);
-        ans
+        let res = client.chat().create(request).await;
+        match res {
+            Ok(res) => {
+                let response = res.choices[0].message.content.clone().unwrap();
+                Ok(response)
+            }
+            Err(err) => Err(err.to_string()),
+        }
     }
 }

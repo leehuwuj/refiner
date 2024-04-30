@@ -55,12 +55,17 @@ pub async fn translate(
     let res = provider_obj
         .completion(format!("{}<text>{}<text>. Your answer: ", new_prompt, text).as_str())
         .await;
-    let ans = res.split("<ans>").collect::<Vec<&str>>()[1]
-        .split("</ans>")
-        .collect::<Vec<&str>>()[0]
-        .replace("<text>", "")
-        .replace("</text>", "");
-    return Ok(ans);
+    if res.is_err() {
+        return Ok("Something wrong with LLM provider API. Please check the config and try again!".to_string());
+    } else {
+        let res = res.unwrap();
+        let ans = res.split("<ans>").collect::<Vec<&str>>()[1]
+            .split("</ans>")
+            .collect::<Vec<&str>>()[0]
+            .replace("<text>", "")
+            .replace("</text>", "");
+        return Ok(ans);
+    }
 }
 
 #[tauri::command]
@@ -82,13 +87,17 @@ pub async fn correct(
     let res = provider
         .completion(format!("{}<text>{}<text>. Your answer: ", new_prompt, text).as_str())
         .await;
-    // Retrieve the answer from the response
-    let ans = res.split("<ans>").collect::<Vec<&str>>()[1]
-        .split("</ans>")
-        .collect::<Vec<&str>>()[0]
-        .replace("<text>", "")
-        .replace("</text>", "");
-    return Ok(ans);
+    if res.is_err() {
+        return Ok("Something wrong with LLM provider API. Please check the config and try again!".to_string());
+    } else {
+        let res = res.unwrap();
+        let ans = res.split("<ans>").collect::<Vec<&str>>()[1]
+            .split("</ans>")
+            .collect::<Vec<&str>>()[0]
+            .replace("<text>", "")
+            .replace("</text>", "");
+        return Ok(ans);
+    }
 }
 
 #[tauri::command]
@@ -111,12 +120,17 @@ pub async fn refine(
         .completion(format!("{}<text>{}<text>. Your answer: ", new_prompt, text).as_str())
         .await;
     // Retrieve the answer from the response and remove all other xml tag in ans
-    let ans = res.split("<ans>").collect::<Vec<&str>>()[1]
-        .split("</ans>")
-        .collect::<Vec<&str>>()[0]
-        .replace("<text>", "")
-        .replace("</text>", "");
-    return Ok(ans);
+    if res.is_err() {
+        return Ok("Something wrong with LLM provider API. Please check the config and try again!".to_string());
+    } else {
+        let res = res.unwrap();
+        let ans = res.split("<ans>").collect::<Vec<&str>>()[1]
+            .split("</ans>")
+            .collect::<Vec<&str>>()[0]
+            .replace("<text>", "")
+            .replace("</text>", "");
+        return Ok(ans);
+    }
 }
 
 // Save API key to environment variable

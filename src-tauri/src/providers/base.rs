@@ -1,10 +1,11 @@
+use std::future::Future;
 use tauri::AppHandle;
 use tauri_plugin_store::StoreBuilder;
 
 use super::{ollama::OllamaProvider, openai::OpenAIProvider};
 
 pub trait Provider {
-    fn completion(&self, prompt: &str) -> impl std::future::Future<Output = String> + Send;
+    fn completion(&self, prompt: &str) -> impl Future<Output = Result<String, String>>;
 }
 
 pub enum ProviderEnum {
@@ -13,7 +14,7 @@ pub enum ProviderEnum {
 }
 
 impl Provider for ProviderEnum {
-    async fn completion(&self, prompt: &str) -> String {
+    async fn completion(&self, prompt: &str) -> Result<String, String> {
         match self {
             ProviderEnum::OllamaProvider(provider) => provider.completion(prompt).await,
             ProviderEnum::OpenAIProvider(provider) => provider.completion(prompt).await,
