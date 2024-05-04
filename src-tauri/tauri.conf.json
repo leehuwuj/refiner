@@ -12,10 +12,10 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 400,
+        "height": 360,
         "resizable": false,
         "title": "Refiner",
-        "width": 800,
+        "width": 750,
         "visible": true,
         "hiddenTitle": true,
         "decorations": false,
