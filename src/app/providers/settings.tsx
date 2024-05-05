@@ -7,7 +7,7 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
     providerMap["openai"],
   );
   const [model, setModel] = React.useState<string>(
-    providerMap["openai"].models?.[0],
+    provider.models?.[0] || '',
   );
   const [prompt, setPrompt] = React.useState<Prompts>();
 
