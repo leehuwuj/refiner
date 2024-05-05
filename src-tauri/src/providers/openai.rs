@@ -1,9 +1,7 @@
 use crate::providers::base::Provider;
 use async_openai::{
     config::OpenAIConfig,
-    types::{
-        ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs,
-    },
+    types::{ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs},
     Client,
 };
 
@@ -31,7 +29,7 @@ impl Provider for OpenAIProvider {
         println!("Prompt: {}", prompt);
         let client = self.client.clone();
         let request = CreateChatCompletionRequestArgs::default()
-            .model("gpt-3.5-turbo-0125")
+            .model(self.model.clone())
             .messages([ChatCompletionRequestUserMessageArgs::default()
                 .content(prompt)
                 .build()
