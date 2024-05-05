@@ -35,7 +35,8 @@
       "iconPath": "icons/icon.png",
       "iconAsTemplate": true,
       "menuOnLeftClick": false
-    }
+    },
+    "withGlobalTauri": true
   },
   "bundle": {
     "active": true,

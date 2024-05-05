@@ -1,8 +1,8 @@
 "use client";
 
 import { invoke } from "@tauri-apps/api/core";
-import { Input, Select, SelectItem } from "@nextui-org/react";
-import { emit, listen } from "@tauri-apps/api/event";
+import { Select, SelectItem } from "@nextui-org/react";
+import { listen } from "@tauri-apps/api/event";
 import { TextInput } from "./sections/input";
 import { Result } from "./sections/result";
 import React, { useCallback, useContext, useEffect, useState } from "react";
@@ -167,6 +167,20 @@ export default function Home() {
     window.addEventListener("shortcut-quickTranslate", handleShortcut);
     return () => {
       window.removeEventListener("shortcut-quickTranslate", handleShortcut);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = async (event: any) => {
+      if (event.key === "Escape") {
+        console.log("Press escape key");
+
+        await window.__TAURI__.window.getCurrent().hide();
+      };
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
