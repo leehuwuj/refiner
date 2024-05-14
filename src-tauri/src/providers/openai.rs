@@ -19,7 +19,7 @@ impl OpenAIProvider {
 
         Self {
             client,
-            model: model.unwrap_or("gpt-3.5-turbo").to_string(),
+            model: model.unwrap_or("gpt-4o").to_string(),
         }
     }
 }
