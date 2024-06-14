@@ -85,6 +85,10 @@ fn main() {
 
             setup_tray(app).unwrap();
 
+            // Hide the app icon from the dock
+            #[cfg(target_os = "macos")]
+            app.set_activation_policy(ActivationPolicy::Accessory);
+
             Ok(())
         })
         .on_window_event(|window, event| {
