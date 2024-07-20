@@ -9,7 +9,7 @@ use tauri::Manager;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::ClickType,
-    App,
+    ActivationPolicy, App,
 };
 use tauri_plugin_positioner::{Position, WindowExt};
 
