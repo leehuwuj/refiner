@@ -9,7 +9,7 @@ use tauri::Manager;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::ClickType,
-    ActivationPolicy, App,
+    App,
 };
 use tauri_plugin_positioner::{Position, WindowExt};
 
@@ -31,11 +31,19 @@ fn setup_tray(app: &App) -> Result<(), String> {
         _ => {}
     });
     app.on_tray_icon_event(move |handler, event| {
-        // Move the window to the top right corner
-        let win = handler.get_webview_window("main").unwrap();
-        let _ = win.as_ref().window().move_window(Position::TopRight);
-        // Handle the tray icon click event
-        handler.show().unwrap();
+        // Move the window to the top right corner for macOS
+        #[cfg(target_os = "macos")]
+        {
+            let win = handler.get_webview_window("main").unwrap();
+            let _ = win.as_ref().window().move_window(Position::TopRight);
+        }
+
+        // Move the window to the bottom right corner for Windows
+        #[cfg(target_os = "windows")]
+        {
+            let win = handler.get_webview_window("main").unwrap();
+            let _ = win.as_ref().window().move_window(Position::TopCenter);
+        }
         tauri_plugin_positioner::on_tray_event(&handler, &event);
         if event.click_type == ClickType::Left {
             if let Some(webview_window) = handler.get_webview_window("main") {
@@ -56,31 +64,67 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .setup(move |app| {
-            #[cfg(desktop)]
             {
                 use tauri_plugin_global_shortcut::{Code, Modifiers};
+                
+                #[cfg(target_os = "macos")] {
 
-                app.handle().plugin(
-                    tauri_plugin_global_shortcut::Builder::new()
-                        .with_shortcuts(["super+e"])?
-                        .with_handler(|app, shortcut| {
-                            // Add 'async' here
-                            if shortcut.matches(Modifiers::SUPER, Code::KeyE) {
-                                // Trigger get selected text
-                                let selected_text = tauri::async_runtime::block_on(async {
-                                    get_selected_text(app).await
-                                });
-                                if let Ok(selected_text) = selected_text {
-                                    let _ = app.emit("shortcut-quickTranslate", selected_text);
+                    app.handle().plugin(
+                        tauri_plugin_global_shortcut::Builder::new()
+                            .with_shortcuts(["super+e"])?
+                            .with_handler(|app, shortcut| {
+                                // Add 'async' here
+                                if shortcut.matches(Modifiers::SUPER, Code::KeyE) {
+                                    // Trigger get selected text
+                                    let selected_text = tauri::async_runtime::block_on(async {
+                                        get_selected_text(app).await
+                                    });
+                                    if let Ok(selected_text) = selected_text {
+                                        let _ = app.emit("shortcut-quickTranslate", selected_text);
+                                    }
+                                    let window = app.clone().get_webview_window("main").unwrap();
+                                    window.show().unwrap();
+                                    window.set_focus().unwrap();
+                                    // let _ = app.emit("shortcut-quickTranslate", selected_text);
                                 }
-                                let window = app.clone().get_webview_window("main").unwrap();
-                                window.show().unwrap();
-                                window.set_focus().unwrap();
-                                // let _ = app.emit("shortcut-quickTranslate", selected_text);
-                            }
-                        })
-                        .build(),
-                )?;
+                            })
+                            .build(),
+                    )?;
+                }
+
+
+                #[cfg(target_os = "windows")]
+                {
+                    app.handle().plugin(
+                        tauri_plugin_global_shortcut::Builder::new()
+                            .with_shortcuts(["ctrl+e"])?
+                            .with_handler(|app, shortcut| {
+                                if shortcut.matches(Modifiers::CONTROL, Code::KeyE) {
+                                    // Get selected text
+                                    let selected_text = tauri::async_runtime::block_on(async {
+                                        unsafe { get_selected_text(app) }.await
+                                    });
+
+                                    match selected_text {
+                                        Ok(selected_text) => {
+                                            let window = app.clone().get_webview_window("main").unwrap();
+                                            window.emit("shortcut-quickTranslate", selected_text).unwrap(); 
+                                            window.show().unwrap();
+                                            window.set_focus().unwrap();
+                                        }
+                                        Err(_) => {
+                                            let window = app.clone().get_webview_window("main").unwrap();
+                                            window.emit("shortcut-quickTranslate", "Failed to read from clipboard!").unwrap(); 
+                                            window.show().unwrap();
+                                            window.set_focus().unwrap();
+                                        }
+                                    }
+                                }
+                            })
+                            .build(),
+                    )?;
+                }
+                
             }
 
             setup_tray(app).unwrap();
