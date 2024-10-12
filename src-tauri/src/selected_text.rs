@@ -1,9 +1,72 @@
-use std::{mem, thread, time::Duration};
-
+use std::{thread, time::Duration};
 use tauri::AppHandle;
 use tauri_plugin_clipboard_manager::ClipboardExt;
-use winapi::um::winuser::{SendInput, INPUT, INPUT_KEYBOARD, KEYEVENTF_KEYUP, VK_CONTROL};
+use tauri_plugin_dialog::MessageDialogKind;
 
+
+// MacOS
+
+#[cfg(target_os = "macos")]
+async fn show_dialog(app: &AppHandle, message: &str, title: &str, kind: MessageDialogKind) {
+    use tauri_plugin_dialog::DialogExt;
+    let _ = app.dialog()
+        .message(message)
+        .kind(kind)
+        .title(title)
+        .show(|result| match result {
+            true => {},
+            false => {},
+        });
+}
+#[cfg(target_os = "macos")]
+pub async fn get_selected_text(app: &AppHandle) -> Result<String, String> {
+    use tauri_plugin_dialog::MessageDialogKind;
+    use tauri_plugin_shell::ShellExt;
+
+    const COPY_APPLE_SCRIPT: &str = r#"tell application "System Events" to keystroke "c" using command down"#;
+
+    let shell = app.shell();
+    let output = shell.command("osascript")
+                .args(&["-e", COPY_APPLE_SCRIPT])
+                .output()
+                .await;
+
+    match output {
+        Ok(output) => {
+            if !output.status.success() {
+                println!("Failed to execute AppleScript command: {:?}", output);
+                show_dialog(app, "Could not have Accessibility permission! Please enable it in your MacOS setting!", "Error", MessageDialogKind::Error).await;
+                return Err("Failed to execute AppleScript command".to_string());
+            }
+            // Wait for the clipboard to be updated
+            thread::sleep(Duration::from_millis(100));
+
+            // Get text from clipboard
+            match app.clipboard().read_text() {
+                Ok(selected_text) => {
+                    println!("Selected text: {:?}", selected_text);
+                    Ok(format!("{:?}", selected_text))
+                },
+                Err(_) => {
+                    show_dialog(app, "Could not have Accessibility permission! Please enable it in your MacOS setting!", "Error", MessageDialogKind::Error).await;
+                    Err("Failed to read from clipboard".to_string())
+                },
+            }
+        },
+        Err(_) => {
+            show_dialog(app, "Could not have Accessibility permission! Please enable it in your MacOS setting!", "Error", MessageDialogKind::Error).await;
+            Err("Failed to execute AppleScript command".to_string())
+        },
+    }
+}
+
+
+// Windows
+
+#[cfg(target_os = "windows")]
+use winapi::um::winuser::{SendInput, INPUT, INPUT_KEYBOARD, KEYEVENTF_KEYUP, VK_CONTROL};
+#[cfg(target_os = "windows")]
+use std::mem;
 #[cfg(target_os = "windows")]
 pub async unsafe fn get_selected_text(app: &AppHandle) -> Result<String, String> {
     thread::sleep(Duration::from_millis(100));
@@ -55,57 +118,3 @@ fn call_ctrl_c() {
 
 
 
-#[cfg(target_os = "macos")]
-async fn show_dialog(app: &AppHandle, message: &str, title: &str, kind: MessageDialogKind) {
-    use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
-    let _ = app.dialog()
-        .message(message)
-        .kind(kind)
-        .title(title)
-        .show(|result| match result {
-            true => {},
-            false => {},
-        });
-}
-#[cfg(target_os = "macos")]
-pub async fn get_selected_text(app: &AppHandle) -> Result<String, String> {
-    use tauri_plugin_clipboard_manager::ClipboardExt;
-    use tauri_plugin_shell::ShellExt;
-    use std::{thread, time::Duration};
-
-    const COPY_APPLE_SCRIPT: &str = r#"tell application "System Events" to keystroke "c" using command down"#;
-
-    let shell = app.shell();
-    let output = shell.command("osascript")
-                .args(&["-e", COPY_APPLE_SCRIPT])
-                .output()
-                .await;
-
-    match output {
-        Ok(output) => {
-            if !output.status.success() {
-                println!("Failed to execute AppleScript command: {:?}", output);
-                show_dialog(app, "Could not have Accessibility permission! Please enable it in your MacOS setting!", "Error", MessageDialogKind::Error).await;
-                return Err("Failed to execute AppleScript command".to_string());
-            }
-            // Wait for the clipboard to be updated
-            thread::sleep(Duration::from_millis(100));
-
-            // Get text from clipboard
-            match app.clipboard().read() {
-                Ok(selected_text) => {
-                    println!("Selected text: {:?}", selected_text);
-                    Ok(format!("{:?}", selected_text))
-                },
-                Err(_) => {
-                    show_dialog(app, "Could not have Accessibility permission! Please enable it in your MacOS setting!", "Error", MessageDialogKind::Error).await;
-                    Err("Failed to read from clipboard".to_string())
-                },
-            }
-        },
-        Err(_) => {
-            show_dialog(app, "Could not have Accessibility permission! Please enable it in your MacOS setting!", "Error", MessageDialogKind::Error).await;
-            Err("Failed to execute AppleScript command".to_string())
-        },
-    }
-}

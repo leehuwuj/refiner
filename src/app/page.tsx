@@ -77,11 +77,24 @@ const triggerTranslation = (
 async function startSerialEventListener() {
   await listen("shortcut-quickTranslate", (event) => {
     let rawText = event.payload as string;
-    rawText = rawText.split("text:")[1].trim().slice(0, -1).trim();
-    rawText = rawText.slice(1, -1).trim();
-    window.dispatchEvent(
-      new CustomEvent("shortcut-quickTranslate", { detail: rawText }),
-    );
+
+    // Attempt to clean and extract the text
+    if (typeof rawText === "string") {
+      // Check if the text contains the expected prefix
+      if (rawText.includes("text:")) {
+        rawText = rawText.split("text:")[1].trim();
+      }
+
+      // Further clean the text if necessary
+      rawText = rawText.replace(/^"|"$/g, '').trim(); // Remove surrounding quotes if present
+
+      // Dispatch the cleaned text as an event
+      window.dispatchEvent(
+        new CustomEvent("shortcut-quickTranslate", { detail: rawText }),
+      );
+    } else {
+      console.error("Invalid payload structure:", event.payload);
+    }
   });
 }
 

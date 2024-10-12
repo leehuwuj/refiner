@@ -5,12 +5,8 @@ mod commands;
 pub mod providers;
 mod selected_text;
 use commands::{correct, refine, translate};
-use tauri::Manager;
-use tauri::{
-    menu::{Menu, MenuItem},
-    tray::ClickType,
-    App,
-};
+use tauri::{ActivationPolicy, App, Emitter, Manager};
+use tauri::menu::{Menu, MenuItem};
 use tauri_plugin_positioner::{Position, WindowExt};
 
 use crate::selected_text::get_selected_text;
@@ -45,10 +41,17 @@ fn setup_tray(app: &App) -> Result<(), String> {
             let _ = win.as_ref().window().move_window(Position::TopCenter);
         }
         tauri_plugin_positioner::on_tray_event(&handler, &event);
-        if event.click_type == ClickType::Left {
+        // if event.click_type == ClickType::Left {
+        //     if let Some(webview_window) = handler.get_webview_window("main") {
+        //         let _ = webview_window.show();
+        //         let _ = webview_window.set_focus();
+        //     }
+        // }
+        if let tauri::tray::TrayIconEvent::Click { .. } = event {
             if let Some(webview_window) = handler.get_webview_window("main") {
-                let _ = webview_window.show();
-                let _ = webview_window.set_focus();
+                webview_window.emit("tray-click", ()).unwrap();
+                webview_window.show().unwrap();
+                webview_window.set_focus().unwrap();
             }
         }
     });
@@ -72,7 +75,7 @@ fn main() {
                     app.handle().plugin(
                         tauri_plugin_global_shortcut::Builder::new()
                             .with_shortcuts(["super+e"])?
-                            .with_handler(|app, shortcut| {
+                            .with_handler(|app, shortcut, _| {
                                 // Add 'async' here
                                 if shortcut.matches(Modifiers::SUPER, Code::KeyE) {
                                     // Trigger get selected text
@@ -80,12 +83,11 @@ fn main() {
                                         get_selected_text(app).await
                                     });
                                     if let Ok(selected_text) = selected_text {
-                                        let _ = app.emit("shortcut-quickTranslate", selected_text);
+                                        let window = app.clone().get_webview_window("main").unwrap();
+                                        window.emit("shortcut-quickTranslate", selected_text).unwrap();
+                                        window.show().unwrap();
+                                        window.set_focus().unwrap();
                                     }
-                                    let window = app.clone().get_webview_window("main").unwrap();
-                                    window.show().unwrap();
-                                    window.set_focus().unwrap();
-                                    // let _ = app.emit("shortcut-quickTranslate", selected_text);
                                 }
                             })
                             .build(),
