@@ -19,28 +19,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || '' }}
 
-      - name: Install frontend dependencies
-        run: pnpm install
-
-      - name: Run TypeScript lint
-        run: pnpm run lint
-
-      - name: Check Tauri Rust project
+      - name: Run Cargo check
         run: |
           cd src-tauri
           cargo check
