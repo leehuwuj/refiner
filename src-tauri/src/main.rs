@@ -5,7 +5,7 @@ mod commands;
 pub mod providers;
 mod selected_text;
 use commands::{correct, refine, translate};
-use tauri::{ActivationPolicy, App, Emitter, Manager};
+use tauri::{App, Emitter, Manager};
 use tauri::menu::{Menu, MenuItem};
 use tauri_plugin_positioner::{Position, WindowExt};
 
@@ -100,7 +100,7 @@ fn main() {
                     app.handle().plugin(
                         tauri_plugin_global_shortcut::Builder::new()
                             .with_shortcuts(["ctrl+e"])?
-                            .with_handler(|app, shortcut| {
+                            .with_handler(|app, shortcut, _| {
                                 if shortcut.matches(Modifiers::CONTROL, Code::KeyE) {
                                     // Get selected text
                                     let selected_text = tauri::async_runtime::block_on(async {
@@ -132,6 +132,8 @@ fn main() {
             setup_tray(app).unwrap();
 
             // Hide the app icon from the dock
+            #[cfg(target_os = "macos")]
+            use tauri::ActivationPolicy;
             #[cfg(target_os = "macos")]
             app.set_activation_policy(ActivationPolicy::Accessory);
 

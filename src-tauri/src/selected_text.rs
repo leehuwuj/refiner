@@ -1,10 +1,11 @@
 use std::{thread, time::Duration};
 use tauri::AppHandle;
 use tauri_plugin_clipboard_manager::ClipboardExt;
-use tauri_plugin_dialog::MessageDialogKind;
 
 
 // MacOS
+#[cfg(target_os = "macos")]
+use tauri_plugin_dialog::MessageDialogKind;
 
 #[cfg(target_os = "macos")]
 async fn show_dialog(app: &AppHandle, message: &str, title: &str, kind: MessageDialogKind) {
@@ -74,7 +75,7 @@ pub async unsafe fn get_selected_text(app: &AppHandle) -> Result<String, String>
     thread::sleep(Duration::from_millis(100));
 
 
-    match app.clipboard().read() {
+    match app.clipboard().read_text() {
         Ok(selected_text) => {
             println!("Selected text: {:?}", selected_text);
             Ok(format!("{:?}", selected_text))
