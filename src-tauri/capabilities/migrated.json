@@ -6,13 +6,13 @@
     "main"
   ],
   "permissions": [
-    "path:default",
-    "event:default",
-    "window:default",
-    "app:default",
-    "resources:default",
-    "menu:default",
-    "tray:default",
+    "core:path:default",
+    "core:event:default",
+    "core:window:default",
+    "core:app:default",
+    "core:resources:default",
+    "core:menu:default",
+    "core:tray:default",
     "store:default",
     "store:allow-set",
     "store:allow-get",
@@ -22,6 +22,6 @@
     "global-shortcut:allow-register",
     "global-shortcut:allow-unregister",
     "shell:default",
-    "window:allow-hide"
+    "core:window:allow-hide"
   ]
 }
