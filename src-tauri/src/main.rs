@@ -133,7 +133,7 @@ fn main() {
 
             // Hide the app icon from the dock
             #[cfg(target_os = "macos")]
-            use tauri::ActivationPolic;
+            use tauri::ActivationPolicy;
             #[cfg(target_os = "macos")]
             app.set_activation_policy(ActivationPolicy::Accessory);
 
