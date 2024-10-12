@@ -1,7 +1,7 @@
 "use client";
 
 import { invoke } from "@tauri-apps/api/core";
-import { Select, SelectItem } from "@nextui-org/react";
+import { button, Select, SelectItem } from "@nextui-org/react";
 import { listen } from "@tauri-apps/api/event";
 import { TextInput } from "./sections/input";
 import { Result } from "./sections/result";
@@ -11,7 +11,9 @@ import { BottomBar } from "./sections/bottomBar";
 import { SettingContext } from "./providers/settings";
 import { FaRegArrowAltCircleRight } from "react-icons/fa";
 import { IoStopCircleOutline } from "react-icons/io5";
+import { HiSwitchHorizontal } from "react-icons/hi";
 import { AppSettings } from "./types/settings";
+import { Tabs, Tab } from "@nextui-org/react";
 
 async function tauri_get_result(
   text: string,
@@ -105,46 +107,58 @@ const LanguageSelections = ({
   selectedLang?: LanguageConfig;
   changeLangConfig: (lang: LanguageConfig) => void;
 }) => {
-  // const sourceLangues = [
-  //   { value: "en", label: "English" },
-  //   { value: "es", label: "Spanish" },
-  //   { value: "fr", label: "French" },
-  // ];
   const targetLangues = [
     { value: "vi", label: "Tiếng Việt" },
     { value: "en", label: "English" },
   ];
+
+  const handleLanguageSwitch = () => {
+    if (selectedLang) {
+      const newConfig = {
+        sourceLang: selectedLang.targetLang,
+        targetLang: selectedLang.sourceLang,
+      };
+      changeLangConfig(newConfig);
+    }
+  };
 
   return (
     <div className="mb-3 flex flex-row gap-2 align-middle items-center">
       <p className="w-3/6 text-gray-500 text-sm">
         Output language:
       </p>
-      <Select
-        className="w-3/6"
-        value={selectedLang?.targetLang.label}
-        placeholder={selectedLang?.targetLang.label}
-      >
-        {targetLangues.map((lang) => (
-          <SelectItem
-            key={lang.value}
-            value={selectedLang?.targetLang.label}
-            onClick={() => {
-              const newConfig = selectedLang;
-              if (newConfig) {
-                newConfig.targetLang = {
-                  code: lang.value,
-                  label: lang.label,
-                };
-                changeLangConfig(newConfig);
-              }
-            }}
-            id={lang.label}
-          >
-            {lang.label}
-          </SelectItem>
-        ))}
-      </Select>
+      <div className="flex w-3/6 items-center relative">
+        <HiSwitchHorizontal
+          onClick={handleLanguageSwitch}
+          className="mr-2 cursor-pointer"
+          size={20}
+        />
+        <Select
+          className="flex-grow"
+          value={selectedLang?.targetLang.label}
+          placeholder={selectedLang?.targetLang.label}
+        >
+          {targetLangues.map((lang) => (
+            <SelectItem
+              key={lang.value}
+              value={selectedLang?.targetLang.label}
+              onClick={() => {
+                const newConfig = selectedLang;
+                if (newConfig) {
+                  newConfig.targetLang = {
+                    code: lang.value,
+                    label: lang.label,
+                  };
+                  changeLangConfig(newConfig);
+                }
+              }}
+              id={lang.label}
+            >
+              {lang.label}
+            </SelectItem>
+          ))}
+        </Select>
+      </div>
     </div>
   );
 };
@@ -157,6 +171,21 @@ export default function Home() {
   const changeInputText = useCallback((text: string) => {
     homeContext.changeInputText(text);
   }, []);
+
+  const data = [
+    {
+      title: "Translate",
+      content: homeContext.result?.translate ?? "",
+    },
+    {
+      title: "Correct",
+      content: homeContext.result?.correct ?? "",
+    },
+    {
+      title: "Refine",
+      content: homeContext.result?.refine ?? "",
+    },
+  ];
 
   useEffect(() => {
     startSerialEventListener();
@@ -218,22 +247,35 @@ export default function Home() {
     };
   }, [homeContext, appSettings]);
 
+  const handleModeChange = useCallback((key: string | number) => {
+    const index = typeof key === 'string' ? parseInt(key, 10) : key;
+    const newMode = data[index].title as Mode;
+    homeContext.setCurrentMode(newMode);
+    if (homeContext.inputText && homeContext.inputText.trim() !== '') {
+      // Use the new mode directly in the triggerTranslation call
+      triggerTranslation({ ...homeContext, currentMode: newMode }, appSettings);
+    }
+  }, [homeContext, appSettings]);
+
   return (
     <div className="flex flex-col">
       <div className="flex h-80 w-full flex-col p-2 sm:flex-row">
         <div className="m-2 flex h-full w-full flex-col sm:w-1/2">
-          <LanguageSelections
-            selectedLang={homeContext.languageConfig}
-            changeLangConfig={homeContext.changeLangConfig}
-          />
-          <div className="mb-0 h-80 overflow-clip">
-            <TextInput
-              inputText={homeContext.inputText}
-              changeText={homeContext.changeInputText}
-            />
-          </div>
+          <Tabs
+            aria-label="Mode"
+            onSelectionChange={handleModeChange}
+          >
+            {data.map((item, index) => (
+              <Tab key={index} title={item.title}>
+                <TextInput
+                  inputText={homeContext.inputText}
+                  changeText={homeContext.changeInputText}
+                />
+              </Tab>
+            ))}
+          </Tabs>
         </div>
-        <div className="flex w-8 flex-col items-center justify-center space-y-5 pt-10">
+        <div className="flex w-8 flex-col items-center justify-center pt-10 pr-2">
           {homeContext.translating ? (
             <IoStopCircleOutline
               className="icon text-gray-500"
