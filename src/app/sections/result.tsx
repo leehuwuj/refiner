@@ -12,6 +12,7 @@ import {
 import { LuClipboardCopy } from "react-icons/lu";
 import { TranslateContext } from "../providers/translate";
 import { MdClear } from "react-icons/md";
+import { LanguageSelections } from "./language-selection";
 
 const TextCard = ({
   title,
@@ -89,40 +90,25 @@ const Result = ({
   mode?: Mode;
 }) => {
   const homeContext = useContext(TranslateContext);
-  const data = [
-    {
-      title: "Translate",
-      content: result?.translate ?? "",
-    },
-    {
-      title: "Correct",
-      content: result?.correct ?? "",
-    },
-    {
-      title: "Refine",
-      content: result?.refine ?? "",
-    },
-  ];
+
+  console.log("Result:", result);
+  console.log("Mode", mode);
+
+  // Result: { translate: 'Hello', correct: '', refine: '' }
+  console.log("Text",);
+
 
   return (
     <div className="flex w-full flex-col">
-      <Tabs
-        aria-label="Mode"
-        onSelectionChange={(index) => {
-          const mode = data[index as number].title as Mode;
-          homeContext.setCurrentMode(mode);
-        }}
-      >
-        {data.map((item, index) => (
-          <Tab key={index} title={item.title}>
-            <TextCard
-              title={item.title}
-              content={item.content}
-              isTranslating={isTranslating}
-            />
-          </Tab>
-        ))}
-      </Tabs>
+      <LanguageSelections
+        selectedLang={homeContext.languageConfig}
+        changeLangConfig={homeContext.changeLangConfig}
+      />
+      <TextCard
+        title={mode ?? "Default Title"}
+        content={result?.[mode?.toLowerCase() as keyof typeof result] ?? ""}
+        isTranslating={isTranslating}
+      />
     </div>
   );
 };
