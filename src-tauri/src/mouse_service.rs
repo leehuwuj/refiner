@@ -1,9 +1,8 @@
-use device_query::{DeviceQuery, DeviceState, MouseState};
+use device_query::{DeviceQuery, DeviceState};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
-use tauri::Manager;
 
 #[derive(Debug)]
 pub enum MouseEvent {
@@ -91,10 +90,21 @@ impl MouseService {
                             if start != end_pos {
                                 // Small delay to allow OS to update selection
                                 thread::sleep(Duration::from_millis(50));
-                                if let Some(selected_text) = tauri::async_runtime::block_on(async {
-                                    Self::check_for_selected_text(&app_handle, &mut last_text).await
-                                }) {
-                                    callback(MouseEvent::TextSelected(selected_text));
+                                #[cfg(target_os = "windows")]
+                                let selected_text = tauri::async_runtime::block_on(async {
+                                    unsafe { crate::selected_text::get_selected_text(&app_handle).await }
+                                });
+
+                                #[cfg(target_os = "macos")]
+                                let selected_text = tauri::async_runtime::block_on(async {
+                                    crate::selected_text::get_selected_text(&app_handle).await
+                                });
+
+                                if let Ok(selected_text) = selected_text {
+                                    if !selected_text.is_empty() && selected_text != last_text {
+                                        last_text = selected_text.clone();
+                                        callback(MouseEvent::TextSelected(selected_text));
+                                    }
                                 }
                             }
                         }
@@ -113,11 +123,4 @@ impl MouseService {
         });
     }
 
-    pub fn stop(&self) {
-        self.running.store(false, Ordering::SeqCst);
-    }
-
-    pub fn is_selecting(&self) -> bool {
-        self.is_mouse_down.load(Ordering::SeqCst)
-    }
 } 

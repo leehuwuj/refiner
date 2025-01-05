@@ -179,7 +179,6 @@ pub fn run() {
                 let app_handle = app_handle_for_service.clone();
                 match event {
                     MouseEvent::TextSelected(text) => {
-                        println!("Text selected: {}", text);
                         let device_state = DeviceState::new();
                         let (x, y) = device_state.get_mouse().coords;
                         
@@ -206,24 +205,17 @@ pub fn run() {
                     app.handle().plugin(
                         tauri_plugin_global_shortcut::Builder::new()
                             .with_shortcuts(["super+e"])?
-                            // Show popup windows when pressing super+e
                             .with_handler(|app, shortcut, _| {
                                 if shortcut.matches(Modifiers::SUPER, Code::KeyE) {
-                                    let selected_text = tauri::async_runtime::block_on(async {
-                                        get_selected_text(app).await
-                                    });
-                                    if let Ok(selected_text) = selected_text {
-                                        let device_state = DeviceState::new();
-                                        let mouse = device_state.get_mouse();
-                                        let (x, y) = mouse.coords;
-                                        let window = tauri::async_runtime::block_on(async {
-                                            create_or_focus_compact_window(app, x as i32, y as i32).await
-                                        });
-                                        window.emit("shortcut-quickTranslate", serde_json::json!({
-                                            "text": selected_text.replace("\"", "")
-                                        })).unwrap();
-                                        window.show().unwrap();
-                                        window.set_focus().unwrap();
+                                    if let Some(window) = app.get_webview_window("main") {
+                                        // Get selected text and send it to the main window
+                                        if let Ok(selected_text) = tauri::async_runtime::block_on(async {
+                                            get_selected_text(app).await
+                                        }) {
+                                            window.emit("shortcut-quickTranslate", format!("text:{}", selected_text)).unwrap();
+                                            window.show().unwrap();
+                                            window.set_focus().unwrap();
+                                        }
                                     }
                                 }
                             })
@@ -238,21 +230,15 @@ pub fn run() {
                             .with_shortcuts(["ctrl+e"])?
                             .with_handler(|app, shortcut, _| {
                                 if shortcut.matches(Modifiers::CONTROL, Code::KeyE) {
-                                    let selected_text = tauri::async_runtime::block_on(async {
-                                        get_selected_text(app).await
-                                    });
-                                    if let Ok(selected_text) = selected_text {
-                                        let device_state = DeviceState::new();
-                                        let mouse = device_state.get_mouse();
-                                        let (x, y) = mouse.coords;
-                                        let window = tauri::async_runtime::block_on(async {
-                                            create_or_focus_compact_window(app, x as i32, y as i32).await
-                                        });
-                                        window.emit("shortcut-quickTranslate", serde_json::json!({
-                                            "text": selected_text.replace("\"", "")
-                                        })).unwrap();
-                                        window.show().unwrap();
-                                        window.set_focus().unwrap();
+                                    if let Some(window) = app.get_webview_window("main") {
+                                        // Get selected text and send it to the main window
+                                        if let Ok(selected_text) = tauri::async_runtime::block_on(async {
+                                            unsafe { get_selected_text(app).await }
+                                        }) {
+                                            window.emit("shortcut-quickTranslate", format!("text:{}", selected_text)).unwrap();
+                                            window.show().unwrap();
+                                            window.set_focus().unwrap();
+                                        }
                                     }
                                 }
                             })

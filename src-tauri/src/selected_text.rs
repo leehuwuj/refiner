@@ -45,7 +45,6 @@ pub async fn get_selected_text(app: &AppHandle) -> Result<String, String> {
             // Get text from clipboard
             match app.clipboard().read_text() {
                 Ok(selected_text) => {
-                    println!("Selected text: {:?}", selected_text);
                     Ok(format!("{:?}", selected_text))
                 },
                 Err(_) => {
@@ -77,7 +76,6 @@ pub async unsafe fn get_selected_text(app: &AppHandle) -> Result<String, String>
 
     match app.clipboard().read_text() {
         Ok(selected_text) => {
-            println!("Selected text: {:?}", selected_text);
             Ok(format!("{:?}", selected_text))
         },
         Err(_) => {
