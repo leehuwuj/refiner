@@ -28,9 +28,10 @@ impl MouseService {
             last_click: Arc::new(std::sync::Mutex::new(None)),
         }
     }
-
+    
+    #[allow(unused_unsafe)]
     async fn check_for_selected_text(app_handle: &tauri::AppHandle, last_text: &mut String) -> Option<String> {
-        if let Ok(selected_text) = crate::selected_text::get_selected_text(app_handle).await {
+        if let Ok(selected_text) = unsafe { crate::selected_text::get_selected_text(app_handle).await } {
             if !selected_text.is_empty() && selected_text != *last_text {
                 *last_text = selected_text.clone();
                 return Some(selected_text);
