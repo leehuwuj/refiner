@@ -217,7 +217,7 @@ export default function Home() {
       if (event.key === "Escape") {
         console.log("Press escape key");
 
-        await window.__TAURI__.window.getCurrent().hide();
+        await window.__TAURI__.window.getCurrentWindow().hide();
       };
     }
     window.addEventListener("keydown", handleKeyDown);
