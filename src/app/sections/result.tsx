@@ -2,8 +2,6 @@
 
 import React, { useContext, useEffect } from "react";
 import {
-  Tabs,
-  Tab,
   Card,
   CardBody,
   Tooltip,
@@ -18,10 +16,12 @@ const TextCard = ({
   title,
   content,
   isTranslating,
+  compact = false,
 }: {
   title: string;
   content: string;
   isTranslating?: boolean;
+  compact?: boolean;
 }) => {
   const [copied, setCopied] = React.useState(false);
   const homeContext = useContext(TranslateContext);
@@ -35,17 +35,19 @@ const TextCard = ({
   };
 
   return (
-    <Card className="relative h-56 border-2 p-2" shadow="none">
-      <CardBody>
+    <Card className={`relative ${compact ? 'h-full' : 'h-56'} border-2 p-2`} shadow="none">
+      <CardBody className={compact ? 'h-full' : ''}>
         {content && content.length > 0 ? (
           <div className="absolute right-0 top-0 flex w-4 flex-col space-y-3">
-            <button
-              onClick={() =>
-                homeContext.changeResult({ [title.toLowerCase()]: "" })
-              }
-            >
-              <MdClear className="text-gray-500" size={18} />
-            </button>
+            {!compact && (
+              <button
+                onClick={() =>
+                  homeContext.changeResult({ [title.toLowerCase()]: "" })
+                }
+              >
+                <MdClear className="text-gray-500" size={18} />
+              </button>
+            )}
             <Tooltip isOpen={copied} content="Copied!">
               <button onClick={() => handleCopy(content)}>
                 <LuClipboardCopy className="text-gray-500" size={18} />
@@ -53,13 +55,14 @@ const TextCard = ({
             </Tooltip>
           </div>
         ) : (
-          <p className="text-sm text-gray-400">
-            {/* Input the text and press <strong>Ctrl + Enter</strong> or <strong>Cmd + Enter</strong> to translate. */}
-            Click chose a mode above that you want me to do: <br />-{" "}
-            <strong>Translated</strong> to translate the text. <br />-{" "}
-            <strong>Correct</strong> to correct grammar. <br />-{" "}
-            <strong>Refine</strong> to refine the translation in a formal way.
-          </p>
+          !compact && (
+            <p className="text-sm text-gray-400">
+              Click chose a mode above that you want me to do: <br />-{" "}
+              <strong>Translated</strong> to translate the text. <br />-{" "}
+              <strong>Correct</strong> to correct grammar. <br />-{" "}
+              <strong>Refine</strong> to refine the translation in a formal way.
+            </p>
+          )
         )}
         {isTranslating && (
           <div className="space-y-3">
@@ -84,30 +87,28 @@ const Result = ({
   result,
   isTranslating,
   mode,
+  compact = false,
 }: {
-  result?: ResultTexts;
+  result?: string | ResultTexts;
   isTranslating?: boolean;
   mode?: Mode;
+  compact?: boolean;
 }) => {
   const homeContext = useContext(TranslateContext);
 
-  console.log("Result:", result);
-  console.log("Mode", mode);
-
-  // Result: { translate: 'Hello', correct: '', refine: '' }
-  console.log("Text",);
-
-
   return (
-    <div className="flex w-full flex-col">
-      <LanguageSelections
-        selectedLang={homeContext.languageConfig}
-        changeLangConfig={homeContext.changeLangConfig}
-      />
+    <div className={`flex w-full flex-col ${compact ? 'h-full' : ''}`}>
+      {!compact && (
+        <LanguageSelections
+          selectedLang={homeContext.languageConfig}
+          changeLangConfig={homeContext.changeLangConfig}
+        />
+      )}
       <TextCard
         title={mode ?? "Default Title"}
-        content={result?.[mode?.toLowerCase() as keyof typeof result] ?? ""}
+        content={typeof result === 'string' ? result : result?.[mode?.toLowerCase() as keyof typeof result] ?? ""}
         isTranslating={isTranslating}
+        compact={compact}
       />
     </div>
   );

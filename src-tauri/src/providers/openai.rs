@@ -26,7 +26,6 @@ impl OpenAIProvider {
 
 impl Provider for OpenAIProvider {
     async fn completion(&self, prompt: &str) -> Result<String, String> {
-        println!("Prompt: {}", prompt);
         let client = self.client.clone();
         let request = CreateChatCompletionRequestArgs::default()
             .model(self.model.clone())
