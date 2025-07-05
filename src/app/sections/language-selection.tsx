@@ -1,5 +1,5 @@
 import React from "react";
-import { Select, SelectItem } from "@nextui-org/react";
+import { Select, SelectItem } from "@heroui/react";
 import { HiSwitchHorizontal } from "react-icons/hi";
 
 interface LanguageConfig {
@@ -34,13 +34,11 @@ const LanguageSelections = ({
             <div className="flex w-3/6 items-center relative space-x-2">
                 <Select
                     className="flex-grow"
-                    value={selectedLang?.targetLang.label}
                     placeholder={selectedLang?.targetLang.label}
                 >
                     {targetLanguages.map((lang) => (
                         <SelectItem
                             key={lang.value}
-                            value={lang.label}
                             onClick={() => {
                                 const newConfig = selectedLang;
                                 if (newConfig) {

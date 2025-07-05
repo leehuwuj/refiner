@@ -1,4 +1,4 @@
-import { Select, SelectItem } from "@nextui-org/select";
+import { Select, SelectItem } from "@heroui/react";
 import { CiSettings } from "react-icons/ci";
 import { Settings } from "./settings";
 import React from "react";
@@ -24,7 +24,7 @@ const BottomBar = () => {
           onChange={(event) => settingContext.setModel(event.target.value)}
         >
           {settingContext.provider?.models?.map((model) => (
-            <SelectItem value={model} key={model} id={model} className="text-xs">
+            <SelectItem key={model} id={model} className="text-xs">
               {model}
             </SelectItem>
           )) || []}

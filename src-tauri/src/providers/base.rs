@@ -28,12 +28,10 @@ pub fn get_provider(app_handler: AppHandle, provider: &str, model: &str) -> Prov
             ProviderEnum::OllamaProvider(OllamaProvider::new(None, None, Some(model.to_string())))
         }
         "openai" => {
-            let store = StoreBuilder::new(&app_handler, "store.bin").build();
-            // Load store
-            store.load().unwrap();
+            let store = StoreBuilder::new(&app_handler, "store.bin").build().expect("Failed to build store");
 
-            let api_key_value = store.get("OPENAI_API_KEY").unwrap();
-            let api_key = api_key_value.as_str().unwrap();
+            let api_key_value = store.get("OPENAI_API_KEY").expect("Failed to get API key from store");
+            let api_key = api_key_value.as_str().expect("API key is not a valid string");
             ProviderEnum::OpenAIProvider(OpenAIProvider::new(Some(api_key), Some(model)))
         }
         _ => panic!("Invalid provider"),

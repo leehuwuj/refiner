@@ -1,7 +1,7 @@
 "use client";
 
 import { invoke } from "@tauri-apps/api/core";
-import { button, Select, SelectItem } from "@nextui-org/react";
+import { Select, SelectItem } from "@heroui/react";
 import { listen } from "@tauri-apps/api/event";
 import { TextInput } from "./sections/input";
 import { Result } from "./sections/result";
@@ -13,7 +13,7 @@ import { FaRegArrowAltCircleRight } from "react-icons/fa";
 import { IoStopCircleOutline } from "react-icons/io5";
 import { HiSwitchHorizontal } from "react-icons/hi";
 import { AppSettings } from "./types/settings";
-import { Tabs, Tab } from "@nextui-org/react";
+import { Tabs, Tab } from "@heroui/react";
 
 async function tauri_get_result(
   text: string,
@@ -24,7 +24,6 @@ async function tauri_get_result(
   targetLanguage?: string,
 ): Promise<string> {
   const invoke_function = mode.toString().toLowerCase();
-  console.log("Invoke function:", invoke_function);
 
   try {
     const payload = {
@@ -35,13 +34,10 @@ async function tauri_get_result(
       targetLang: targetLanguage,
       prompt: null,
     };
-    console.log("Payload:", payload);
 
     const result = (await invoke(invoke_function, payload)) as string;
-    console.log("Result text:", result);
     return result;
   } catch (error) {
-    console.error("Failed to invoke LLM:", error);
     throw error;
   }
 }
@@ -141,7 +137,6 @@ const LanguageSelections = ({
           {targetLangues.map((lang) => (
             <SelectItem
               key={lang.value}
-              value={selectedLang?.targetLang.label}
               onClick={() => {
                 const newConfig = selectedLang;
                 if (newConfig) {
@@ -201,7 +196,6 @@ export default function Home() {
   useEffect(() => {
     const handleShortcut = (event: any) => {
       let rawText = event.detail as string;
-      console.log("Change input text: " + rawText);
       changeInputText(rawText);
       setTriggerByShortcut(true);
     };
@@ -215,7 +209,6 @@ export default function Home() {
   useEffect(() => {
     const handleKeyDown = async (event: any) => {
       if (event.key === "Escape") {
-        console.log("Press escape key");
 
         await window.__TAURI__.window.getCurrentWindow().hide();
       };
