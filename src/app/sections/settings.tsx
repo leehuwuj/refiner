@@ -8,18 +8,11 @@ import {
   Select,
   SelectItem,
   Input,
+  Switch,
 } from "@nextui-org/react";
-import { load } from "@tauri-apps/plugin-store";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { SettingContext } from "../providers/settings";
 import { providerMap } from "../types/settings";
-
-const store_api_key = async (api_key: string) => {
-  const store = await load("store.bin");
-  store.set("OPENAI_API_KEY", api_key);
-  await store.save();
-  await store.get("OPENAI_API_KEY");
-};
 
 const Settings = ({
   isOpen,
@@ -31,6 +24,40 @@ const Settings = ({
   onOpenChange: () => void;
 }) => {
   const settingContext = useContext(SettingContext);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  const handleSave = async (onClose: () => void) => {
+    setIsSaving(true);
+    setSaveMessage(null);
+
+    try {
+      // Get the API key
+      const inputtedApiKey = document.getElementById("apiKey") as HTMLInputElement;
+      const apiKey = inputtedApiKey.value.trim();
+
+      // Use the context's save function
+      const success = await settingContext.saveSettings(apiKey || undefined);
+
+      if (success) {
+        setSaveMessage("Settings saved successfully!");
+
+        // Close modal after a short delay to show the success message
+        setTimeout(() => {
+          onClose();
+          setSaveMessage(null);
+        }, 1500);
+      } else {
+        setSaveMessage("Failed to save settings. Please try again.");
+      }
+
+    } catch (error) {
+      console.error("Failed to save settings:", error);
+      setSaveMessage("Failed to save settings. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <>
@@ -95,23 +122,38 @@ const Settings = ({
                   label="API Key"
                   variant="bordered"
                 />
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">Mouse Text Selection</span>
+                    <span className="text-xs text-gray-500">
+                      Enable double-click and drag selection to translate text
+                    </span>
+                  </div>
+                  <Switch
+                    isSelected={settingContext.doubleClickEnabled}
+                    onValueChange={(value) => {
+                      settingContext.setDoubleClickEnabled(value);
+                    }}
+                    size="sm"
+                  />
+                </div>
+                {saveMessage && (
+                  <div className={`text-sm p-2 rounded ${saveMessage.includes("Failed")
+                    ? "bg-red-100 text-red-700 border border-red-300"
+                    : "bg-green-100 text-green-700 border border-green-300"
+                    }`}>
+                    {saveMessage}
+                  </div>
+                )}
               </ModalBody>
               <ModalFooter>
-                {/* call api to save api key */}
                 <Button
                   color="primary"
-                  onClick={async () => {
-                    // Get the API key
-                    const inputtedApiKey = document.getElementById("apiKey") as HTMLInputElement;
-                    const apiKey = inputtedApiKey.value.trim();
-                    // Store the API key
-                    await store_api_key(
-                      apiKey,
-                    );
-                    onClose();
-                  }}
+                  onPress={() => handleSave(onClose)}
+                  isLoading={isSaving}
+                  disabled={isSaving}
                 >
-                  Save
+                  {isSaving ? "Saving..." : "Save"}
                 </Button>
               </ModalFooter>
             </>

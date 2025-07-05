@@ -69,23 +69,45 @@ use winapi::um::winuser::{SendInput, INPUT, INPUT_KEYBOARD, KEYEVENTF_KEYUP, VK_
 use std::mem;
 #[cfg(target_os = "windows")]
 pub async unsafe fn get_selected_text(app: &AppHandle) -> Result<String, String> {
-    thread::sleep(Duration::from_millis(100));
-    call_ctrl_c();
-    thread::sleep(Duration::from_millis(100));
-
-
-    match app.clipboard().read_text() {
-        Ok(selected_text) => {
-            Ok(format!("{:?}", selected_text))
+    // Store current clipboard content to restore later
+    let original_clipboard = app.clipboard().read_text().unwrap_or_default();
+    
+    // Wait a bit to ensure window focus is stable
+    thread::sleep(Duration::from_millis(150));
+    
+    // Try to copy selected text
+    match call_ctrl_c() {
+        Ok(_) => {
+            // Wait for clipboard to be updated
+            thread::sleep(Duration::from_millis(200));
+            
+            // Read from clipboard
+            match app.clipboard().read_text() {
+                Ok(selected_text) => {
+                    // Check if clipboard actually changed
+                    if selected_text != original_clipboard && !selected_text.is_empty() {
+                        println!("Successfully retrieved selected text: {}", selected_text);
+                        Ok(format!("{:?}", selected_text))
+                    } else {
+                        println!("No text selection detected or clipboard unchanged");
+                        Err("No text selection detected".to_string())
+                    }
+                },
+                Err(e) => {
+                    println!("Failed to read from clipboard: {}", e);
+                    Err("Failed to read from clipboard".to_string())
+                },
+            }
         },
-        Err(_) => {
-            Err("Failed to read from clipboard".to_string())
-        },
+        Err(e) => {
+            println!("Failed to send Ctrl+C: {}", e);
+            Err(format!("Failed to send Ctrl+C: {}", e))
+        }
     }
 }
 
 #[cfg(target_os = "windows")]
-fn call_ctrl_c() {
+fn call_ctrl_c() -> Result<(), String> {
     unsafe {
         // Create an INPUT structure for pressing the Ctrl key down
         let mut input = INPUT {
@@ -99,19 +121,40 @@ fn call_ctrl_c() {
         input.u.ki_mut().dwExtraInfo = 0;
 
         // Press the Ctrl key
-        SendInput(1, &mut input, mem::size_of::<INPUT>() as i32);
+        let result1 = SendInput(1, &mut input, mem::size_of::<INPUT>() as i32);
+        if result1 == 0 {
+            return Err("Failed to send Ctrl key press".to_string());
+        }
+
+        // Small delay between key presses to ensure proper handling
+        std::thread::sleep(Duration::from_millis(10));
 
         // Modify the INPUT structure for pressing the C key down
         input.u.ki_mut().wVk = 0x43 as u16; // VK_C is the virtual key code for the C key
-        SendInput(1, &mut input, mem::size_of::<INPUT>() as i32);
+        let result2 = SendInput(1, &mut input, mem::size_of::<INPUT>() as i32);
+        if result2 == 0 {
+            return Err("Failed to send C key press".to_string());
+        }
+
+        // Small delay before releasing keys
+        std::thread::sleep(Duration::from_millis(10));
 
         // Modify the INPUT structure to release the C key
         input.u.ki_mut().dwFlags = KEYEVENTF_KEYUP; // KEYEVENTF_KEYUP for key release
-        SendInput(1, &mut input, mem::size_of::<INPUT>() as i32);
+        let result3 = SendInput(1, &mut input, mem::size_of::<INPUT>() as i32);
+        if result3 == 0 {
+            return Err("Failed to send C key release".to_string());
+        }
 
         // Modify the INPUT structure to release the Ctrl key
         input.u.ki_mut().wVk = VK_CONTROL as u16;
-        SendInput(1, &mut input, mem::size_of::<INPUT>() as i32);
+        let result4 = SendInput(1, &mut input, mem::size_of::<INPUT>() as i32);
+        if result4 == 0 {
+            return Err("Failed to send Ctrl key release".to_string());
+        }
+
+        println!("Successfully sent Ctrl+C key sequence");
+        Ok(())
     }
 }
 

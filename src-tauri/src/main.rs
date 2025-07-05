@@ -6,7 +6,7 @@ pub mod providers;
 mod selected_text;
 mod mouse_service;
 
-use commands::{correct, refine, translate};
+use commands::{correct, refine, translate, get_double_click_enabled, save_settings};
 use mouse_service::{MouseService, MouseEvent};
 use tauri::{App, Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
 use tauri::menu::{Menu, MenuItem};
@@ -71,62 +71,79 @@ fn get_mouse_position() -> (i32, i32) {
     mouse.coords
 }
 
-async fn create_or_focus_compact_window(app: &tauri::AppHandle, x: i32, y: i32) -> tauri::WebviewWindow {
+async fn create_or_focus_compact_window(app: &tauri::AppHandle, x: i32, y: i32) -> Result<tauri::WebviewWindow, String> {
+    // Properly close existing window to prevent window class conflicts
     if let Some(window) = app.get_webview_window("translate-popup") {
-        // Just hide the existing window and reposition it
-        let _ = window.hide();
-        let _ = window.set_position(tauri::Position::Logical(tauri::LogicalPosition {
-            x: x as f64,
-            y: y as f64,
-        }));
-        window
-    } else {
-        let window = WebviewWindowBuilder::new(
-            app,
-            "translate-popup", 
-            WebviewUrl::App("translate-popup".into())
-        )
-        .title("Quick Translate")
-        .transparent(true)
-        .decorations(false)
-        .always_on_top(true)
-        .inner_size(300.0, 200.0)
-        .skip_taskbar(true)
-        .visible(false)
-        .position(x as f64, y as f64)
-        .build()
-        .unwrap();
+        println!("Closing existing translate-popup window to prevent class conflicts");
+        if let Err(e) = window.close() {
+            println!("Warning: Failed to close existing translate-popup window: {}", e);
+        }
+        // Give Windows time to properly unregister the window class
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
 
-        window
+    // Create new window with proper error handling
+    match WebviewWindowBuilder::new(
+        app,
+        "translate-popup", 
+        WebviewUrl::App("translate-popup".into())
+    )
+    .title("Quick Translate")
+    .transparent(true)
+    .decorations(false)
+    .always_on_top(true)
+    .inner_size(300.0, 200.0)
+    .skip_taskbar(true)
+    .visible(false)
+    .position(x as f64, y as f64)
+    .build()
+    {
+        Ok(window) => {
+            println!("Successfully created translate-popup window");
+            Ok(window)
+        },
+        Err(e) => {
+            println!("Failed to create translate-popup window: {}", e);
+            Err(format!("Failed to create translate-popup window: {}", e))
+        }
     }
 }
 
-async fn create_selection_icon(app: &tauri::AppHandle, x: i32, y: i32) -> tauri::WebviewWindow {
+async fn create_selection_icon(app: &tauri::AppHandle, x: i32, y: i32) -> Result<tauri::WebviewWindow, String> {
+    // Properly close existing window to prevent window class conflicts
     if let Some(window) = app.get_webview_window("selection-icon") {
-        let _ = window.hide();
-        let _ = window.set_position(tauri::Position::Logical(tauri::LogicalPosition {
-            x: x as f64,
-            y: y as f64,
-        }));
-        window
-    } else {
-        let window = WebviewWindowBuilder::new(
-            app,
-            "selection-icon",
-            WebviewUrl::App("selection-icon".into())
-        )
-        .title("Selection Icon")
-        .transparent(true)
-        .decorations(false)
-        .always_on_top(true)
-        .inner_size(24.0, 24.0)  // Small icon size
-        .skip_taskbar(true)
-        .visible(false)
-        .position(x as f64, y as f64)
-        .build()
-        .unwrap();
+        println!("Closing existing selection-icon window to prevent class conflicts");
+        if let Err(e) = window.close() {
+            println!("Warning: Failed to close existing selection-icon window: {}", e);
+        }
+        // Give Windows time to properly unregister the window class
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
 
-        window
+    // Create new window with proper error handling
+    match WebviewWindowBuilder::new(
+        app,
+        "selection-icon",
+        WebviewUrl::App("selection-icon".into())
+    )
+    .title("Selection Icon")
+    .transparent(true)
+    .decorations(false)
+    .always_on_top(true)
+    .inner_size(24.0, 24.0)  // Small icon size
+    .skip_taskbar(true)
+    .visible(false)
+    .position(x as f64, y as f64)
+    .build()
+    {
+        Ok(window) => {
+            println!("Successfully created selection-icon window");
+            Ok(window)
+        },
+        Err(e) => {
+            println!("Failed to create selection-icon window: {}", e);
+            Err(format!("Failed to create selection-icon window: {}", e))
+        }
     }
 }
 
@@ -141,6 +158,44 @@ pub fn run() {
         .setup(move |app| {
             let app_handle = app.handle();
             
+            // Listen for selection icon creation events from mouse service (thread safety)
+            let selection_app_handle = app_handle.clone();
+            app_handle.listen("create-selection-icon", move |event| {
+                println!("Received create-selection-icon event from mouse service");
+                if let Ok(payload) = serde_json::from_str::<serde_json::Value>(event.payload()) {
+                    if let (Some(text), Some(x), Some(y)) = (
+                        payload.get("text").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                        payload.get("x").and_then(|v| v.as_i64()),
+                        payload.get("y").and_then(|v| v.as_i64())
+                    ) {
+                        let app_handle = selection_app_handle.clone();
+                        tauri::async_runtime::spawn(async move {
+                            match create_selection_icon(&app_handle, x as i32, y as i32).await {
+                                Ok(window) => {
+                                    // Store the selected text in the window's state
+                                    if let Err(e) = window.emit("set-selected-text", &text) {
+                                        println!("Failed to emit set-selected-text event: {}", e);
+                                    }
+                                    if let Err(e) = window.show() {
+                                        println!("Failed to show selection icon window: {}", e);
+                                    }
+                                    if let Err(e) = window.set_focus() {
+                                        println!("Failed to set focus on selection icon window: {}", e);
+                                    }
+                                },
+                                Err(e) => {
+                                    println!("Failed to create selection icon window: {}", e);
+                                }
+                            }
+                        });
+                    } else {
+                        println!("Invalid payload for create-selection-icon event");
+                    }
+                } else {
+                    println!("Failed to parse create-selection-icon event payload");
+                }
+            });
+
             // Listen for icon click events
             let icon_app_handle = app_handle.clone();
             app_handle.listen("icon-clicked", move |event| {
@@ -158,12 +213,24 @@ pub fn run() {
                     // Show the translate popup in a separate thread to avoid blocking
                     let app_handle = icon_app_handle.clone();
                     tauri::async_runtime::spawn(async move {
-                        let translate_window = create_or_focus_compact_window(&app_handle, x, y).await;
-                        translate_window.emit("shortcut-quickTranslate", serde_json::json!({
-                            "text": selected_text
-                        })).unwrap();
-                        translate_window.show().unwrap();
-                        translate_window.set_focus().unwrap();
+                        match create_or_focus_compact_window(&app_handle, x, y).await {
+                            Ok(translate_window) => {
+                                if let Err(e) = translate_window.emit("shortcut-quickTranslate", serde_json::json!({
+                                    "text": selected_text
+                                })) {
+                                    println!("Failed to emit shortcut-quickTranslate event: {}", e);
+                                }
+                                if let Err(e) = translate_window.show() {
+                                    println!("Failed to show translate window: {}", e);
+                                }
+                                if let Err(e) = translate_window.set_focus() {
+                                    println!("Failed to set focus on translate window: {}", e);
+                                }
+                            },
+                            Err(e) => {
+                                println!("Failed to create translate window: {}", e);
+                            }
+                        }
                     });
                 }
             });
@@ -182,14 +249,15 @@ pub fn run() {
                         let device_state = DeviceState::new();
                         let (x, y) = device_state.get_mouse().coords;
                         
-                        // Show the small icon window
-                        tauri::async_runtime::block_on(async {
-                            let window = create_selection_icon(&app_handle, x + 5, y - 5).await;  // Offset slightly from cursor
-                            // Store the selected text in the window's state
-                            window.emit("set-selected-text", text).unwrap();
-                            window.show().unwrap();
-                            window.set_focus().unwrap();
-                        });
+                        // Emit event to main thread to handle window creation (thread safety)
+                        println!("Text selected from mouse service, emitting event to main thread");
+                        if let Err(e) = app_handle.emit("create-selection-icon", serde_json::json!({
+                            "text": text,
+                            "x": x + 5,
+                            "y": y - 5
+                        })) {
+                            println!("Failed to emit create-selection-icon event: {}", e);
+                        }
                     },
                     _ => {}
                 }
@@ -255,6 +323,30 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(ActivationPolicy::Accessory);
 
+            // Register cleanup handler for proper window management
+            let cleanup_handle = app_handle.clone();
+            app.listen("app-shutdown", move |_| {
+                println!("Application shutting down, cleaning up windows...");
+                
+                // Close all windows properly to prevent window class issues
+                if let Some(window) = cleanup_handle.get_webview_window("translate-popup") {
+                    println!("Closing translate-popup window");
+                    let _ = window.close();
+                }
+                
+                if let Some(window) = cleanup_handle.get_webview_window("selection-icon") {
+                    println!("Closing selection-icon window");
+                    let _ = window.close();
+                }
+                
+                if let Some(window) = cleanup_handle.get_webview_window("main") {
+                    println!("Closing main window");
+                    let _ = window.close();
+                }
+                
+                println!("Window cleanup completed");
+            });
+
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -262,13 +354,24 @@ pub fn run() {
                 tauri::WindowEvent::Focused(is_focused) => {
                     // detect click outside of the focused window and hide the app
                     if !is_focused {
-                         window.hide().unwrap();
+                        println!("Window lost focus, hiding window: {}", window.label());
+                        if let Err(e) = window.hide() {
+                            println!("Failed to hide window on focus loss: {}", e);
+                        }
+                    } else {
+                        println!("Window gained focus: {}", window.label());
                     }
+                }
+                tauri::WindowEvent::Destroyed => {
+                    println!("Window destroyed: {}", window.label());
+                }
+                tauri::WindowEvent::CloseRequested { .. } => {
+                    println!("Window close requested: {}", window.label());
                 }
                 _ => {}
             }
         })
-        .invoke_handler(tauri::generate_handler![translate, correct, refine, get_mouse_position])
+        .invoke_handler(tauri::generate_handler![translate, correct, refine, get_mouse_position, get_double_click_enabled, save_settings])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

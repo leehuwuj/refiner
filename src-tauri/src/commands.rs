@@ -1,5 +1,6 @@
 use crate::providers::{self, base::get_provider};
 use providers::base::Provider;
+use tauri_plugin_store::StoreExt;
 
 const DEFAULT_TRANSLATION_PROMPT: &str = "
     You're a good translator.
@@ -140,4 +141,36 @@ pub async fn refine(
             .replace("</text>", "");
         return Ok(ans);
     }
+}
+
+#[tauri::command]
+pub async fn get_double_click_enabled(app_handle: tauri::AppHandle) -> Result<bool, String> {
+    let store = app_handle.store("store.bin");
+    match store.get("DOUBLE_CLICK_ENABLED") {
+        Some(value) => {
+            if let Some(enabled) = value.as_bool() {
+                Ok(enabled)
+            } else {
+                Ok(false) // Default to false if value is not a boolean
+            }
+        },
+        None => Ok(false), // Default to false if key doesn't exist
+    }
+}
+
+#[tauri::command]
+pub async fn save_settings(app_handle: tauri::AppHandle, api_key: Option<String>, double_click_enabled: bool) -> Result<(), String> {
+    let store = app_handle.store("store.bin");
+    
+    if let Some(key) = api_key {
+        if !key.is_empty() {
+            store.set("OPENAI_API_KEY", key);
+        }
+    }
+    
+    store.set("DOUBLE_CLICK_ENABLED", double_click_enabled);
+    
+    store.save().map_err(|e| format!("Failed to save store: {}", e))?;
+    
+    Ok(())
 }

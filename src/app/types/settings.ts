@@ -24,8 +24,11 @@ export interface AppSettings {
   provider?: Provider;
   model?: string;
   prompt?: Prompts;
+  doubleClickEnabled?: boolean;
 
   setProvider: (provider: Provider) => void;
   setModel: (model: string) => void;
   setPrompt: (prompt: Prompts) => void;
+  setDoubleClickEnabled: (enabled: boolean) => void;
+  saveSettings: (apiKey?: string) => Promise<boolean>;
 }
