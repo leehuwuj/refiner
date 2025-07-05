@@ -6,7 +6,7 @@ import {
   CardBody,
   Tooltip,
   Skeleton,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { LuClipboardCopy } from "react-icons/lu";
 import { TranslateContext } from "../providers/translate";
 import { MdClear } from "react-icons/md";

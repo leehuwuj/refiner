@@ -145,7 +145,7 @@ pub async fn refine(
 
 #[tauri::command]
 pub async fn get_double_click_enabled(app_handle: tauri::AppHandle) -> Result<bool, String> {
-    let store = app_handle.store("store.bin");
+    let store = app_handle.store("store.bin").map_err(|e| format!("Failed to get store: {}", e))?;
     match store.get("DOUBLE_CLICK_ENABLED") {
         Some(value) => {
             if let Some(enabled) = value.as_bool() {
@@ -160,7 +160,7 @@ pub async fn get_double_click_enabled(app_handle: tauri::AppHandle) -> Result<bo
 
 #[tauri::command]
 pub async fn save_settings(app_handle: tauri::AppHandle, api_key: Option<String>, double_click_enabled: bool) -> Result<(), String> {
-    let store = app_handle.store("store.bin");
+    let store = app_handle.store("store.bin").map_err(|e| format!("Failed to get store: {}", e))?;
     
     if let Some(key) = api_key {
         if !key.is_empty() {

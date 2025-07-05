@@ -1,7 +1,7 @@
 "use client";
 
 import { invoke } from "@tauri-apps/api/core";
-import { button, Select, SelectItem } from "@nextui-org/react";
+import { Select, SelectItem } from "@heroui/react";
 import { listen } from "@tauri-apps/api/event";
 import { TextInput } from "./sections/input";
 import { Result } from "./sections/result";
@@ -13,7 +13,7 @@ import { FaRegArrowAltCircleRight } from "react-icons/fa";
 import { IoStopCircleOutline } from "react-icons/io5";
 import { HiSwitchHorizontal } from "react-icons/hi";
 import { AppSettings } from "./types/settings";
-import { Tabs, Tab } from "@nextui-org/react";
+import { Tabs, Tab } from "@heroui/react";
 
 async function tauri_get_result(
   text: string,
@@ -137,7 +137,6 @@ const LanguageSelections = ({
           {targetLangues.map((lang) => (
             <SelectItem
               key={lang.value}
-              value={selectedLang?.targetLang.label}
               onClick={() => {
                 const newConfig = selectedLang;
                 if (newConfig) {

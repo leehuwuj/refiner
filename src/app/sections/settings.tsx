@@ -9,7 +9,7 @@ import {
   SelectItem,
   Input,
   Switch,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { useContext, useState } from "react";
 import { SettingContext } from "../providers/settings";
 import { providerMap } from "../types/settings";
@@ -91,10 +91,10 @@ const Settings = ({
                       }
                     }}
                   >
-                    <SelectItem value="Ollama" key="ollama">
+                    <SelectItem key="ollama">
                       Ollama
                     </SelectItem>
-                    <SelectItem value="OpenAI" key="openai">
+                    <SelectItem key="openai">
                       OpenAI
                     </SelectItem>
                   </Select>
@@ -110,7 +110,7 @@ const Settings = ({
                     }}
                   >
                     {settingContext.provider?.models?.map((model) => (
-                      <SelectItem value={model} key={model} id={model}>
+                      <SelectItem key={model} id={model}>
                         {model}
                       </SelectItem>
                     )) || []}
