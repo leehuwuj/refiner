@@ -156,6 +156,13 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .setup(move |app| {
+            // Hide the app icon from the dock
+            #[cfg(target_os = "macos")]
+            {
+                use tauri::ActivationPolicy;
+                app.set_activation_policy(ActivationPolicy::Accessory);
+            }
+            
             let app_handle = app.handle();
             
             // Listen for selection icon creation events from mouse service (thread safety)
@@ -316,12 +323,6 @@ pub fn run() {
             }
 
             setup_tray(app).unwrap();
-
-            // Hide the app icon from the dock
-            #[cfg(target_os = "macos")]
-            use tauri::ActivationPolicy;
-            #[cfg(target_os = "macos")]
-            app.set_activation_policy(ActivationPolicy::Accessory);
 
             // Register cleanup handler for proper window management
             let cleanup_handle = app_handle.clone();
