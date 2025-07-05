@@ -24,7 +24,6 @@ async function tauri_get_result(
   targetLanguage?: string,
 ): Promise<string> {
   const invoke_function = mode.toString().toLowerCase();
-  console.log("Invoke function:", invoke_function);
 
   try {
     const payload = {
@@ -35,13 +34,10 @@ async function tauri_get_result(
       targetLang: targetLanguage,
       prompt: null,
     };
-    console.log("Payload:", payload);
 
     const result = (await invoke(invoke_function, payload)) as string;
-    console.log("Result text:", result);
     return result;
   } catch (error) {
-    console.error("Failed to invoke LLM:", error);
     throw error;
   }
 }
@@ -201,7 +197,6 @@ export default function Home() {
   useEffect(() => {
     const handleShortcut = (event: any) => {
       let rawText = event.detail as string;
-      console.log("Change input text: " + rawText);
       changeInputText(rawText);
       setTriggerByShortcut(true);
     };
@@ -215,7 +210,6 @@ export default function Home() {
   useEffect(() => {
     const handleKeyDown = async (event: any) => {
       if (event.key === "Escape") {
-        console.log("Press escape key");
 
         await window.__TAURI__.window.getCurrentWindow().hide();
       };
