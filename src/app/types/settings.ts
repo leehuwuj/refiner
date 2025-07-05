@@ -9,7 +9,7 @@ export const providerMap: Record<string, Provider> = {
   openai: {
     name: "openai",
     label: "OpenAI",
-    models: ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo", "gpt-4"],
+    models: ["gpt-4o-mini", "gpt-4.1-nano", "gpt-4.1-mini"],
   },
 };
 
