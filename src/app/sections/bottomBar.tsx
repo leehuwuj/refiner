@@ -11,9 +11,9 @@ const BottomBar = () => {
   const settingContext = useContext(SettingContext);
 
   return (
-    <div className="fixed bottom-0 left-0 flex h-12 w-full items-center justify-between rounded-b-extra bg-gray-200 pl-3 pr-3">
+    <div className="fixed bottom-0 left-0 flex h-12 w-full items-center justify-between rounded-b-extra bg-default-100 pl-3 pr-3">
       <div className="flex space-x-3 w-full items-center align-middle justify-between">
-        <button onClick={() => setOpenSettings(true)} className="text-gray-500">
+        <button onClick={() => setOpenSettings(true)} className="text-default-500 hover:text-default-700">
           <CiSettings size={24} className="font-bold" />
         </button>
         <Select
@@ -35,9 +35,9 @@ const BottomBar = () => {
             placeholder="Writing style"
           >
           </input>
-          <FaWandMagicSparkles size={18} className="absolute top-1.5 left-2 text-gray-500" />
+          <FaWandMagicSparkles size={18} className="absolute top-1.5 left-2 text-default-500" />
         </div>
-        <p className="w-4/12 text-gray-500 text-xs text-right">
+        <p className="w-4/12 text-default-500 text-xs text-right">
           © 2024 Refiner App
         </p>
       </div>

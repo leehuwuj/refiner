@@ -12,6 +12,7 @@ import {
 import { useContext, useState } from "react";
 import { SettingContext } from "../providers/settings";
 import { providerMap, ShortcutWindowType } from "../types/settings";
+import ThemeToggle from "../components/theme-toggle";
 
 const Settings = ({
   isOpen,
@@ -140,6 +141,7 @@ const Settings = ({
                     </SelectItem>
                   </Select>
                 </div>
+                <ThemeToggle />
                 {saveMessage && (
                   <div className={`text-sm p-2 rounded ${saveMessage.includes("Failed")
                     ? "bg-red-100 text-red-700 border border-red-300"

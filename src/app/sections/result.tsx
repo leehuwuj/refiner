@@ -35,8 +35,8 @@ const TextCard = ({
   };
 
   return (
-    <Card className={`relative ${compact ? 'h-full' : 'h-56'} border-2 p-2`} shadow="none">
-      <CardBody className={compact ? 'h-full' : ''}>
+    <Card className={`relative ${compact ? 'h-full bg-transparent border-0' : 'h-56 border-2'} p-2`} shadow="none">
+      <CardBody className={compact ? 'h-full overflow-auto scrollbar-hide' : ''}>
         {content && content.length > 0 ? (
           <div className="absolute right-0 top-0 flex w-4 flex-col space-y-3">
             {!compact && (
@@ -45,18 +45,18 @@ const TextCard = ({
                   homeContext.changeResult({ [title.toLowerCase()]: "" })
                 }
               >
-                <MdClear className="text-gray-500" size={18} />
+                <MdClear className="text-default-500 hover:text-default-700" size={18} />
               </button>
             )}
             <Tooltip isOpen={copied} content="Copied!">
               <button onClick={() => handleCopy(content)}>
-                <LuClipboardCopy className="text-gray-500" size={18} />
+                <LuClipboardCopy className="text-default-500 hover:text-default-700" size={18} />
               </button>
             </Tooltip>
           </div>
         ) : (
           !compact && (
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-default-400">
               Click chose a mode above that you want me to do: <br />-{" "}
               <strong>Translated</strong> to translate the text. <br />-{" "}
               <strong>Correct</strong> to correct grammar. <br />-{" "}

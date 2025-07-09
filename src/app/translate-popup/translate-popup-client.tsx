@@ -124,15 +124,15 @@ export default function TranslatePopupClient() {
     }, []);
 
     return (
-        <div className="h-screen w-screen bg-transparent">
-            <div className="h-full w-full relative">
+        <div className="h-screen w-screen bg-transparent overflow-auto scrollbar-hide">
+            <div className="h-full w-full relative overflow-auto scrollbar-hide">
                 {/* Settings button */}
                 <button
                     onClick={openMainWindow}
-                    className="absolute bottom-2 right-2 z-10 p-1 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors duration-200 shadow-sm"
+                    className="absolute bottom-2 right-2 z-10 p-1 rounded-full bg-default-100 hover:bg-default-200 transition-colors duration-200 shadow-sm"
                     title="Open Settings"
                 >
-                    <CiSettings size={16} className="text-gray-600" />
+                    <CiSettings size={16} className="text-default-600" />
                 </button>
 
                 <Result
