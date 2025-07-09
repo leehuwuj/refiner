@@ -30,12 +30,21 @@ export default function SelectionIcon() {
         }
     };
 
+    const handleMouseDown = (e: React.MouseEvent) => {
+        // Prevent the mousedown from bubbling to avoid interfering with other interactions
+        e.stopPropagation();
+    };
+
     return (
         <div
-            className="w-6 h-6 rounded-full bg-blue-200 hover:bg-blue-300 cursor-pointer flex items-center justify-center shadow-lg"
+            className="w-6 h-6 rounded-full bg-blue-200 hover:bg-blue-300 cursor-pointer flex items-center justify-center shadow-lg transition-colors duration-200"
             onClick={handleClick}
+            onMouseDown={handleMouseDown}
+            role="button"
+            tabIndex={0}
+            aria-label="Translate selected text"
         >
-            <RiTranslate />
+            <RiTranslate className="text-blue-600" size={16} />
         </div>
     );
 } 

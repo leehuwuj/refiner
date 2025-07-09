@@ -10,6 +10,7 @@ pub enum MouseEvent {
     ButtonReleased(()),
     Move(()),
     TextSelected(String),
+    ClickOutsideIcon(i32, i32), // x, y coordinates of the click
 }
 
 pub struct MouseService {
@@ -18,6 +19,9 @@ pub struct MouseService {
     start_pos: Arc<std::sync::Mutex<(i32, i32)>>,
     last_click: Arc<std::sync::Mutex<Option<Instant>>>,
     last_text_selection: Arc<std::sync::Mutex<Option<Instant>>>,
+    // Track selection icon position and visibility
+    selection_icon_bounds: Arc<std::sync::Mutex<Option<(i32, i32, i32, i32)>>>, // x, y, width, height
+    selection_icon_visible: Arc<AtomicBool>,
 }
 
 impl MouseService {
@@ -28,6 +32,25 @@ impl MouseService {
             start_pos: Arc::new(std::sync::Mutex::new((0, 0))),
             last_click: Arc::new(std::sync::Mutex::new(None)),
             last_text_selection: Arc::new(std::sync::Mutex::new(None)),
+            selection_icon_bounds: Arc::new(std::sync::Mutex::new(None)),
+            selection_icon_visible: Arc::new(AtomicBool::new(false)),
+        }
+    }
+
+    pub fn set_selection_icon_bounds(&self, x: i32, y: i32, width: i32, height: i32) {
+        *self.selection_icon_bounds.lock().unwrap() = Some((x, y, width, height));
+    }
+
+    pub fn set_selection_icon_visible(&self, visible: bool) {
+        self.selection_icon_visible.store(visible, Ordering::SeqCst);
+    }
+
+    fn is_click_inside_icon(&self, click_x: i32, click_y: i32) -> bool {
+        if let Some((icon_x, icon_y, width, height)) = *self.selection_icon_bounds.lock().unwrap() {
+            click_x >= icon_x && click_x <= icon_x + width &&
+            click_y >= icon_y && click_y <= icon_y + height
+        } else {
+            false
         }
     }
     
@@ -55,6 +78,8 @@ impl MouseService {
         let start_pos = self.start_pos.clone();
         let last_click = self.last_click.clone();
         let last_text_selection = self.last_text_selection.clone();
+        let selection_icon_bounds = self.selection_icon_bounds.clone();
+        let selection_icon_visible = self.selection_icon_visible.clone();
         running.store(true, Ordering::SeqCst);
 
         thread::spawn(move || {
@@ -78,17 +103,18 @@ impl MouseService {
 
             while running.load(Ordering::SeqCst) {
                 let current_state = device_state.get_mouse();
-                
-                for (index, (&last_pressed, &current_pressed)) in last_state.button_pressed.iter().zip(current_state.button_pressed.iter()).enumerate() {
-                    if !last_pressed && current_pressed {
+
+                // Check for button presses
+                for (index, &is_pressed) in current_state.button_pressed.iter().enumerate() {
+                    if is_pressed && !last_state.button_pressed[index] {
                         if index == 1 { // Left button
                             is_mouse_down.store(true, Ordering::SeqCst);
                             *start_pos.lock().unwrap() = current_state.coords;
-
-                            // Check for double click - only if enabled
+                            
+                            // Check for double-click
                             let mut last_click_guard = last_click.lock().unwrap();
-                            if let Some(last_click_time) = *last_click_guard {
-                                if last_click_time.elapsed() < DOUBLE_CLICK_DURATION {
+                            if let Some(last_time) = *last_click_guard {
+                                if last_time.elapsed() < DOUBLE_CLICK_DURATION {
                                     // Check if double-click is enabled before processing
                                     let double_click_enabled = tauri::async_runtime::block_on(async {
                                         Self::is_double_click_enabled(&app_handle).await
@@ -111,9 +137,29 @@ impl MouseService {
                             } else {
                                 *last_click_guard = Some(Instant::now());
                             }
+
+                            // Check if this is a click outside the selection icon
+                            if selection_icon_visible.load(Ordering::SeqCst) {
+                                let (click_x, click_y) = current_state.coords;
+                                let is_inside = if let Some((icon_x, icon_y, width, height)) = *selection_icon_bounds.lock().unwrap() {
+                                    click_x >= icon_x && click_x <= icon_x + width &&
+                                    click_y >= icon_y && click_y <= icon_y + height
+                                } else {
+                                    false
+                                };
+
+                                if !is_inside {
+                                    callback(MouseEvent::ClickOutsideIcon(click_x, click_y));
+                                }
+                            }
                         }
                         callback(MouseEvent::ButtonPressed(()));
-                    } else if last_pressed && !current_pressed {
+                    }
+                }
+
+                // Check for button releases
+                for (index, &is_pressed) in current_state.button_pressed.iter().enumerate() {
+                    if !is_pressed && last_state.button_pressed[index] {
                         if index == 1 { // Left button
                             is_mouse_down.store(false, Ordering::SeqCst);
                             let end_pos = current_state.coords;
@@ -163,5 +209,9 @@ impl MouseService {
                 thread::sleep(Duration::from_millis(10));
             }
         });
+    }
+
+    pub fn stop(&self) {
+        self.running.store(false, Ordering::SeqCst);
     }
 } 
