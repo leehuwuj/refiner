@@ -129,10 +129,10 @@ export default function TranslatePopupClient() {
                 {/* Settings button */}
                 <button
                     onClick={openMainWindow}
-                    className="absolute bottom-2 right-2 z-10 p-1 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors duration-200 shadow-sm"
+                    className="absolute bottom-2 right-2 z-10 p-1 rounded-full bg-default-100 hover:bg-default-200 transition-colors duration-200 shadow-sm"
                     title="Open Settings"
                 >
-                    <CiSettings size={16} className="text-gray-600" />
+                    <CiSettings size={16} className="text-default-600" />
                 </button>
 
                 <Result

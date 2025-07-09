@@ -10,8 +10,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="rounded-extra">
-      <body className={inter.className}>
+    <html lang="en" className="rounded-extra" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
         <div>
           <Providers>{children}</Providers>
         </div>

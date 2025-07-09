@@ -120,7 +120,7 @@ const LanguageSelections = ({
 
   return (
     <div className="mb-3 flex flex-row gap-2 align-middle items-center">
-      <p className="w-3/6 text-gray-500 text-sm">
+      <p className="w-3/6 text-default-500 text-sm">
         Output language:
       </p>
       <div className="flex w-3/6 items-center relative">
@@ -271,7 +271,7 @@ export default function Home() {
         <div className="flex w-8 flex-col items-center justify-center pt-10 pr-2">
           {homeContext.translating ? (
             <IoStopCircleOutline
-              className="icon text-gray-500"
+              className="icon text-default-500 hover:text-default-700 cursor-pointer"
               size={24}
               onClick={() => {
                 homeContext.setTranslating(false);
@@ -280,7 +280,7 @@ export default function Home() {
           ) : (
             <button id="submit-trigger">
               <FaRegArrowAltCircleRight
-                className="icon text-gray-500"
+                className="icon text-default-500 hover:text-default-700 cursor-pointer"
                 size={24}
                 onClick={() => triggerTranslation(homeContext, appSettings)}
               />

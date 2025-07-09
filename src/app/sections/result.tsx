@@ -45,18 +45,18 @@ const TextCard = ({
                   homeContext.changeResult({ [title.toLowerCase()]: "" })
                 }
               >
-                <MdClear className="text-gray-500" size={18} />
+                <MdClear className="text-default-500 hover:text-default-700" size={18} />
               </button>
             )}
             <Tooltip isOpen={copied} content="Copied!">
               <button onClick={() => handleCopy(content)}>
-                <LuClipboardCopy className="text-gray-500" size={18} />
+                <LuClipboardCopy className="text-default-500 hover:text-default-700" size={18} />
               </button>
             </Tooltip>
           </div>
         ) : (
           !compact && (
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-default-400">
               Click chose a mode above that you want me to do: <br />-{" "}
               <strong>Translated</strong> to translate the text. <br />-{" "}
               <strong>Correct</strong> to correct grammar. <br />-{" "}

@@ -22,6 +22,8 @@ export interface Prompts {
 
 export type ShortcutWindowType = "popup" | "main";
 
+export type ThemeType = "light" | "dark" | "system";
+
 export interface AppSettings {
   provider?: Provider;
   model?: string;
