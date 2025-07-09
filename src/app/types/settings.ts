@@ -5,7 +5,7 @@ export interface Provider {
 }
 
 export const providerMap: Record<string, Provider> = {
-  ollama: { name: "ollama", label: "Ollama", models: ["phi3", "llama3"] },
+  ollama: { name: "ollama", label: "Ollama", models: ["gemma3", "phi3", "llama3"] },
   openai: {
     name: "openai",
     label: "OpenAI",
