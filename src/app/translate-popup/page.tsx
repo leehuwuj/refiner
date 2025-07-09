@@ -3,7 +3,6 @@ import { Providers } from '../provider';
 
 const TranslatePopupClient = dynamic(
     () => import('./translate-popup-client'),
-    { ssr: false }
 );
 
 export default function TranslatePopup() {
