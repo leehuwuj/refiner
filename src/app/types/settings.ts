@@ -9,7 +9,7 @@ export const providerMap: Record<string, Provider> = {
   openai: {
     name: "openai",
     label: "OpenAI",
-    models: ["gpt-4o-mini", "gpt-4.1-nano", "gpt-4.1-mini"],
+    models: ["gpt-4.1-nano", "gpt-4.1-mini", "gpt-4o-mini"],
   },
 };
 
@@ -20,15 +20,17 @@ export interface Prompts {
   value?: string;
 }
 
+export type ShortcutWindowType = "popup" | "main";
+
 export interface AppSettings {
   provider?: Provider;
   model?: string;
   prompt?: Prompts;
-  doubleClickEnabled?: boolean;
+  shortcutWindowType?: ShortcutWindowType;
 
   setProvider: (provider: Provider) => void;
   setModel: (model: string) => void;
   setPrompt: (prompt: Prompts) => void;
-  setDoubleClickEnabled: (enabled: boolean) => void;
+  setShortcutWindowType: (type: ShortcutWindowType) => void;
   saveSettings: (apiKey?: string) => Promise<boolean>;
 }

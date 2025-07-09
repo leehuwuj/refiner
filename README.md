@@ -9,7 +9,7 @@ Features:
  - [x] Providers: OpenAI, Ollama, Claude (WIP).
  - [x] Hot key: Quickly translate a selected text via shortcut key (Currently is: `Cmd + E`)
  - [] Linux support.
- - [] Windows support.
+ - [x] Windows support.
  - [WIP] Custom prompt: Adjust the translation or text refining in different style.
 
 ***Note***: This app is still in development

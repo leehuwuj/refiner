@@ -45,8 +45,7 @@ const BottomBar = () => {
         openSettings && (
           <Settings
             isOpen={openSettings}
-            onOpen={() => setOpenSettings(true)}
-            onOpenChange={() => setOpenSettings(false)}
+            onOpenChange={(isOpen) => setOpenSettings(isOpen)}
           />
         )
       }

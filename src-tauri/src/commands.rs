@@ -144,22 +144,22 @@ pub async fn refine(
 }
 
 #[tauri::command]
-pub async fn get_double_click_enabled(app_handle: tauri::AppHandle) -> Result<bool, String> {
+pub async fn get_shortcut_window_type(app_handle: tauri::AppHandle) -> Result<String, String> {
     let store = app_handle.store("store.bin").map_err(|e| format!("Failed to get store: {}", e))?;
-    match store.get("DOUBLE_CLICK_ENABLED") {
+    match store.get("SHORTCUT_WINDOW_TYPE") {
         Some(value) => {
-            if let Some(enabled) = value.as_bool() {
-                Ok(enabled)
+            if let Some(window_type) = value.as_str() {
+                Ok(window_type.to_string())
             } else {
-                Ok(false) // Default to false if value is not a boolean
+                Ok("main".to_string()) // Default to main if value is not a string
             }
         },
-        None => Ok(false), // Default to false if key doesn't exist
+        None => Ok("main".to_string()), // Default to main if key doesn't exist
     }
 }
 
 #[tauri::command]
-pub async fn save_settings(app_handle: tauri::AppHandle, api_key: Option<String>, double_click_enabled: bool) -> Result<(), String> {
+pub async fn save_settings(app_handle: tauri::AppHandle, api_key: Option<String>, shortcut_window_type: Option<String>) -> Result<(), String> {
     let store = app_handle.store("store.bin").map_err(|e| format!("Failed to get store: {}", e))?;
     
     if let Some(key) = api_key {
@@ -168,7 +168,9 @@ pub async fn save_settings(app_handle: tauri::AppHandle, api_key: Option<String>
         }
     }
     
-    store.set("DOUBLE_CLICK_ENABLED", double_click_enabled);
+    if let Some(window_type) = shortcut_window_type {
+        store.set("SHORTCUT_WINDOW_TYPE", window_type);
+    }
     
     store.save().map_err(|e| format!("Failed to save store: {}", e))?;
     

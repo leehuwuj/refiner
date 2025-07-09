@@ -1,5 +1,5 @@
 import React from "react";
-import { AppSettings, Prompts, Provider, providerMap } from "../types/settings";
+import { AppSettings, Prompts, Provider, providerMap, ShortcutWindowType } from "../types/settings";
 import { load } from "@tauri-apps/plugin-store";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -13,16 +13,16 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
     provider.models?.[0] || '',
   );
   const [prompt, setPrompt] = React.useState<Prompts>();
-  const [doubleClickEnabled, setDoubleClickEnabled] = React.useState<boolean>(false);
+  const [shortcutWindowType, setShortcutWindowType] = React.useState<ShortcutWindowType>("main");
 
   // Load settings from storage on component mount
   React.useEffect(() => {
     const loadSettings = async () => {
       try {
         const store = await load("store.bin");
-        const savedDoubleClickEnabled = await store.get("DOUBLE_CLICK_ENABLED");
-        if (savedDoubleClickEnabled !== null) {
-          setDoubleClickEnabled(savedDoubleClickEnabled as boolean);
+        const savedShortcutWindowType = await store.get("SHORTCUT_WINDOW_TYPE");
+        if (savedShortcutWindowType !== null) {
+          setShortcutWindowType(savedShortcutWindowType as ShortcutWindowType);
         }
       } catch (error) {
         console.log("Failed to load settings:", error);
@@ -36,7 +36,7 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await invoke("save_settings", {
         apiKey: apiKey || null,
-        doubleClickEnabled: doubleClickEnabled
+        shortcutWindowType: shortcutWindowType
       });
 
       return true;
@@ -48,7 +48,7 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SettingContext.Provider
-      value={{ provider, model, prompt, doubleClickEnabled, setProvider, setModel, setPrompt, setDoubleClickEnabled, saveSettings }}
+      value={{ provider, model, prompt, shortcutWindowType, setProvider, setModel, setPrompt, setShortcutWindowType, saveSettings }}
     >
       {children}
     </SettingContext.Provider>

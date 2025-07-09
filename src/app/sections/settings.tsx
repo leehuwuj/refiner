@@ -8,20 +8,17 @@ import {
   Select,
   SelectItem,
   Input,
-  Switch,
 } from "@heroui/react";
 import { useContext, useState } from "react";
 import { SettingContext } from "../providers/settings";
-import { providerMap } from "../types/settings";
+import { providerMap, ShortcutWindowType } from "../types/settings";
 
 const Settings = ({
   isOpen,
-  onOpen,
   onOpenChange,
 }: {
   isOpen: boolean;
-  onOpen: () => void;
-  onOpenChange: () => void;
+  onOpenChange: (isOpen: boolean) => void;
 }) => {
   const settingContext = useContext(SettingContext);
   const [isSaving, setIsSaving] = useState(false);
@@ -122,20 +119,26 @@ const Settings = ({
                   label="API Key"
                   variant="bordered"
                 />
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-2 justify-between">
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium">Mouse Text Selection</span>
-                    <span className="text-xs text-gray-500">
-                      Enable double-click and drag selection to translate text
-                    </span>
+                    <span className="text-sm font-medium">Shortcut Window Type</span>
                   </div>
-                  <Switch
-                    isSelected={settingContext.doubleClickEnabled}
-                    onValueChange={(value) => {
-                      settingContext.setDoubleClickEnabled(value);
-                    }}
+                  <Select
+                    value={settingContext.shortcutWindowType}
+                    className="w-full"
+                    placeholder="Select"
                     size="sm"
-                  />
+                    onChange={(e) => {
+                      settingContext.setShortcutWindowType(e.target.value as ShortcutWindowType);
+                    }}
+                  >
+                    <SelectItem key="popup">
+                      Small Popup
+                    </SelectItem>
+                    <SelectItem key="main">
+                      Main Window
+                    </SelectItem>
+                  </Select>
                 </div>
                 {saveMessage && (
                   <div className={`text-sm p-2 rounded ${saveMessage.includes("Failed")
