@@ -35,8 +35,8 @@ const TextCard = ({
   };
 
   return (
-    <Card className={`relative ${compact ? 'h-full' : 'h-56'} border-2 p-2`} shadow="none">
-      <CardBody className={compact ? 'h-full' : ''}>
+    <Card className={`relative ${compact ? 'h-full bg-transparent border-0' : 'h-56 border-2'} p-2`} shadow="none">
+      <CardBody className={compact ? 'h-full overflow-auto scrollbar-hide' : ''}>
         {content && content.length > 0 ? (
           <div className="absolute right-0 top-0 flex w-4 flex-col space-y-3">
             {!compact && (

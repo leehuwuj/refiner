@@ -124,8 +124,8 @@ export default function TranslatePopupClient() {
     }, []);
 
     return (
-        <div className="h-screen w-screen bg-transparent">
-            <div className="h-full w-full relative">
+        <div className="h-screen w-screen bg-transparent overflow-auto scrollbar-hide">
+            <div className="h-full w-full relative overflow-auto scrollbar-hide">
                 {/* Settings button */}
                 <button
                     onClick={openMainWindow}

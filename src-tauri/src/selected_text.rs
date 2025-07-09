@@ -69,10 +69,6 @@ use winapi::um::winuser::{SendInput, INPUT, INPUT_KEYBOARD, KEYEVENTF_KEYUP, VK_
 use std::mem;
 #[cfg(target_os = "windows")]
 pub async unsafe fn get_selected_text(app: &AppHandle) -> Result<String, String> {
-    // Store current clipboard content to restore later
-    let original_clipboard = app.clipboard().read_text().unwrap_or_default();
-    
-    // Wait a bit to ensure window focus is stable
     thread::sleep(Duration::from_millis(150));
     
     // Try to copy selected text
@@ -85,11 +81,9 @@ pub async unsafe fn get_selected_text(app: &AppHandle) -> Result<String, String>
             match app.clipboard().read_text() {
                 Ok(selected_text) => {
                     // Check if clipboard actually changed
-                    if selected_text != original_clipboard && !selected_text.is_empty() {
-                        println!("Successfully retrieved selected text: {}", selected_text);
+                    if !selected_text.is_empty() {
                         Ok(format!("{:?}", selected_text))
                     } else {
-                        println!("No text selection detected or clipboard unchanged");
                         Err("No text selection detected".to_string())
                     }
                 },
@@ -153,7 +147,6 @@ fn call_ctrl_c() -> Result<(), String> {
             return Err("Failed to send Ctrl key release".to_string());
         }
 
-        println!("Successfully sent Ctrl+C key sequence");
         Ok(())
     }
 }

@@ -20,6 +20,19 @@ const config: Config = {
       },
     },
   },
-  plugins: [heroui()],
+  plugins: [
+    heroui(),
+    function ({ addUtilities }: any) {
+      addUtilities({
+        '.scrollbar-hide': {
+          '-ms-overflow-style': 'none',
+          'scrollbar-width': 'none',
+          '&::-webkit-scrollbar': {
+            display: 'none',
+          },
+        },
+      });
+    },
+  ],
 };
 export default config;
