@@ -34,7 +34,7 @@ export const ThemeToggle: React.FC = () => {
                 className="max-w-xs"
             >
                 {themeOptions.map((option) => (
-                    <SelectItem key={option.key} value={option.key}>
+                    <SelectItem key={option.key}>
                         {option.label}
                     </SelectItem>
                 ))}
