@@ -124,8 +124,8 @@ export default function TranslatePopupClient() {
                     text: rawText,
                     provider: currentAppSettings.provider?.name,
                     model: currentAppSettings.model,
-                    sourceLanguage: currentHomeContext.languageConfig.sourceLang.code ?? "en",
-                    targetLanguage: currentHomeContext.languageConfig.targetLang.code ?? "vi",
+                    sourceLanguage: "<please detect source language (supported: English, Vietnamese)>",
+                    targetLanguage: "<opposite with source language (supported: English, Vietnamese)>",
                 });
 
                 currentHomeContext.changeResult({
