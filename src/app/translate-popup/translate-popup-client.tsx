@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useContext } from 'react';
+import { useEffect, useContext, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
@@ -26,33 +26,25 @@ async function tauri_get_result(options: {
             prompt: null,
         };
 
-        console.log(payload);
         const result = (await invoke('translate', payload)) as string;
         return result;
     } catch (error) {
-        console.error("Failed to invoke LLM:", error);
         throw error;
     }
 }
 
 async function startSerialEventListener() {
-    await listen("shortcut-quickTranslate", (event) => {
+    await listen("shortcut-popup-translate", (event) => {
         let rawText = event.payload as string;
-        // Attempt to clean and extract the text
         if (typeof rawText === "string") {
-            // Check if the text contains the expected prefix
             if (rawText.includes("text:")) {
                 rawText = rawText.split("text:")[1].trim();
             }
-            // Further clean the text if necessary
-            rawText = rawText.replace(/^"|"$/g, '').trim(); // Remove surrounding quotes if present
+            rawText = rawText.replace(/^"|"$/g, '').trim();
 
-            // Dispatch the cleaned text as an event
             window.dispatchEvent(
-                new CustomEvent("shortcut-quickTranslate", { detail: rawText }),
+                new CustomEvent("shortcut-popup-translate", { detail: rawText }),
             );
-        } else {
-            console.error("Invalid payload structure:", event.payload);
         }
     });
 }
@@ -64,64 +56,97 @@ async function openMainWindow() {
             await mainWindow.show();
             await mainWindow.setFocus();
         } else {
-            console.error('Main window not found');
         }
     } catch (error) {
-        console.error('Failed to open main window:', error);
     }
 }
 
 export default function TranslatePopupClient() {
     const homeContext = useContext(TranslateContext);
     const appSettings = useContext(SettingContext);
+    const isMounted = useRef(false);
+
+    // Refs to store latest values
+    const homeContextRef = useRef(homeContext);
+    const appSettingsRef = useRef(appSettings);
+
+    // Update refs when values change
+    useEffect(() => {
+        homeContextRef.current = homeContext;
+    }, [homeContext]);
 
     useEffect(() => {
-        startSerialEventListener();
-    }, []);
+        appSettingsRef.current = appSettings;
+    }, [appSettings]);
 
     useEffect(() => {
-        const handleKeyDown = async (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                try {
-                    const window = await WebviewWindow.getByLabel('translate-popup');
-                    if (window) {
-                        await window.hide();
+        if (isMounted.current) return;
+        isMounted.current = true;
+
+        let tauriUnlisten: (() => void) | null = null;
+        let windowHandlerRef: ((event: any) => void) | null = null;
+        let isHandlerActive = true;
+
+        const setupEventListeners = async () => {
+            // Setup Tauri event listener
+            tauriUnlisten = await listen("shortcut-popup-translate", (event) => {
+                if (!isHandlerActive) return;
+
+                let rawText = event.payload as string;
+                if (typeof rawText === "string") {
+                    if (rawText.includes("text:")) {
+                        rawText = rawText.split("text:")[1].trim();
                     }
-                } catch (error) {
-                    console.error('Failed to hide window:', error);
+                    rawText = rawText.replace(/^"|"$/g, '').trim();
+
+                    window.dispatchEvent(
+                        new CustomEvent("shortcut-popup-translate", { detail: rawText }),
+                    );
+                } else {
                 }
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, []);
-
-    useEffect(() => {
-        const handleShortcut = async (event: any) => {
-            let rawText = event.detail as string;
-            homeContext.changeResult({
-                [homeContext.currentMode.toLocaleLowerCase()]: "...",
             });
-            // Trigger translation
-            const res = await tauri_get_result(
-                {
+
+            // Setup window event listener
+            const handleShortcut = async (event: any) => {
+                if (!isHandlerActive) return;
+
+                let rawText = event.detail as string;
+
+                // Use current values from refs
+                const currentHomeContext = homeContextRef.current;
+                const currentAppSettings = appSettingsRef.current;
+
+                currentHomeContext.changeResult({
+                    [currentHomeContext.currentMode.toLocaleLowerCase()]: "...",
+                });
+
+                const res = await tauri_get_result({
                     text: rawText,
-                    provider: appSettings.provider?.name, // Optional - will use default if not provided
-                    model: appSettings.model, // Optional - will use default if not provided
-                    sourceLanguage: homeContext.languageConfig.sourceLang.code ?? "en",
-                    targetLanguage: homeContext.languageConfig.targetLang.code ?? "vi",
-                }
-            );
-            homeContext.changeResult({
-                [homeContext.currentMode.toLocaleLowerCase()]: res,
-            });
+                    provider: currentAppSettings.provider?.name,
+                    model: currentAppSettings.model,
+                    sourceLanguage: currentHomeContext.languageConfig.sourceLang.code ?? "en",
+                    targetLanguage: currentHomeContext.languageConfig.targetLang.code ?? "vi",
+                });
+
+                currentHomeContext.changeResult({
+                    [currentHomeContext.currentMode.toLocaleLowerCase()]: res,
+                });
+            };
+
+            windowHandlerRef = handleShortcut;
+            window.addEventListener("shortcut-popup-translate", handleShortcut);
         };
-        window.addEventListener("shortcut-quickTranslate", handleShortcut);
+
+        setupEventListeners();
+
         return () => {
-            window.removeEventListener("shortcut-quickTranslate", handleShortcut);
+            isHandlerActive = false;
+            if (windowHandlerRef) {
+                window.removeEventListener("shortcut-popup-translate", windowHandlerRef);
+            }
+            if (tauriUnlisten) {
+                tauriUnlisten();
+            }
         };
     }, []);
 

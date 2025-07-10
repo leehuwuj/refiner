@@ -41,9 +41,14 @@ async fn handle_shortcut_common(app_handle: tauri::AppHandle) {
                 },  
                 _ => Err("Invalid window type".to_string()),
             };
-            
+            let event_name = match window_type.as_str() {
+                "popup" => "shortcut-popup-translate",
+                "main" => "shortcut-main-translate",
+                _ => "shortcut-main-translate",
+            };
+
             if let Ok(window) = window_result {
-                let _ = window.emit("shortcut-quickTranslate", format!("text:{}", text));
+                let _ = window.emit(event_name, format!("text:{}", text));
                 let _ = window.show();
                 let _ = window.set_focus();
             }

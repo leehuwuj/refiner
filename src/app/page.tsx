@@ -73,7 +73,7 @@ const triggerTranslation = (
 };
 
 async function startSerialEventListener() {
-  await listen("shortcut-quickTranslate", (event) => {
+  await listen("shortcut-main-translate", (event) => {
     let rawText = event.payload as string;
 
     // Attempt to clean and extract the text
@@ -88,7 +88,7 @@ async function startSerialEventListener() {
 
       // Dispatch the cleaned text as an event
       window.dispatchEvent(
-        new CustomEvent("shortcut-quickTranslate", { detail: rawText }),
+        new CustomEvent("shortcut-main-translate", { detail: rawText }),
       );
     } else {
       console.error("Invalid payload structure:", event.payload);
@@ -200,9 +200,9 @@ export default function Home() {
       setTriggerByShortcut(true);
     };
 
-    window.addEventListener("shortcut-quickTranslate", handleShortcut);
+    window.addEventListener("shortcut-main-translate", handleShortcut);
     return () => {
-      window.removeEventListener("shortcut-quickTranslate", handleShortcut);
+      window.removeEventListener("shortcut-main-translate", handleShortcut);
     };
   }, []);
 
