@@ -35,21 +35,43 @@ const DEFAULT_REFINE_PROMPT: &str = "
 "
 ;
 
+// Helper function to get default settings from store
+async fn get_default_settings(app_handle: &tauri::AppHandle) -> Result<(String, String), String> {
+    let store = app_handle.store("store.bin").map_err(|e| format!("Failed to get store: {}", e))?;
+    
+    let default_provider = store.get("PROVIDER")
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_else(|| "ollama".to_string());
+    
+    let default_model = store.get("MODEL")
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_else(|| "gemma3".to_string());
+    
+    Ok((default_provider, default_model))
+}
+
 #[tauri::command]
 pub async fn translate(
     app_handle: tauri::AppHandle,
-    provider: &str,
-    model: &str,
+    provider: Option<&str>,
+    model: Option<&str>,
     text: &str,
     source_lang: Option<&str>,
     target_lang: Option<&str>,
     prompt: Option<&str>,
 ) -> Result<String, String> {
+    // Get default settings if not provided
+    let (default_provider, default_model) = get_default_settings(&app_handle).await?;
+    
+    let provider = provider.filter(|p| !p.is_empty()).unwrap_or(&default_provider);
+    let model = model.filter(|m| !m.is_empty()).unwrap_or(&default_model);
+    
     // Format the prompt with the original and target language
     let prompt = prompt.unwrap_or(DEFAULT_TRANSLATION_PROMPT);
     let new_prompt = prompt
         .replace("{original_lang}", source_lang.unwrap_or("English"))
         .replace("{target_lang}", target_lang.unwrap_or("English"));
+    
     // Init provider based on the provider name
     let provider_obj = get_provider(app_handle, provider, model);
 
@@ -75,13 +97,19 @@ pub async fn translate(
 #[tauri::command]
 pub async fn correct(
     app_handle: tauri::AppHandle,
-    provider: &str,
-    model: &str,
+    provider: Option<&str>,
+    model: Option<&str>,
     text: &str,
     prompt: Option<&str>,
     source_lang: Option<&str>,
     target_lang: Option<&str>,
 ) -> Result<String, String> {
+    // Get default settings if not provided
+    let (default_provider, default_model) = get_default_settings(&app_handle).await?;
+    
+    let provider = provider.filter(|p| !p.is_empty()).unwrap_or(&default_provider);
+    let model = model.filter(|m| !m.is_empty()).unwrap_or(&default_model);
+    
     let prompt = prompt.unwrap_or(DEFAULT_CORRECTION_PROMPT);
     // Format the prompt with the original and target language
     let new_prompt = prompt
@@ -110,13 +138,19 @@ pub async fn correct(
 #[tauri::command]
 pub async fn refine(
     app_handle: tauri::AppHandle,
-    provider: &str,
-    model: &str,
+    provider: Option<&str>,
+    model: Option<&str>,
     text: &str,
     prompt: Option<&str>,
     source_lang: Option<&str>,
     target_lang: Option<&str>,
 ) -> Result<String, String> {
+    // Get default settings if not provided
+    let (default_provider, default_model) = get_default_settings(&app_handle).await?;
+    
+    let provider = provider.filter(|p| !p.is_empty()).unwrap_or(&default_provider);
+    let model = model.filter(|m| !m.is_empty()).unwrap_or(&default_model);
+    
     let prompt = prompt.unwrap_or(DEFAULT_REFINE_PROMPT);
     // Format the prompt with the original and target language
     let new_prompt = prompt
@@ -159,7 +193,14 @@ pub async fn get_shortcut_window_type(app_handle: tauri::AppHandle) -> Result<St
 }
 
 #[tauri::command]
-pub async fn save_settings(app_handle: tauri::AppHandle, api_key: Option<String>, shortcut_window_type: Option<String>) -> Result<(), String> {
+pub async fn save_settings(
+    app_handle: tauri::AppHandle, 
+    api_key: Option<String>, 
+    shortcut_window_type: Option<String>,
+    provider: Option<String>,
+    model: Option<String>,
+    prompt: Option<String>
+) -> Result<(), String> {
     let store = app_handle.store("store.bin").map_err(|e| format!("Failed to get store: {}", e))?;
     
     if let Some(key) = api_key {
@@ -169,7 +210,27 @@ pub async fn save_settings(app_handle: tauri::AppHandle, api_key: Option<String>
     }
     
     if let Some(window_type) = shortcut_window_type {
-        store.set("SHORTCUT_WINDOW_TYPE", window_type);
+        if !window_type.is_empty() {
+            store.set("SHORTCUT_WINDOW_TYPE", window_type);
+        }
+    }
+    
+    if let Some(provider_name) = provider {
+        if !provider_name.is_empty() {
+            store.set("PROVIDER", provider_name);
+        }
+    }
+    
+    if let Some(model_name) = model {
+        if !model_name.is_empty() {
+            store.set("MODEL", model_name);
+        }
+    }
+    
+    if let Some(prompt_data) = prompt {
+        if !prompt_data.is_empty() && prompt_data != "undefined" && prompt_data != "null" {
+            store.set("PROMPT", prompt_data);
+        }
     }
     
     store.save().map_err(|e| format!("Failed to save store: {}", e))?;

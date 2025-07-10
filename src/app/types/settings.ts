@@ -29,6 +29,7 @@ export interface AppSettings {
   model?: string;
   prompt?: Prompts;
   shortcutWindowType?: ShortcutWindowType;
+  apiKey?: string;
 
   setProvider: (provider: Provider) => void;
   setModel: (model: string) => void;

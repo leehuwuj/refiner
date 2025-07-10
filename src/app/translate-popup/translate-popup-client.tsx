@@ -11,20 +11,22 @@ import { SettingContext } from '../providers/settings';
 
 async function tauri_get_result(options: {
     text: string,
-    provider: string,
-    model: string,
+    provider?: string,
+    model?: string,
     sourceLanguage?: string,
     targetLanguage?: string,
 }): Promise<string> {
     try {
         const payload = {
-            provider: options.provider,
-            model: options.model,
+            provider: options.provider || null,
+            model: options.model || null,
             text: options.text,
             sourceLang: options.sourceLanguage,
             targetLang: options.targetLanguage,
             prompt: null,
         };
+
+        console.log(payload);
         const result = (await invoke('translate', payload)) as string;
         return result;
     } catch (error) {
@@ -107,8 +109,8 @@ export default function TranslatePopupClient() {
             const res = await tauri_get_result(
                 {
                     text: rawText,
-                    provider: appSettings.provider?.name ?? "ollama",
-                    model: appSettings.model ?? "llama3",
+                    provider: appSettings.provider?.name, // Optional - will use default if not provided
+                    model: appSettings.model, // Optional - will use default if not provided
                     sourceLanguage: homeContext.languageConfig.sourceLang.code ?? "en",
                     targetLanguage: homeContext.languageConfig.targetLang.code ?? "vi",
                 }

@@ -9,7 +9,7 @@ import {
   SelectItem,
   Input,
 } from "@heroui/react";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { SettingContext } from "../providers/settings";
 import { providerMap, ShortcutWindowType } from "../types/settings";
 import ThemeToggle from "../components/theme-toggle";
@@ -24,18 +24,22 @@ const Settings = ({
   const settingContext = useContext(SettingContext);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [localApiKey, setLocalApiKey] = useState<string>("");
+
+  // Update local API key when context changes
+  useEffect(() => {
+    if (settingContext.apiKey) {
+      setLocalApiKey(settingContext.apiKey);
+    }
+  }, [settingContext.apiKey]);
 
   const handleSave = async (onClose: () => void) => {
     setIsSaving(true);
     setSaveMessage(null);
 
     try {
-      // Get the API key
-      const inputtedApiKey = document.getElementById("apiKey") as HTMLInputElement;
-      const apiKey = inputtedApiKey.value.trim();
-
       // Use the context's save function
-      const success = await settingContext.saveSettings(apiKey || undefined);
+      const success = await settingContext.saveSettings(localApiKey || undefined);
 
       if (success) {
         setSaveMessage("Settings saved successfully!");
@@ -76,7 +80,8 @@ const Settings = ({
                   <Select
                     autoFocus
                     label="Provider"
-                    placeholder={settingContext.provider?.label ?? "Ollama"}
+                    selectedKeys={settingContext.provider ? [settingContext.provider.name] : []}
+                    placeholder={settingContext.provider?.label ?? "Select Provider"}
                     variant="bordered"
                     className="w-1/2"
                     onChange={(e) => {
@@ -101,8 +106,8 @@ const Settings = ({
                     variant="bordered"
                     className="w-1/2"
                     aria-label="Select a model"
-                    value={settingContext.model}
-                    placeholder={settingContext.model}
+                    selectedKeys={settingContext.model ? [settingContext.model] : []}
+                    placeholder={settingContext.model || "Select Model"}
                     onChange={(e) => {
                       settingContext.setModel(e.target.value);
                     }}
@@ -116,16 +121,18 @@ const Settings = ({
                 </div>
                 <Input
                   id="apiKey"
-                  type="secret"
+                  type="password"
                   label="API Key"
                   variant="bordered"
+                  value={localApiKey}
+                  onChange={(e) => setLocalApiKey(e.target.value)}
                 />
                 <div className="flex flex-col gap-2 justify-between">
                   <div className="flex flex-col">
                     <span className="text-sm font-medium">Shortcut Window Type</span>
                   </div>
                   <Select
-                    value={settingContext.shortcutWindowType}
+                    selectedKeys={settingContext.shortcutWindowType ? [settingContext.shortcutWindowType] : []}
                     className="w-full"
                     placeholder="Select"
                     size="sm"
