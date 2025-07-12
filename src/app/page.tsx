@@ -17,9 +17,9 @@ import { Tabs, Tab } from "@heroui/react";
 
 async function tauri_get_result(
   text: string,
-  provider: string,
-  model: string,
   mode: Mode,
+  provider?: string,
+  model?: string,
   sourceLanguage?: string,
   targetLanguage?: string,
 ): Promise<string> {
@@ -27,8 +27,8 @@ async function tauri_get_result(
 
   try {
     const payload = {
-      provider: provider,
-      model: model,
+      provider: provider || null,
+      model: model || null,
       text: text,
       sourceLang: sourceLanguage,
       targetLang: targetLanguage,
@@ -52,9 +52,9 @@ const triggerTranslation = (
   // const el = window.document.getElementById("input-text");
   tauri_get_result(
     homeContext.inputText ?? "",
-    settingContext.provider?.name ?? "ollama",
-    settingContext.model ?? "llama3",
     homeContext.currentMode,
+    settingContext.provider?.name,
+    settingContext.model,
     homeContext.languageConfig.sourceLang.label ?? "English",
     homeContext.languageConfig.targetLang.label ?? "Tiếng Việt",
   )
@@ -73,7 +73,7 @@ const triggerTranslation = (
 };
 
 async function startSerialEventListener() {
-  await listen("shortcut-quickTranslate", (event) => {
+  await listen("shortcut-main-translate", (event) => {
     let rawText = event.payload as string;
 
     // Attempt to clean and extract the text
@@ -88,7 +88,7 @@ async function startSerialEventListener() {
 
       // Dispatch the cleaned text as an event
       window.dispatchEvent(
-        new CustomEvent("shortcut-quickTranslate", { detail: rawText }),
+        new CustomEvent("shortcut-main-translate", { detail: rawText }),
       );
     } else {
       console.error("Invalid payload structure:", event.payload);
@@ -200,9 +200,9 @@ export default function Home() {
       setTriggerByShortcut(true);
     };
 
-    window.addEventListener("shortcut-quickTranslate", handleShortcut);
+    window.addEventListener("shortcut-main-translate", handleShortcut);
     return () => {
-      window.removeEventListener("shortcut-quickTranslate", handleShortcut);
+      window.removeEventListener("shortcut-main-translate", handleShortcut);
     };
   }, []);
 
