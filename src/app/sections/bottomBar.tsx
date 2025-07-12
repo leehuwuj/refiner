@@ -38,7 +38,7 @@ const BottomBar = () => {
           <FaWandMagicSparkles size={18} className="absolute top-1.5 left-2 text-default-500" />
         </div>
         <p className="w-4/12 text-default-500 text-xs text-right">
-          © 2024 Refiner App
+          © 2025 Refiner App
         </p>
       </div>
       {
