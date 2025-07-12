@@ -1,7 +1,16 @@
 ## Introduction
-<img src="src-tauri/icons/128x128.png" width=128 height=128>
+<table>
+  <tr>
+    <td style="vertical-align: middle; padding-right: 16px;">
+      <img src="src-tauri/icons/64x64.png" width="64" height="64" alt="Refiner Icon">
+    </td>
+    <td style="vertical-align: middle;">
+      <b>Refiner</b>: A simple AI-powered application for translating or refining text.
+    </td>
+  </tr>
+</table>
 
-***Refiner***: A simple AI-powered application for translating or refining text.
+***Note***: This app is still in development
 
 Features:
  - [x] Translation: Translate inputted text to a target language.
@@ -12,7 +21,7 @@ Features:
  - [x] Windows support.
  - [WIP] Custom prompt: Adjust the translation or text refining in different style.
 
-***Note***: This app is still in development
+
 
 ## Screenshots:
 - Home:
