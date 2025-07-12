@@ -14,7 +14,12 @@ export const providerMap: Record<string, Provider> = {
   gemini: {
     name: "gemini",
     label: "Gemini",
-    models: ["gemini-2.0-flash-lite", "gemini-2.5-flash"],
+    models: ["gemini-pro", "gemini-1.5-flash-latest"],
+  },
+  groq: {
+    name: "groq",
+    label: "Groq",
+    models: ["llama-3.1-8b-instant", "gemma2-9b-it"],
   },
 };
 

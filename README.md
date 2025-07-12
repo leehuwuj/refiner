@@ -15,7 +15,7 @@
 Features:
  - [x] Translation: Translate inputted text to a target language.
  - [x] Local LLM: Use Ollama as local LLM (offline mode).
- - [x] Providers: OpenAI, Ollama, Gemini.
+ - [x] Providers: OpenAI, Ollama, Gemini, Groq.
  - [x] Hot key: Quickly translate a selected text via shortcut key (Currently is: `Cmd + E`)
  - [] Linux support.
  - [x] Windows support.
