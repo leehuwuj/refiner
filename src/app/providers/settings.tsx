@@ -67,7 +67,7 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         // Load API key
-        const savedApiKey = await store.get("OPENAI_API_KEY");
+        const savedApiKey = await store.get("LLM_API_KEY");
         if (savedApiKey !== null) {
           setApiKey(savedApiKey as string);
         }

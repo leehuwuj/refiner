@@ -166,7 +166,7 @@ pub async fn save_settings(
     
     if let Some(key) = api_key {
         if !key.is_empty() {
-            store.set("OPENAI_API_KEY", key);
+            store.set("LLM_API_KEY", key);
         }
     }
     
