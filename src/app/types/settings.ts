@@ -11,6 +11,11 @@ export const providerMap: Record<string, Provider> = {
     label: "OpenAI",
     models: ["gpt-4.1-nano", "gpt-4.1-mini", "gpt-4o-mini"],
   },
+  gemini: {
+    name: "gemini",
+    label: "Gemini",
+    models: ["gemini-2.0-flash-lite", "gemini-2.5-flash"],
+  },
 };
 
 export type promptTypes = ["translate", "correct", "refine"];

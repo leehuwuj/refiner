@@ -100,6 +100,9 @@ const Settings = ({
                     <SelectItem key="openai">
                       OpenAI
                     </SelectItem>
+                    <SelectItem key="gemini">
+                      Gemini
+                    </SelectItem>
                   </Select>
                   <Select
                     label="Model"
