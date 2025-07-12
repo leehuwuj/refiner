@@ -103,6 +103,9 @@ const Settings = ({
                     <SelectItem key="gemini">
                       Gemini
                     </SelectItem>
+                    <SelectItem key="groq">
+                      Groq
+                    </SelectItem>
                   </Select>
                   <Select
                     label="Model"
