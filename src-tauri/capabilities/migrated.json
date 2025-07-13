@@ -4,7 +4,7 @@
   "local": true,
   "windows": [
     "main",
-    "translate-popup",
+    "compact-popup",
     "selection-icon"
   ],
   "permissions": [

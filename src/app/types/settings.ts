@@ -14,7 +14,7 @@ export const providerMap: Record<string, Provider> = {
   gemini: {
     name: "gemini",
     label: "Gemini",
-    models: ["gemini-pro", "gemini-1.5-flash-latest"],
+    models: ["gemini-2.0-flash-lite-exp", "gemini-2.5-flash"],
   },
   groq: {
     name: "groq",

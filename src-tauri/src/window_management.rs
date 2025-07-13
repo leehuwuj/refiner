@@ -11,7 +11,7 @@ pub async fn create_or_focus_compact_window(app: &tauri::AppHandle) -> Result<ta
     let position = get_mouse_position();
 
     // Check if windows exist then just open it
-    if let Some(window) = app.get_webview_window("translate-popup") {
+    if let Some(window) = app.get_webview_window("compact-popup") {
         // Move the window to the mouse position
         #[cfg(target_os = "windows")]
         {
@@ -32,8 +32,8 @@ pub async fn create_or_focus_compact_window(app: &tauri::AppHandle) -> Result<ta
     } else {
         match WebviewWindowBuilder::new(
         app,
-        "translate-popup", 
-        WebviewUrl::App("translate-popup".into())
+        "compact-popup", 
+        WebviewUrl::App("compact-popup".into())
         ).title("Quick Translate")
         .transparent(true)
         .decorations(false)
@@ -48,7 +48,7 @@ pub async fn create_or_focus_compact_window(app: &tauri::AppHandle) -> Result<ta
                 Ok(window)
             },
             Err(e) => {
-                Err(format!("Failed to create translate-popup window: {}", e))
+                Err(format!("Failed to create compact-popup window: {}", e))
             }
         }
     }

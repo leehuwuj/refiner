@@ -48,9 +48,9 @@ pub fn run() {
                 tauri::WindowEvent::Focused(is_focused) => {
                     if !is_focused {
                         match window.label() {
-                            "translate-popup" => {
+                            "compact-popup" => {
                                 if let Err(e) = window.hide() {
-                                    println!("Failed to hide translate popup on focus loss: {}", e);
+                                    println!("Failed to hide compact popup on focus loss: {}", e);
                                 }
                             }
                             _ => {
