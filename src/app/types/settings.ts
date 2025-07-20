@@ -5,7 +5,7 @@ export interface Provider {
 }
 
 export const providerMap: Record<string, Provider> = {
-  ollama: { name: "ollama", label: "Ollama", models: ["gemma3", "phi3", "llama3"] },
+  ollama: { name: "ollama", label: "Ollama", models: ["qwen3", "gemma3", "phi3", "llama3"] },
   openai: {
     name: "openai",
     label: "OpenAI",
@@ -14,7 +14,7 @@ export const providerMap: Record<string, Provider> = {
   gemini: {
     name: "gemini",
     label: "Gemini",
-    models: ["gemini-pro", "gemini-1.5-flash-latest"],
+    models: ["gemini-2.0-flash-lite-exp", "gemini-2.5-flash"],
   },
   groq: {
     name: "groq",

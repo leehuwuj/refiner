@@ -1,6 +1,6 @@
 {
   "productName": "Refiner",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "identifier": "dev.leehuwuj.refiner",
   "build": {
     "beforeDevCommand": "pnpm dev",
