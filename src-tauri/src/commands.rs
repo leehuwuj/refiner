@@ -11,6 +11,47 @@ const DEFAULT_CORRECTION_PROMPT: &str =
 const DEFAULT_REFINE_PROMPT: &str =
     "You are an expert editor. Rewrite the following text in a more conversational style, in {target_lang}. Provide only the rewritten text, without any additional explanations or formatting.";
 
+// Helper function to trim thinking blocks from model responses
+fn trim_thinking_blocks(response: &str) -> String {
+    let mut result = response.to_string();
+    
+    // Remove <think>...</think> blocks
+    while let Some(start) = result.find("<think>") {
+        if let Some(end) = result[start..].find("</think>") {
+            let end_pos = start + end + 7; // 7 is length of "</think>"
+            result.replace_range(start..end_pos, "");
+        } else {
+            // If no closing tag found, remove everything from <think> to the end
+            result.truncate(start);
+        }
+    }
+    
+    // Remove <thinking>...</thinking> blocks (alternative format)
+    while let Some(start) = result.find("<thinking>") {
+        if let Some(end) = result[start..].find("</thinking>") {
+            let end_pos = start + end + 10; // 10 is length of "</thinking>"
+            result.replace_range(start..end_pos, "");
+        } else {
+            // If no closing tag found, remove everything from <thinking> to the end
+            result.truncate(start);
+        }
+    }
+    
+    // Remove <reasoning>...</reasoning> blocks (another alternative format)
+    while let Some(start) = result.find("<reasoning>") {
+        if let Some(end) = result[start..].find("</reasoning>") {
+            let end_pos = start + end + 11; // 11 is length of "</reasoning>"
+            result.replace_range(start..end_pos, "");
+        } else {
+            // If no closing tag found, remove everything from <reasoning> to the end
+            result.truncate(start);
+        }
+    }
+    
+    // Trim whitespace from the result
+    result.trim().to_string()
+}
+
 // Helper function to get default settings from store
 async fn get_default_settings(app_handle: &tauri::AppHandle) -> Result<(String, String), String> {
     let store = app_handle.store("store.bin").map_err(|e| format!("Failed to get store: {}", e))?;
@@ -61,7 +102,7 @@ pub async fn translate(
         );
     } else {
         let res = res.unwrap();
-        return Ok(res);
+        return Ok(trim_thinking_blocks(&res));
     }
 }
 
@@ -97,7 +138,7 @@ pub async fn correct(
         );
     } else {
         let res = res.unwrap();
-        return Ok(res);
+        return Ok(trim_thinking_blocks(&res));
     }
 }
 
@@ -134,7 +175,7 @@ pub async fn refine(
         );
     } else {
         let res = res.unwrap();
-        return Ok(res);
+        return Ok(trim_thinking_blocks(&res));
     }
 }
 
