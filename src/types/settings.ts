@@ -23,11 +23,10 @@ export const providerMap: Record<string, Provider> = {
   },
 };
 
-export type promptTypes = ["translate", "correct", "refine"];
-
-export interface Prompts {
-  type: promptTypes;
-  value?: string;
+export interface PromptSettings {
+  translate?: string;
+  correct?: string;
+  refine?: string;
 }
 
 export type ShortcutWindowType = "popup" | "main";
@@ -37,17 +36,19 @@ export type ThemeType = "light" | "dark" | "system";
 export interface AppSettings {
   provider?: Provider;
   model?: string;
-  prompt?: Prompts;
+  prompts?: PromptSettings;
   shortcutWindowType?: ShortcutWindowType;
   apiKey?: string;
   ollamaEndpoint?: string;
   ollamaThinking?: boolean;
+  preferredLang?: string;
 
   setProvider: (provider: Provider) => void;
   setModel: (model: string) => void;
-  setPrompt: (prompt: Prompts) => void;
+  setPrompts: (prompts: PromptSettings) => void;
   setShortcutWindowType: (type: ShortcutWindowType) => void;
   setOllamaEndpoint: (endpoint: string) => void;
   setOllamaThinking: (thinking: boolean) => void;
-  saveSettings: (apiKey?: string) => Promise<boolean>;
+  setPreferredLang: (lang: string) => void;
+  saveSettings: (apiKey?: string, prompts?: PromptSettings) => Promise<boolean>;
 }

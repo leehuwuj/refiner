@@ -1,5 +1,5 @@
 import React from "react";
-import type { AppSettings, Provider, Prompts, ShortcutWindowType } from "@/types/settings";
+import type { AppSettings, Provider, PromptSettings, ShortcutWindowType } from "@/types/settings";
 import { providerMap } from "@/types/settings";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -8,11 +8,12 @@ const SettingContext = React.createContext({} as AppSettings);
 const SettingProvider = ({ children }: { children: React.ReactNode }) => {
   const [provider, setProvider] = React.useState<Provider>(providerMap["openai"]);
   const [model, setModel] = React.useState<string>(providerMap["openai"].models?.[0] || "");
-  const [prompt, setPrompt] = React.useState<Prompts>();
+  const [prompts, setPrompts] = React.useState<PromptSettings>({});
   const [shortcutWindowType, setShortcutWindowType] = React.useState<ShortcutWindowType>("main");
   const [apiKey, setApiKey] = React.useState<string>("");
   const [ollamaEndpoint, setOllamaEndpoint] = React.useState<string>("http://localhost:11434");
   const [ollamaThinking, setOllamaThinking] = React.useState<boolean>(true);
+  const [preferredLang, setPreferredLang] = React.useState<string>("Tiếng Việt");
 
   React.useEffect(() => {
     const loadSettings = async () => {
@@ -24,6 +25,10 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
           shortcut_window_type: string | null;
           ollama_endpoint: string | null;
           ollama_thinking: boolean | null;
+          prompt_translate: string | null;
+          prompt_correct: string | null;
+          prompt_refine: string | null;
+          preferred_lang: string | null;
         }>("get_settings");
 
         let loadedProvider = provider;
@@ -56,6 +61,16 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
         if (saved.ollama_thinking !== null && saved.ollama_thinking !== undefined) {
           setOllamaThinking(saved.ollama_thinking);
         }
+
+        setPrompts({
+          translate: saved.prompt_translate ?? undefined,
+          correct: saved.prompt_correct ?? undefined,
+          refine: saved.prompt_refine ?? undefined,
+        });
+
+        if (saved.preferred_lang) {
+          setPreferredLang(saved.preferred_lang);
+        }
       } catch (error) {
         console.error("Failed to load settings:", error);
       }
@@ -63,21 +78,20 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
     loadSettings();
   }, []);
 
-  const saveSettings = async (inputApiKey?: string) => {
+  const saveSettings = async (inputApiKey?: string, promptsOverride?: PromptSettings) => {
+    const promptsToSave = promptsOverride ?? prompts;
     try {
-      let promptToSave = null;
-      if (prompt && typeof prompt === "object") {
-        promptToSave = JSON.stringify(prompt);
-      }
-
       await invoke("save_settings", {
         apiKey: inputApiKey || null,
         shortcutWindowType: shortcutWindowType,
         provider: provider.name,
         model: model,
-        prompt: promptToSave,
         ollamaEndpoint: ollamaEndpoint ?? null,
         ollamaThinking: ollamaThinking,
+        promptTranslate: promptsToSave.translate ?? "",
+        promptCorrect: promptsToSave.correct ?? "",
+        promptRefine: promptsToSave.refine ?? "",
+        preferredLang: preferredLang,
       });
 
       if (inputApiKey) {
@@ -96,17 +110,19 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         provider,
         model,
-        prompt,
+        prompts,
         shortcutWindowType,
         apiKey,
         ollamaEndpoint,
         ollamaThinking,
+        preferredLang,
         setProvider,
         setModel,
-        setPrompt,
+        setPrompts,
         setShortcutWindowType,
         setOllamaEndpoint,
         setOllamaThinking,
+        setPreferredLang,
         saveSettings,
       }}
     >

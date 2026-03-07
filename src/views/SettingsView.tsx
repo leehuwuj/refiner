@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
-import { Save, Bot, Key, Zap, Monitor, Palette, Check, AlertCircle } from "lucide-react";
+import { Save, Bot, Key, Zap, Monitor, Palette, Check, AlertCircle, MessageSquare, Languages } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { SettingContext } from "@/providers/settings";
@@ -63,10 +63,31 @@ function Row({ label, description, children }: { label: string; description?: st
 
 // ── Settings View ─────────────────────────────────────────────────────────────
 
+const LANGUAGES = [
+  { value: "en", label: "English" },
+  { value: "vi", label: "Tiếng Việt" },
+  { value: "fr", label: "Français" },
+  { value: "de", label: "Deutsch" },
+  { value: "ja", label: "日本語" },
+  { value: "zh", label: "中文" },
+  { value: "ko", label: "한국어" },
+  { value: "es", label: "Español" },
+];
+
+const DEFAULT_PROMPTS = {
+  translate:
+    "You are an expert translator. Translate the following text from {original_lang} to {target_lang}. Provide only the translated text, without any additional explanations or formatting.",
+  correct:
+    "You are an expert in grammar. Correct the grammar of the following text in {target_lang}. Provide only the corrected text, without any additional explanations or formatting.",
+  refine:
+    "You are an expert editor. Rewrite the following text in a more conversational style, in {target_lang}. Provide only the rewritten text, without any additional explanations or formatting.",
+};
+
 export default function SettingsView() {
   const s = useContext(SettingContext);
   const { theme, setTheme } = useTheme();
   const [localApiKey, setLocalApiKey] = useState("");
+  const [localPrompts, setLocalPrompts] = useState({ translate: "", correct: "", refine: "" });
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
 
@@ -76,11 +97,20 @@ export default function SettingsView() {
     if (s.apiKey) setLocalApiKey(s.apiKey);
   }, [s.apiKey]);
 
+  useEffect(() => {
+    setLocalPrompts({
+      translate: s.prompts?.translate ?? "",
+      correct: s.prompts?.correct ?? "",
+      refine: s.prompts?.refine ?? "",
+    });
+  }, [s.prompts]);
+
   const handleSave = async () => {
     setIsSaving(true);
     setSaveStatus("idle");
     try {
-      const ok = await s.saveSettings(localApiKey || undefined);
+      s.setPrompts(localPrompts);
+      const ok = await s.saveSettings(localApiKey || undefined, localPrompts);
       setSaveStatus(ok ? "success" : "error");
     } catch {
       setSaveStatus("error");
@@ -228,6 +258,52 @@ export default function SettingsView() {
           </Row>
         </Section>
 
+        {/* Language */}
+        <Section icon={Languages} title="Language">
+          <Row label="Preferred Language" description="Default target language for translations">
+            <Select
+              value={s.preferredLang ?? "Tiếng Việt"}
+              onValueChange={(v) => s.setPreferredLang(v)}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGES.map((l) => (
+                  <SelectItem key={l.value} value={l.label}>
+                    {l.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Row>
+        </Section>
+
+        {/* Prompts */}
+        <Section icon={MessageSquare} title="Prompts">
+          <p className="text-[11px] text-[var(--text-tertiary)] -mt-1">
+            Available variables: <code className="text-[var(--text-secondary)]">{"{original_lang}"}</code>, <code className="text-[var(--text-secondary)]">{"{target_lang}"}</code>. Leave blank to use defaults.
+          </p>
+          {(["translate", "correct", "refine"] as const).map((mode) => (
+            <div key={mode} className="space-y-1.5">
+              <p className="text-sm capitalize text-[var(--text-primary)]">{mode}</p>
+              <textarea
+                value={localPrompts[mode]}
+                onChange={(e) => setLocalPrompts((p) => ({ ...p, [mode]: e.target.value }))}
+                placeholder={DEFAULT_PROMPTS[mode]}
+                rows={3}
+                className={cn(
+                  "w-full resize-none text-xs rounded-lg px-3 py-2 leading-relaxed",
+                  "bg-[var(--glass-input-bg)] border border-[var(--glass-border)]",
+                  "text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)]",
+                  "focus:outline-none focus:border-[var(--glass-border-bright)]",
+                  "scrollbar-hide transition-colors",
+                )}
+              />
+            </div>
+          ))}
+        </Section>
+
         {/* Appearance */}
         <Section icon={Palette} title="Appearance">
           <Row label="Theme">
@@ -264,7 +340,7 @@ export default function SettingsView() {
 
         {/* Footer */}
         <p className="text-center text-[10px] text-[var(--text-tertiary)] pt-2">
-          © 2025 Refiner App
+          © 2026 Refiner App
         </p>
       </div>
     </div>

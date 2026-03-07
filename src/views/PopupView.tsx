@@ -14,14 +14,17 @@ async function translateText(options: {
   text: string;
   provider?: string;
   model?: string;
+  prompt?: string;
+  preferredLang?: string;
 }): Promise<string> {
+  const lang = options.preferredLang || "Tiếng Việt";
   return invoke<string>("translate", {
     provider: options.provider || null,
     model: options.model || null,
     text: options.text,
-    sourceLang: "<please detect source language (supported: English, Vietnamese)>",
-    targetLang: "<opposite with source language (supported: English, Vietnamese)>",
-    prompt: null,
+    sourceLang: `<please detect source language, preferred: ${lang}>`,
+    targetLang: `<translate to the opposite language of the source, preferred: ${lang}>`,
+    prompt: options.prompt || null,
   });
 }
 
@@ -29,14 +32,17 @@ async function correctText(options: {
   text: string;
   provider?: string;
   model?: string;
+  prompt?: string;
+  preferredLang?: string;
 }): Promise<string> {
+  const lang = options.preferredLang || "Tiếng Việt";
   return invoke<string>("correct", {
     provider: options.provider || null,
     model: options.model || null,
     text: options.text,
-    sourceLang: "<please detect source language (supported: English, Vietnamese)>",
-    targetLang: "<opposite with source language (supported: English, Vietnamese)>",
-    prompt: null,
+    sourceLang: `<please detect source language, preferred: ${lang}>`,
+    targetLang: `<correct in the detected source language, preferred: ${lang}>`,
+    prompt: options.prompt || null,
   });
 }
 
@@ -185,13 +191,13 @@ export default function PopupView() {
   useEffect(() => { settingsRef.current = settings; }, [settings]);
 
   const runTranslation = useRef((text: string) => {
-    const { provider, model } = settingsRef.current;
+    const { provider, model, prompts, preferredLang } = settingsRef.current;
     ctxRef.current.changeResult({ translate: "", correct: "" });
 
-    translateText({ text, provider: provider?.name, model })
+    translateText({ text, provider: provider?.name, model, prompt: prompts?.translate, preferredLang })
       .then((translation) => {
         ctxRef.current.changeResult({ translate: translation, correct: "" });
-        return correctText({ text, provider: provider?.name, model }).then((correction) => {
+        return correctText({ text, provider: provider?.name, model, prompt: prompts?.correct, preferredLang }).then((correction) => {
           ctxRef.current.changeResult({ translate: translation, correct: correction });
         });
       })
@@ -233,7 +239,7 @@ export default function PopupView() {
   const correctLoading = !!ctx.translating && !ctx.result?.correct;
 
   return (
-    <div style={{ width: "100vw", height: "100vh", background: "transparent", display: "flex" }}>
+    <div style={{ width: "100vw", height: "100vh", background: "transparent", display: "flex", borderRadius: "var(--radius-app)", overflow: "hidden" }}>
       {/* Card */}
       <div
         style={{
@@ -246,6 +252,7 @@ export default function PopupView() {
           WebkitBackdropFilter: "blur(40px) saturate(150%)",
           boxShadow: "var(--glass-shadow)",
           position: "relative",
+          borderRadius: "var(--radius-app)",
         }}
       >
         {/* Noise */}

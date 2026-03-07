@@ -108,12 +108,11 @@ html, body, #root {
 }
 
 /* Transparent root for frameless windows */
-html {
-  background: transparent;
+html, body, #root {
+  background: transparent !important;
 }
 
 body {
-  background: transparent;
   color: var(--text-primary);
 }
 

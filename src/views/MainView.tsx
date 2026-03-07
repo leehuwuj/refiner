@@ -34,6 +34,7 @@ async function runMode(
   model?: string,
   sourceLang?: string,
   targetLang?: string,
+  customPrompt?: string,
 ): Promise<string> {
   const fn = mode.toLowerCase();
   return invoke<string>(fn, {
@@ -42,7 +43,7 @@ async function runMode(
     text,
     sourceLang: sourceLang ?? "English",
     targetLang: targetLang ?? "Tiếng Việt",
-    prompt: null,
+    prompt: customPrompt || null,
   });
 }
 
@@ -233,10 +234,24 @@ export default function MainView() {
   const [styleHint, setStyleHint] = useState("");
   const isMounted = useRef(false);
 
+  // Sync preferred language from settings into target language
+  useEffect(() => {
+    if (settings.preferredLang) {
+      const lang = LANGUAGES.find((l) => l.label === settings.preferredLang);
+      if (lang) {
+        ctx.changeLangConfig({
+          ...ctx.languageConfig,
+          targetLang: { code: lang.value, label: lang.label },
+        });
+      }
+    }
+  }, [settings.preferredLang]);
+
   const trigger = useCallback(() => {
     if (ctx.translating) return;
     ctx.setTranslating(true);
     ctx.changeResult({});
+    const modeKey = ctx.currentMode.toLowerCase() as keyof typeof settings.prompts;
     runMode(
       ctx.inputText ?? "",
       ctx.currentMode,
@@ -244,6 +259,7 @@ export default function MainView() {
       settings.model,
       ctx.languageConfig.sourceLang.label,
       ctx.languageConfig.targetLang.label,
+      settings.prompts?.[modeKey],
     )
       .then((answer) => {
         ctx.changeResult({ [ctx.currentMode.toLowerCase()]: answer });
@@ -299,6 +315,7 @@ export default function MainView() {
       if (ctx.inputText?.trim()) {
         ctx.setTranslating(true);
         ctx.changeResult({});
+        const modeKey = mode.toLowerCase() as keyof typeof settings.prompts;
         runMode(
           ctx.inputText,
           mode,
@@ -306,6 +323,7 @@ export default function MainView() {
           settings.model,
           ctx.languageConfig.sourceLang.label,
           ctx.languageConfig.targetLang.label,
+          settings.prompts?.[modeKey],
         )
           .then((answer) => ctx.changeResult({ [mode.toLowerCase()]: answer }))
           .catch(console.error)
@@ -336,7 +354,7 @@ export default function MainView() {
   };
 
   return (
-    <div style={{ width: "100vw", height: "100vh", background: "transparent", display: "flex" }}>
+    <div style={{ width: "100vw", height: "100vh", background: "transparent", display: "flex", borderRadius: "var(--radius-app)", overflow: "hidden" }}>
       {/* ── Main surface ── */}
       <div
         style={{
@@ -348,6 +366,7 @@ export default function MainView() {
           backdropFilter: "blur(40px) saturate(150%)",
           WebkitBackdropFilter: "blur(40px) saturate(150%)",
           boxShadow: "var(--glass-shadow)",
+          borderRadius: "var(--radius-app)",
         }}
       >
         {/* Noise texture overlay */}
@@ -391,13 +410,18 @@ export default function MainView() {
           <ModeTabs current={ctx.currentMode} onChange={handleModeChange} />
 
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            {settings.provider?.models && (
+            {settings.provider && (
               <Select value={settings.model} onValueChange={(val) => settings.setModel(val)}>
                 <SelectTrigger compact className="w-auto max-w-[140px] text-[10px]">
                   <SelectValue placeholder="Model" />
                 </SelectTrigger>
                 <SelectContent>
-                  {settings.provider.models.map((m) => (
+                  {[
+                    ...(settings.provider.models ?? []),
+                    ...(settings.model && !settings.provider.models?.includes(settings.model)
+                      ? [settings.model]
+                      : []),
+                  ].map((m) => (
                     <SelectItem key={m} value={m} className="text-xs">
                       {m}
                     </SelectItem>
@@ -539,13 +563,13 @@ export default function MainView() {
                     height: 30,
                     borderRadius: "50%",
                     border: "none",
-                    background: "var(--accent)",
-                    color: "var(--glass-app-bg)",
+                    background: "rgba(255,255,255,0.18)",
+                    color: "var(--text-primary)",
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: "0 2px 12px rgba(255,255,255,0.08), inset 0 1px 0 rgba(255,255,255,0.2)",
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12)",
                   }}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.92 }}
