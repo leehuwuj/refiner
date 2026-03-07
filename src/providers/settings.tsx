@@ -1,23 +1,19 @@
 import React from "react";
-import { AppSettings, Prompts, Provider, providerMap, ShortcutWindowType } from "../types/settings";
+import type { AppSettings, Provider, Prompts, ShortcutWindowType } from "@/types/settings";
+import { providerMap } from "@/types/settings";
 import { invoke } from "@tauri-apps/api/core";
 
 const SettingContext = React.createContext({} as AppSettings);
 
 const SettingProvider = ({ children }: { children: React.ReactNode }) => {
-  const [provider, setProvider] = React.useState<Provider>(
-    providerMap["openai"],
-  );
-  const [model, setModel] = React.useState<string>(
-    provider.models?.[0] || '',
-  );
+  const [provider, setProvider] = React.useState<Provider>(providerMap["openai"]);
+  const [model, setModel] = React.useState<string>(providerMap["openai"].models?.[0] || "");
   const [prompt, setPrompt] = React.useState<Prompts>();
   const [shortcutWindowType, setShortcutWindowType] = React.useState<ShortcutWindowType>("main");
   const [apiKey, setApiKey] = React.useState<string>("");
   const [ollamaEndpoint, setOllamaEndpoint] = React.useState<string>("http://localhost:11434");
   const [ollamaThinking, setOllamaThinking] = React.useState<boolean>(true);
 
-  // Load settings from storage on component mount
   React.useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -69,9 +65,8 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
 
   const saveSettings = async (inputApiKey?: string) => {
     try {
-      // Only stringify prompt if it's a valid object
       let promptToSave = null;
-      if (prompt && typeof prompt === 'object') {
+      if (prompt && typeof prompt === "object") {
         promptToSave = JSON.stringify(prompt);
       }
 
@@ -85,7 +80,6 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
         ollamaThinking: ollamaThinking,
       });
 
-      // Update local API key state if provided
       if (inputApiKey) {
         setApiKey(inputApiKey);
       }
@@ -99,7 +93,22 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <SettingContext.Provider
-      value={{ provider, model, prompt, shortcutWindowType, apiKey, ollamaEndpoint, ollamaThinking, setProvider, setModel, setPrompt, setShortcutWindowType, setOllamaEndpoint, setOllamaThinking, saveSettings }}
+      value={{
+        provider,
+        model,
+        prompt,
+        shortcutWindowType,
+        apiKey,
+        ollamaEndpoint,
+        ollamaThinking,
+        setProvider,
+        setModel,
+        setPrompt,
+        setShortcutWindowType,
+        setOllamaEndpoint,
+        setOllamaThinking,
+        saveSettings,
+      }}
     >
       {children}
     </SettingContext.Provider>

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls c:UsershuuDevelopmentsrefiner/*.config* c:UsershuuDevelopmentsrefiner/*.json)",
+      "Bash(pnpm install)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(pnpm build)",
+      "Bash(pnpm add -D @rollup/rollup-win32-arm64-msvc)"
+    ]
+  }
+}

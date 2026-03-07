@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Refiner</title>
+    <script>
+      (function () {
+        var s = localStorage.getItem("refiner-theme");
+        if (s === "light" || s === "dark") {
+          document.documentElement.className = s;
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/popup.tsx"></script>
+  </body>
+</html>
