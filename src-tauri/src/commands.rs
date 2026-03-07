@@ -1,4 +1,5 @@
 use crate::providers::{self, base::get_provider};
+use crate::window_management::create_or_focus_settings_window;
 use providers::base::Provider;
 use tauri_plugin_store::StoreExt;
 
@@ -65,6 +66,12 @@ async fn get_default_settings(app_handle: &tauri::AppHandle) -> Result<(String, 
         .unwrap_or_else(|| "gemma3".to_string());
     
     Ok((default_provider, default_model))
+}
+
+#[tauri::command]
+pub async fn open_settings_window(app_handle: tauri::AppHandle) -> Result<(), String> {
+    create_or_focus_settings_window(&app_handle).await?;
+    Ok(())
 }
 
 #[tauri::command]

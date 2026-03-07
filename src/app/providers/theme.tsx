@@ -94,14 +94,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         root.classList.add(resolvedTheme);
     }, [resolvedTheme, mounted]);
 
-    // Don't render theme-sensitive content until mounted to avoid hydration mismatch
-    if (!mounted) {
-        return <div className="opacity-0">{children}</div>;
-    }
-
     return (
         <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme: handleThemeChange }}>
-            {children}
+            <div className={mounted ? undefined : "opacity-0"}>
+                {children}
+            </div>
         </ThemeContext.Provider>
     );
 }; 
