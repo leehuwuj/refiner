@@ -1,0 +1,270 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   LIQUID GLASS DESIGN SYSTEM — Monochrome
+   ============================================================ */
+
+:root {
+  /* Glass surfaces */
+  --glass-app-bg: rgba(10, 10, 14, 0.92);
+  --glass-panel-bg: rgba(255, 255, 255, 0.04);
+  --glass-panel-hover: rgba(255, 255, 255, 0.065);
+  --glass-input-bg: rgba(255, 255, 255, 0.04);
+  --glass-control-bg: rgba(255, 255, 255, 0.07);
+  --glass-control-hover: rgba(255, 255, 255, 0.12);
+  --glass-control-active: rgba(255, 255, 255, 0.18);
+
+  /* Blur */
+  --glass-blur: blur(40px) saturate(150%);
+
+  /* Borders */
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-border-subtle: rgba(255, 255, 255, 0.03);
+  --glass-border-bright: rgba(255, 255, 255, 0.14);
+
+  /* Shadows */
+  --glass-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 2px 16px rgba(0, 0, 0, 0.3);
+  --glass-inner-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --glass-panel-shadow: 0 1px 8px rgba(0, 0, 0, 0.2);
+
+  /* Accent — white light, no color */
+  --accent: rgba(255, 255, 255, 0.88);
+  --accent-alt: rgba(255, 255, 255, 0.6);
+  --accent-rgb: 255, 255, 255;
+  --accent-subtle: rgba(255, 255, 255, 0.06);
+  --accent-subtle-hover: rgba(255, 255, 255, 0.10);
+  --accent-gradient: linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 100%);
+  --accent-glow: 0 0 16px rgba(255, 255, 255, 0.06);
+
+  /* Text */
+  --text-primary: rgba(255, 255, 255, 0.88);
+  --text-secondary: rgba(255, 255, 255, 0.48);
+  --text-tertiary: rgba(255, 255, 255, 0.24);
+  --text-placeholder: rgba(255, 255, 255, 0.18);
+
+  /* Radius */
+  --radius-app: 20px;
+  --radius-panel: 12px;
+  --radius-control: 8px;
+  --radius-pill: 9999px;
+
+  /* Solid surfaces — non-transparent windows, dropdowns, tooltips */
+  --surface-bg: #0c0c10;
+  --dropdown-bg: #141418;
+  --dropdown-border: rgba(255, 255, 255, 0.10);
+
+  /* Noise texture for authentic glass */
+  --noise-url: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+}
+
+/* Light mode overrides */
+.light {
+  --glass-app-bg: rgba(242, 242, 248, 0.94);
+  --glass-panel-bg: rgba(255, 255, 255, 0.50);
+  --glass-panel-hover: rgba(255, 255, 255, 0.65);
+  --glass-input-bg: rgba(255, 255, 255, 0.55);
+  --glass-control-bg: rgba(255, 255, 255, 0.55);
+  --glass-control-hover: rgba(255, 255, 255, 0.70);
+  --glass-control-active: rgba(255, 255, 255, 0.85);
+
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-border-subtle: rgba(0, 0, 0, 0.03);
+  --glass-border-bright: rgba(0, 0, 0, 0.12);
+
+  --glass-shadow: 0 24px 80px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.05);
+  --glass-inner-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.80);
+
+  --accent: rgba(0, 0, 0, 0.80);
+  --accent-subtle: rgba(0, 0, 0, 0.04);
+  --accent-subtle-hover: rgba(0, 0, 0, 0.08);
+
+  --surface-bg: #f4f4f8;
+  --dropdown-bg: #ffffff;
+  --dropdown-border: rgba(0, 0, 0, 0.08);
+
+  --text-primary: rgba(0, 0, 0, 0.85);
+  --text-secondary: rgba(0, 0, 0, 0.48);
+  --text-tertiary: rgba(0, 0, 0, 0.26);
+  --text-placeholder: rgba(0, 0, 0, 0.18);
+}
+
+/* ============================================================
+   BASE RESET
+   ============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Transparent root for frameless windows */
+html {
+  background: transparent;
+}
+
+body {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+/* ============================================================
+   GLASS SURFACE COMPONENTS
+   ============================================================ */
+
+.glass-app {
+  background: var(--glass-app-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Noise overlay for authentic glass texture */
+.glass-app::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--noise-url);
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+}
+
+.glass-panel {
+  background: var(--glass-panel-bg);
+  box-shadow: var(--glass-panel-shadow), var(--glass-inner-highlight);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--noise-url);
+  opacity: 0.02;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ============================================================
+   SCROLLBAR HIDE
+   ============================================================ */
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================================
+   SKELETON ANIMATION
+   ============================================================ */
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--glass-control-bg) 25%,
+    var(--glass-control-hover) 50%,
+    var(--glass-control-bg) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: var(--radius-control);
+}
+
+/* ============================================================
+   FADE / SLIDE ANIMATIONS
+   ============================================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.2s ease-out;
+}
+
+/* ============================================================
+   SELECTION / FOCUS
+   ============================================================ */
+
+::selection {
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--text-primary);
+}
+
+.light ::selection {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+*:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.3);
+  outline-offset: 2px;
+}
+
+.light *:focus-visible {
+  outline: 2px solid rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================================
+   TEXTAREA / INPUT BASE
+   ============================================================ */
+
+textarea, input {
+  background: transparent;
+  color: var(--text-primary);
+  caret-color: var(--text-secondary);
+}
+
+textarea::placeholder, input::placeholder {
+  color: var(--text-placeholder);
+}
+
+textarea:focus, input:focus {
+  outline: none;
+}
+
+/* ============================================================
+   DRAG REGION (Tauri)
+   ============================================================ */
+
+[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+[data-tauri-drag-region] * {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}

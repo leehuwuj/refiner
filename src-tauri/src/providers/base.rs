@@ -29,7 +29,16 @@ impl Provider for ProviderEnum {
 pub fn get_provider(app_handler: AppHandle, provider: &str, model: &str) -> ProviderEnum {
     match provider {
         "ollama" => {
-            ProviderEnum::OllamaProvider(OllamaProvider::new(None, None, Some(model.to_string())))
+            let store = StoreBuilder::new(&app_handler, "store.bin")
+                .build()
+                .expect("Failed to build store");
+            let endpoint = store
+                .get("OLLAMA_ENDPOINT")
+                .and_then(|v| v.as_str().map(|s| s.to_string()));
+            let thinking = store
+                .get("OLLAMA_THINKING")
+                .and_then(|v| v.as_bool());
+            ProviderEnum::OllamaProvider(OllamaProvider::new(endpoint, Some(model.to_string()), thinking))
         }
         "openai" => {
             let store = StoreBuilder::new(&app_handler, "store.bin")

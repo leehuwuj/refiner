@@ -1,5 +1,6 @@
 use tauri::{App, Emitter, Manager};
 use tauri_plugin_global_shortcut::{Code, Modifiers};
+use tauri_plugin_store::StoreExt;
 use crate::selected_text::get_selected_text;
 use crate::window_management::create_or_focus_compact_window;
 use crate::commands::get_shortcut_window_type;
@@ -48,9 +49,17 @@ async fn handle_shortcut_common(app_handle: tauri::AppHandle) {
             };
 
             if let Ok(window) = window_result {
-                let _ = window.emit(event_name, format!("text:{}", text));
+                // Store pending text so the popup can read it on mount
+                // (handles the race condition where emit fires before JS loads)
+                if window_type == "popup" {
+                    if let Ok(store) = app_handle.store("store.bin") {
+                        store.set("POPUP_PENDING_TEXT", text);
+                    }
+                }
+
                 let _ = window.show();
                 let _ = window.set_focus();
+                let _ = window.emit(event_name, format!("text:{}", text));
             }
         }
     }

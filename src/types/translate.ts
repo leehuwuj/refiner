@@ -1,22 +1,22 @@
-interface Language {
+export interface Language {
   code: string;
   label: string;
 }
 
-type LanguageConfig = {
+export type LanguageConfig = {
   sourceLang: Language;
   targetLang: Language;
 };
 
-interface ResultTexts {
+export interface ResultTexts {
   translate?: string;
   correct?: string;
   refine?: string;
 }
 
-type Mode = "Translate" | "Correct" | "Refine";
+export type Mode = "Translate" | "Correct" | "Refine";
 
-interface TranslateContextType {
+export interface TranslateContextType {
   languageConfig: LanguageConfig;
   inputText?: string;
   result?: ResultTexts;

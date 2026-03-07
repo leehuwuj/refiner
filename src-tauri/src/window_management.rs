@@ -1,6 +1,28 @@
 use tauri::{Manager, Position, WebviewUrl, WebviewWindowBuilder};
 use device_query::{DeviceQuery, DeviceState};
 
+pub async fn create_or_focus_settings_window(app: &tauri::AppHandle) -> Result<tauri::WebviewWindow, String> {
+    if let Some(window) = app.get_webview_window("settings") {
+        window.show().map_err(|e| e.to_string())?;
+        window.set_focus().map_err(|e| e.to_string())?;
+        Ok(window)
+    } else {
+        match WebviewWindowBuilder::new(
+            app,
+            "settings",
+            WebviewUrl::App("settings".into()),
+        )
+        .title("Settings")
+        .inner_size(480.0, 520.0)
+        .resizable(false)
+        .build()
+        {
+            Ok(window) => Ok(window),
+            Err(e) => Err(format!("Failed to create settings window: {}", e)),
+        }
+    }
+}
+
 fn get_mouse_position() -> (i32, i32) {
     let device_state = DeviceState::new();
     let (x, y) = device_state.get_mouse().coords;
