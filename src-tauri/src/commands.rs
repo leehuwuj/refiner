@@ -56,16 +56,39 @@ fn trim_thinking_blocks(response: &str) -> String {
 // Helper function to get default settings from store
 async fn get_default_settings(app_handle: &tauri::AppHandle) -> Result<(String, String), String> {
     let store = app_handle.store("store.bin").map_err(|e| format!("Failed to get store: {}", e))?;
-    
+
     let default_provider = store.get("PROVIDER")
         .and_then(|v| v.as_str().map(|s| s.to_string()))
         .unwrap_or_else(|| "ollama".to_string());
-    
+
     let default_model = store.get("MODEL")
         .and_then(|v| v.as_str().map(|s| s.to_string()))
         .unwrap_or_else(|| "gemma3".to_string());
-    
+
     Ok((default_provider, default_model))
+}
+
+#[derive(serde::Serialize)]
+pub struct AllSettings {
+    pub provider: Option<String>,
+    pub model: Option<String>,
+    pub api_key: Option<String>,
+    pub shortcut_window_type: Option<String>,
+    pub ollama_endpoint: Option<String>,
+    pub ollama_thinking: Option<bool>,
+}
+
+#[tauri::command]
+pub async fn get_settings(app_handle: tauri::AppHandle) -> Result<AllSettings, String> {
+    let store = app_handle.store("store.bin").map_err(|e| format!("Failed to get store: {}", e))?;
+    Ok(AllSettings {
+        provider: store.get("PROVIDER").and_then(|v| v.as_str().map(|s| s.to_string())),
+        model: store.get("MODEL").and_then(|v| v.as_str().map(|s| s.to_string())),
+        api_key: store.get("LLM_API_KEY").and_then(|v| v.as_str().map(|s| s.to_string())),
+        shortcut_window_type: store.get("SHORTCUT_WINDOW_TYPE").and_then(|v| v.as_str().map(|s| s.to_string())),
+        ollama_endpoint: store.get("OLLAMA_ENDPOINT").and_then(|v| v.as_str().map(|s| s.to_string())),
+        ollama_thinking: store.get("OLLAMA_THINKING").and_then(|v| v.as_bool()),
+    })
 }
 
 #[tauri::command]
@@ -102,14 +125,9 @@ pub async fn translate(
     let res = provider_obj
         .completion(&format!("<start_of_turn>user\n{}\n\nText to translate: {}\n<end_of_turn>\n<start_of_turn>model", new_prompt, text))
         .await;
-    if res.is_err() {
-        return Ok(
-            "Something wrong with LLM provider API. Please check the config and try again!"
-                .to_string(),
-        );
-    } else {
-        let res = res.unwrap();
-        return Ok(trim_thinking_blocks(&res));
+    match res {
+        Ok(text) => Ok(trim_thinking_blocks(&text)),
+        Err(e) => Ok(format!("Error: {}", e)),
     }
 }
 
@@ -138,14 +156,9 @@ pub async fn correct(
     let res = provider
         .completion(&format!("<start_of_turn>user\n{}\n\nText to correct: {}\n<end_of_turn>\n<start_of_turn>model", new_prompt, text))
         .await;
-    if res.is_err() {
-        return Ok(
-            "Something wrong with LLM provider API. Please check the config and try again!"
-                .to_string(),
-        );
-    } else {
-        let res = res.unwrap();
-        return Ok(trim_thinking_blocks(&res));
+    match res {
+        Ok(text) => Ok(trim_thinking_blocks(&text)),
+        Err(e) => Ok(format!("Error: {}", e)),
     }
 }
 
@@ -174,15 +187,9 @@ pub async fn refine(
     let res = provider
         .completion(&format!("<start_of_turn>user\n{}\n\nText to refine: {}\n<end_of_turn>\n<start_of_turn>model", new_prompt, text))
         .await;
-    // Retrieve the answer from the response and remove all other xml tag in ans
-    if res.is_err() {
-        return Ok(
-            "Something wrong with LLM provider API. Please check the config and try again!"
-                .to_string(),
-        );
-    } else {
-        let res = res.unwrap();
-        return Ok(trim_thinking_blocks(&res));
+    match res {
+        Ok(text) => Ok(trim_thinking_blocks(&text)),
+        Err(e) => Ok(format!("Error: {}", e)),
     }
 }
 
@@ -203,12 +210,14 @@ pub async fn get_shortcut_window_type(app_handle: tauri::AppHandle) -> Result<St
 
 #[tauri::command]
 pub async fn save_settings(
-    app_handle: tauri::AppHandle, 
-    api_key: Option<String>, 
+    app_handle: tauri::AppHandle,
+    api_key: Option<String>,
     shortcut_window_type: Option<String>,
     provider: Option<String>,
     model: Option<String>,
-    prompt: Option<String>
+    prompt: Option<String>,
+    ollama_endpoint: Option<String>,
+    ollama_thinking: Option<bool>,
 ) -> Result<(), String> {
     let store = app_handle.store("store.bin").map_err(|e| format!("Failed to get store: {}", e))?;
     
@@ -241,7 +250,17 @@ pub async fn save_settings(
             store.set("PROMPT", prompt_data);
         }
     }
-    
+
+    if let Some(endpoint) = ollama_endpoint {
+        if !endpoint.is_empty() {
+            store.set("OLLAMA_ENDPOINT", endpoint);
+        }
+    }
+
+    if let Some(thinking) = ollama_thinking {
+        store.set("OLLAMA_THINKING", thinking);
+    }
+
     store.save().map_err(|e| format!("Failed to save store: {}", e))?;
     
     Ok(())

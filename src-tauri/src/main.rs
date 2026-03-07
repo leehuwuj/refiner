@@ -8,7 +8,7 @@ mod window_management;
 mod tray;
 mod shortcuts;
 
-use commands::{correct, refine, translate, save_settings, get_shortcut_window_type, open_settings_window};
+use commands::{correct, refine, translate, save_settings, get_settings, get_shortcut_window_type, open_settings_window};
 use device_query::{DeviceQuery, DeviceState};
 
 use crate::tray::setup_tray;
@@ -64,7 +64,7 @@ pub fn run() {
                 _ => {}
             }
         })
-        .invoke_handler(tauri::generate_handler![translate, correct, refine, get_mouse_position, get_shortcut_window_type, save_settings, open_settings_window])
+        .invoke_handler(tauri::generate_handler![translate, correct, refine, get_mouse_position, get_shortcut_window_type, save_settings, get_settings, open_settings_window])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
