@@ -1,5 +1,5 @@
 import React from "react";
-import type { AppSettings, Provider, PromptSettings, ShortcutWindowType } from "@/types/settings";
+import type { AppSettings, Provider, PromptSettings, ShortcutWindowType, TextSizeType } from "@/types/settings";
 import { providerMap } from "@/types/settings";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -14,6 +14,7 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
   const [ollamaEndpoint, setOllamaEndpoint] = React.useState<string>("http://localhost:11434");
   const [ollamaThinking, setOllamaThinking] = React.useState<boolean>(true);
   const [preferredLang, setPreferredLang] = React.useState<string>("Tiếng Việt");
+  const [textSize, setTextSize] = React.useState<TextSizeType>("medium");
 
   React.useEffect(() => {
     const loadSettings = async () => {
@@ -29,6 +30,7 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
           prompt_correct: string | null;
           prompt_refine: string | null;
           preferred_lang: string | null;
+          text_size: string | null;
         }>("get_settings");
 
         let loadedProvider = provider;
@@ -71,12 +73,21 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
         if (saved.preferred_lang) {
           setPreferredLang(saved.preferred_lang);
         }
+
+        if (saved.text_size) {
+          setTextSize(saved.text_size as TextSizeType);
+        }
       } catch (error) {
         console.error("Failed to load settings:", error);
       }
     };
     loadSettings();
   }, []);
+
+  React.useEffect(() => {
+    const scaleMap: Record<TextSizeType, string> = { small: "0.88", medium: "1", large: "1.14" };
+    document.documentElement.style.zoom = scaleMap[textSize] ?? "1";
+  }, [textSize]);
 
   const saveSettings = async (inputApiKey?: string, promptsOverride?: PromptSettings) => {
     const promptsToSave = promptsOverride ?? prompts;
@@ -92,6 +103,7 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
         promptCorrect: promptsToSave.correct ?? "",
         promptRefine: promptsToSave.refine ?? "",
         preferredLang: preferredLang,
+        textSize: textSize,
       });
 
       if (inputApiKey) {
@@ -123,6 +135,8 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
         setOllamaEndpoint,
         setOllamaThinking,
         setPreferredLang,
+        textSize,
+        setTextSize,
         saveSettings,
       }}
     >

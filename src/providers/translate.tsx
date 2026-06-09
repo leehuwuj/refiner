@@ -23,7 +23,7 @@ const TranslateProvider = ({ children }: { children: React.ReactNode }) => {
         currentMode,
         changeLangConfig: (lang: LanguageConfig) => setLanguageConfig(lang),
         changeInputText: (text: string) => setInputText(text),
-        changeResult: (res: ResultTexts) => setResult((prev) => ({ ...prev, ...res })),
+        changeResult: (res: ResultTexts) => setResult(res),
         setTranslating: (isTranslating: boolean) => setTranslating(isTranslating),
         setCurrentMode: (mode: Mode) => setCurrentMode(mode),
       }}

@@ -22,8 +22,8 @@ async function translateText(options: {
     provider: options.provider || null,
     model: options.model || null,
     text: options.text,
-    sourceLang: `<please detect source language, preferred: ${lang}>`,
-    targetLang: `<translate to the opposite language of the source, preferred: ${lang}>`,
+    sourceLang: "auto",
+    targetLang: lang,
     prompt: options.prompt || null,
   });
 }
@@ -35,13 +35,12 @@ async function correctText(options: {
   prompt?: string;
   preferredLang?: string;
 }): Promise<string> {
-  const lang = options.preferredLang || "Tiếng Việt";
   return invoke<string>("correct", {
     provider: options.provider || null,
     model: options.model || null,
     text: options.text,
-    sourceLang: `<please detect source language, preferred: ${lang}>`,
-    targetLang: `<correct in the detected source language, preferred: ${lang}>`,
+    sourceLang: "auto",
+    targetLang: "the original language of the text",
     prompt: options.prompt || null,
   });
 }
@@ -192,6 +191,7 @@ export default function PopupView() {
 
   const runTranslation = useRef((text: string) => {
     const { provider, model, prompts, preferredLang } = settingsRef.current;
+    ctxRef.current.setTranslating(true);
     ctxRef.current.changeResult({ translate: "", correct: "" });
 
     translateText({ text, provider: provider?.name, model, prompt: prompts?.translate, preferredLang })
@@ -207,6 +207,9 @@ export default function PopupView() {
           translate: "Translation failed",
           correct: "Correction failed",
         });
+      })
+      .finally(() => {
+        ctxRef.current.setTranslating(false);
       });
   });
 

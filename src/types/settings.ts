@@ -33,6 +33,8 @@ export type ShortcutWindowType = "popup" | "main";
 
 export type ThemeType = "light" | "dark" | "system";
 
+export type TextSizeType = "small" | "medium" | "large";
+
 export interface AppSettings {
   provider?: Provider;
   model?: string;
@@ -42,6 +44,7 @@ export interface AppSettings {
   ollamaEndpoint?: string;
   ollamaThinking?: boolean;
   preferredLang?: string;
+  textSize?: TextSizeType;
 
   setProvider: (provider: Provider) => void;
   setModel: (model: string) => void;
@@ -50,5 +53,6 @@ export interface AppSettings {
   setOllamaEndpoint: (endpoint: string) => void;
   setOllamaThinking: (thinking: boolean) => void;
   setPreferredLang: (lang: string) => void;
+  setTextSize: (size: TextSizeType) => void;
   saveSettings: (apiKey?: string, prompts?: PromptSettings) => Promise<boolean>;
 }

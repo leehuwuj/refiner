@@ -232,6 +232,7 @@ export default function MainView() {
   const settings = useContext(SettingContext);
   const [triggerByShortcut, setTriggerByShortcut] = useState(false);
   const [styleHint, setStyleHint] = useState("");
+  const [loading, setLoading] = useState(false);
   const isMounted = useRef(false);
 
   // Sync preferred language from settings into target language
@@ -248,7 +249,8 @@ export default function MainView() {
   }, [settings.preferredLang]);
 
   const trigger = useCallback(() => {
-    if (ctx.translating) return;
+    if (loading) return;
+    setLoading(true);
     ctx.setTranslating(true);
     ctx.changeResult({});
     const modeKey = ctx.currentMode.toLowerCase() as keyof typeof settings.prompts;
@@ -265,8 +267,11 @@ export default function MainView() {
         ctx.changeResult({ [ctx.currentMode.toLowerCase()]: answer });
       })
       .catch(console.error)
-      .finally(() => ctx.setTranslating(false));
-  }, [ctx, settings]);
+      .finally(() => {
+        setLoading(false);
+        ctx.setTranslating(false);
+      });
+  }, [loading, ctx, settings]);
 
   useEffect(() => {
     if (!isMounted.current) {
@@ -301,18 +306,19 @@ export default function MainView() {
       if (e.key === "Escape") {
         window.__TAURI__.window.getCurrentWindow().hide();
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !ctx.translating) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !loading) {
         trigger();
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [ctx.translating, trigger]);
+  }, [loading, trigger]);
 
   const handleModeChange = useCallback(
     (mode: Mode) => {
       ctx.setCurrentMode(mode);
       if (ctx.inputText?.trim()) {
+        setLoading(true);
         ctx.setTranslating(true);
         ctx.changeResult({});
         const modeKey = mode.toLowerCase() as keyof typeof settings.prompts;
@@ -327,7 +333,10 @@ export default function MainView() {
         )
           .then((answer) => ctx.changeResult({ [mode.toLowerCase()]: answer }))
           .catch(console.error)
-          .finally(() => ctx.setTranslating(false));
+          .finally(() => {
+            setLoading(false);
+            ctx.setTranslating(false);
+          });
       }
     },
     [ctx, settings],
@@ -528,13 +537,13 @@ export default function MainView() {
             }}
           >
             <AnimatePresence mode="wait">
-              {ctx.translating ? (
+              {loading ? (
                 <motion.button
                   key="stop"
                   initial={{ scale: 0.7, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.7, opacity: 0 }}
-                  onClick={() => ctx.setTranslating(false)}
+                  onClick={() => { setLoading(false); ctx.setTranslating(false); }}
                   style={{
                     width: 30,
                     height: 30,
@@ -598,57 +607,55 @@ export default function MainView() {
               style={{ flex: 1, padding: "12px 14px", overflowY: "auto", position: "relative" }}
               className="scrollbar-hide"
             >
-              <AnimatePresence mode="wait">
-                {ctx.translating && !currentResult ? (
-                  <motion.div
-                    key="skeleton"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <SkeletonText lines={4} />
-                  </motion.div>
-                ) : currentResult ? (
-                  <motion.p
-                    key="result"
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
-                    style={{
-                      fontSize: 13,
-                      lineHeight: 1.65,
-                      color: "var(--text-primary)",
-                      margin: 0,
-                      paddingRight: 28,
-                    }}
-                  >
-                    {currentResult}
-                  </motion.p>
-                ) : (
-                  <motion.div
-                    key="empty"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    style={{
-                      height: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <p style={{
-                      fontSize: 11,
-                      color: "var(--text-tertiary)",
-                      textAlign: "center",
-                      lineHeight: 1.6,
-                      maxWidth: 160,
-                      margin: 0,
-                    }}>
-                      Result will appear here
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {loading ? (
+                <motion.div
+                  key="skeleton"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <SkeletonText lines={4} />
+                </motion.div>
+              ) : currentResult ? (
+                <motion.p
+                  key="result"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  style={{
+                    fontSize: 13,
+                    lineHeight: 1.65,
+                    color: "var(--text-primary)",
+                    margin: 0,
+                    paddingRight: 28,
+                  }}
+                >
+                  {currentResult}
+                </motion.p>
+              ) : (
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <p style={{
+                    fontSize: 11,
+                    color: "var(--text-tertiary)",
+                    textAlign: "center",
+                    lineHeight: 1.6,
+                    maxWidth: 160,
+                    margin: 0,
+                  }}>
+                    Result will appear here
+                  </p>
+                </motion.div>
+              )}
 
               {currentResult && (
                 <div style={{ position: "absolute", top: 8, right: 8 }}>

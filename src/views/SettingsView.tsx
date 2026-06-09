@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import { SettingContext } from "@/providers/settings";
 import { providerMap } from "@/types/settings";
-import type { ShortcutWindowType } from "@/types/settings";
+import type { ShortcutWindowType, TextSizeType } from "@/types/settings";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -318,6 +318,21 @@ export default function SettingsView() {
                 <SelectItem value="system">System</SelectItem>
                 <SelectItem value="dark">Dark</SelectItem>
                 <SelectItem value="light">Light</SelectItem>
+              </SelectContent>
+            </Select>
+          </Row>
+          <Row label="Text Size" description="Scales all text across windows">
+            <Select
+              value={s.textSize ?? "medium"}
+              onValueChange={(v) => s.setTextSize(v as TextSizeType)}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Select size" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="small">Small</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="large">Large</SelectItem>
               </SelectContent>
             </Select>
           </Row>

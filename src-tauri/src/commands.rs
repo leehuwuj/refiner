@@ -80,6 +80,7 @@ pub struct AllSettings {
     pub prompt_correct: Option<String>,
     pub prompt_refine: Option<String>,
     pub preferred_lang: Option<String>,
+    pub text_size: Option<String>,
 }
 
 #[tauri::command]
@@ -96,6 +97,7 @@ pub async fn get_settings(app_handle: tauri::AppHandle) -> Result<AllSettings, S
         prompt_correct: store.get("PROMPT_CORRECT").and_then(|v| v.as_str().map(|s| s.to_string())),
         prompt_refine: store.get("PROMPT_REFINE").and_then(|v| v.as_str().map(|s| s.to_string())),
         preferred_lang: store.get("PREFERRED_LANG").and_then(|v| v.as_str().map(|s| s.to_string())),
+        text_size: store.get("TEXT_SIZE").and_then(|v| v.as_str().map(|s| s.to_string())),
     })
 }
 
@@ -229,6 +231,7 @@ pub async fn save_settings(
     prompt_correct: Option<String>,
     prompt_refine: Option<String>,
     preferred_lang: Option<String>,
+    text_size: Option<String>,
 ) -> Result<(), String> {
     let store = app_handle.store("store.bin").map_err(|e| format!("Failed to get store: {}", e))?;
 
@@ -286,6 +289,12 @@ pub async fn save_settings(
     if let Some(lang) = preferred_lang {
         if !lang.is_empty() {
             store.set("PREFERRED_LANG", lang);
+        }
+    }
+
+    if let Some(size) = text_size {
+        if !size.is_empty() {
+            store.set("TEXT_SIZE", size);
         }
     }
 
