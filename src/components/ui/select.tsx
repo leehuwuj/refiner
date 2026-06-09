@@ -9,24 +9,27 @@ const SelectValue = SelectPrimitive.Value;
 
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & { compact?: boolean }
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> & {
+    compact?: boolean;
+  }
 >(({ className, children, compact, ...props }, ref) => (
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
       "flex items-center justify-between gap-1 rounded-lg text-sm",
-      "bg-[var(--glass-control-bg)]",
+      "border border-[var(--chip-border)] bg-[var(--glass-control-bg)]",
+      "shadow-[var(--chip-highlight),var(--chip-shadow)]",
       "text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)]",
       "hover:bg-[var(--glass-control-hover)] focus:outline-none",
-      "transition-all duration-150 cursor-default select-none",
-      compact ? "h-7 px-2 text-xs" : "h-9 px-3",
+      "cursor-default select-none transition-all duration-150",
+      compact ? "h-8 px-2.5 text-xs" : "h-9 px-3",
       className,
     )}
     {...props}
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <ChevronDown className="opacity-50 shrink-0" size={compact ? 12 : 14} />
+      <ChevronDown className="shrink-0 opacity-50" size={compact ? 12 : 14} />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -45,7 +48,7 @@ const SelectContent = React.forwardRef<
         "relative z-50 min-w-[8rem] overflow-hidden rounded-xl",
         "bg-[var(--dropdown-bg)]",
         "shadow-[0_16px_40px_rgba(0,0,0,0.4)]",
-        "backdrop-filter backdrop-blur-xl",
+        "backdrop-blur-xl backdrop-filter",
         "data-[state=open]:animate-slide-up",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=top]:-translate-y-1",
@@ -53,7 +56,9 @@ const SelectContent = React.forwardRef<
       )}
       {...props}
     >
-      <SelectPrimitive.Viewport className="p-1">{children}</SelectPrimitive.Viewport>
+      <SelectPrimitive.Viewport className="p-1">
+        {children}
+      </SelectPrimitive.Viewport>
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
 ));
@@ -91,7 +96,10 @@ const SelectLabel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Label
     ref={ref}
-    className={cn("px-3 py-1.5 text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider", className)}
+    className={cn(
+      "px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]",
+      className,
+    )}
     {...props}
   />
 ));

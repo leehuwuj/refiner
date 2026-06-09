@@ -9,7 +9,6 @@ import {
   Copy,
   Check,
   ArrowLeftRight,
-  Sparkles,
 } from "lucide-react";
 
 import { TranslateContext } from "@/providers/translate";
@@ -63,10 +62,12 @@ function ModeTabs({
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 1,
-        borderRadius: 10,
-        padding: 3,
+        gap: 2,
+        borderRadius: 12,
+        padding: 4,
         background: "var(--glass-control-bg)",
+        border: "1px solid var(--chip-border)",
+        boxShadow: "var(--chip-highlight)",
       }}
     >
       {MODES.map((mode) => {
@@ -77,14 +78,14 @@ function ModeTabs({
             onClick={() => onChange(mode)}
             style={{
               position: "relative",
-              padding: "4px 14px",
-              fontSize: 11,
-              fontWeight: 500,
-              borderRadius: 7,
+              padding: "6px 16px",
+              fontSize: 12,
+              fontWeight: 600,
+              borderRadius: 8,
               border: "none",
               cursor: "pointer",
               background: "transparent",
-              color: active ? "var(--text-primary)" : "var(--text-tertiary)",
+              color: active ? "var(--text-primary)" : "var(--text-secondary)",
               transition: "color 0.2s",
               userSelect: "none",
             }}
@@ -95,10 +96,11 @@ function ModeTabs({
                 style={{
                   position: "absolute",
                   inset: 0,
-                  borderRadius: 7,
-                  background: "var(--glass-control-hover)",
+                  borderRadius: 8,
+                  background: "var(--glass-control-active)",
+                  border: "1px solid var(--chip-border)",
                   boxShadow:
-                    "inset 0 1px 0 rgba(255,255,255,0.08), 0 1px 3px rgba(0,0,0,0.2)",
+                    "inset 0 1px 0 rgba(255,255,255,0.14), 0 1px 4px rgba(0,0,0,0.25)",
                 }}
                 transition={{ type: "spring", stiffness: 500, damping: 35 }}
               />
@@ -139,35 +141,37 @@ function LanguageBar({
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
       <span
         style={{
-          fontSize: 10,
+          display: "inline-flex",
+          alignItems: "center",
+          height: 32,
+          fontSize: 12,
           color: "var(--text-secondary)",
-          fontWeight: 500,
-          padding: "2px 8px",
-          borderRadius: 6,
+          fontWeight: 600,
+          padding: "0 12px",
+          borderRadius: 8,
+          whiteSpace: "nowrap",
           background: "var(--glass-control-bg)",
+          border: "1px solid var(--chip-border)",
+          boxShadow: "var(--chip-highlight)",
         }}
       >
         {sourceLang}
       </span>
       <button
         onClick={onSwap}
-        className="hover:text-[var(--text-primary)]"
+        title="Swap languages"
+        className="lg-chip"
         style={{
-          padding: 4,
-          borderRadius: 6,
-          border: "none",
-          background: "transparent",
-          color: "var(--text-tertiary)",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          transition: "color 0.15s",
+          width: 32,
+          height: 32,
+          borderRadius: "50%",
+          flexShrink: 0,
         }}
       >
-        <ArrowLeftRight size={11} />
+        <ArrowLeftRight size={13} />
       </button>
       <Select value={targetLang} onValueChange={onTargetChange}>
-        <SelectTrigger compact className="w-auto min-w-[80px] text-[10px]">
+        <SelectTrigger compact className="w-auto min-w-[96px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -197,17 +201,11 @@ function CopyButton({ text }: { text: string }) {
     <Tooltip content={copied ? "Copied!" : "Copy"} open={copied || undefined}>
       <button
         onClick={handleCopy}
-        className="hover:bg-[var(--glass-control-hover)] hover:text-[var(--text-primary)]"
+        className="lg-chip"
         style={{
-          padding: 6,
-          borderRadius: 8,
-          border: "none",
-          background: "var(--glass-control-bg)",
-          color: "var(--text-tertiary)",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          transition: "all 0.15s",
+          width: 30,
+          height: 30,
+          borderRadius: 9,
         }}
       >
         <AnimatePresence mode="wait">
@@ -219,7 +217,7 @@ function CopyButton({ text }: { text: string }) {
               exit={{ scale: 0.5, opacity: 0 }}
               transition={{ duration: 0.15 }}
             >
-              <Check size={13} />
+              <Check size={14} />
             </motion.div>
           ) : (
             <motion.div
@@ -227,7 +225,7 @@ function CopyButton({ text }: { text: string }) {
               initial={{ scale: 1 }}
               animate={{ scale: 1 }}
             >
-              <Copy size={13} />
+              <Copy size={14} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -242,7 +240,6 @@ export default function MainView() {
   const ctx = useContext(TranslateContext);
   const settings = useContext(SettingContext);
   const [triggerByShortcut, setTriggerByShortcut] = useState(false);
-  const [styleHint, setStyleHint] = useState("");
   const [loading, setLoading] = useState(false);
   const isMounted = useRef(false);
 
@@ -474,20 +471,14 @@ export default function MainView() {
             <Tooltip content="Settings">
               <button
                 onClick={() => invoke("open_settings_window")}
-                className="hover:bg-[var(--glass-control-hover)] hover:text-[var(--text-primary)]"
+                className="lg-chip"
                 style={{
-                  padding: 6,
-                  borderRadius: 8,
-                  border: "none",
-                  background: "transparent",
-                  color: "var(--text-tertiary)",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  transition: "all 0.15s",
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
                 }}
               >
-                <Settings size={14} />
+                <Settings size={15} />
               </button>
             </Tooltip>
           </div>
@@ -513,10 +504,11 @@ export default function MainView() {
               overflow: "hidden",
               margin: "0 0 0 10px",
               marginBottom: 8,
-              borderRadius: 12,
+              borderRadius: 14,
               background:
                 "linear-gradient(180deg, var(--glass-panel-bg) 0%, transparent 100%)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
+              border: "1px solid var(--glass-border)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
             }}
           >
             <textarea
@@ -572,7 +564,7 @@ export default function MainView() {
           {/* Action column */}
           <div
             style={{
-              width: 44,
+              width: 56,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -584,6 +576,7 @@ export default function MainView() {
               {loading ? (
                 <motion.button
                   key="stop"
+                  className="lg-chip"
                   initial={{ scale: 0.7, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.7, opacity: 0 }}
@@ -592,45 +585,33 @@ export default function MainView() {
                     ctx.setTranslating(false);
                   }}
                   style={{
-                    width: 30,
-                    height: 30,
+                    width: 42,
+                    height: 42,
                     borderRadius: "50%",
-                    border: "none",
-                    background: "var(--glass-control-bg)",
-                    color: "var(--text-secondary)",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+                    color: "var(--text-primary)",
                   }}
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.92 }}
                 >
-                  <Square size={10} />
+                  <Square size={13} fill="currentColor" />
                 </motion.button>
               ) : (
                 <motion.button
                   key="run"
+                  className="lg-chip-primary"
                   initial={{ scale: 0.7, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.7, opacity: 0 }}
                   onClick={trigger}
                   style={{
-                    width: 30,
-                    height: 30,
+                    width: 42,
+                    height: 42,
                     borderRadius: "50%",
-                    border: "none",
-                    background: "rgba(255,255,255,0.18)",
-                    color: "var(--text-primary)",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12)",
                   }}
-                  whileHover={{ scale: 1.1 }}
+                  whileHover={{ scale: 1.08 }}
                   whileTap={{ scale: 0.92 }}
                 >
-                  <ArrowRight size={13} strokeWidth={2.5} />
+                  <ArrowRight size={18} strokeWidth={2.5} />
                 </motion.button>
               )}
             </AnimatePresence>
@@ -645,10 +626,11 @@ export default function MainView() {
               overflow: "hidden",
               margin: "0 10px 0 0",
               marginBottom: 8,
-              borderRadius: 12,
+              borderRadius: 14,
               background:
                 "linear-gradient(180deg, var(--glass-panel-bg) 0%, transparent 100%)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
+              border: "1px solid var(--glass-border)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
             }}
           >
             <div
@@ -718,86 +700,65 @@ export default function MainView() {
                 </div>
               )}
             </div>
-
-            <div
-              style={{
-                padding: "4px 12px 8px",
-                minHeight: 28,
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              {ctx.currentMode === "Translate" && (
-                <LanguageBar
-                  sourceLang={ctx.languageConfig.sourceLang.label}
-                  targetLang={ctx.languageConfig.targetLang.label}
-                  onSwap={handleSwapLanguages}
-                  onTargetChange={handleTargetLangChange}
-                />
-              )}
-            </div>
           </div>
         </div>
 
         {/* ── Footer ── */}
         <div
           style={{
-            display: "flex",
+            display: "grid",
+            gridTemplateColumns: "1fr auto 1fr",
             alignItems: "center",
-            justifyContent: "space-between",
-            padding: "4px 14px 8px",
+            padding: "6px 14px 10px",
             flexShrink: 0,
             position: "relative",
             zIndex: 2,
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              flex: 1,
-              maxWidth: 240,
-            }}
-          >
-            <Sparkles
-              size={10}
-              style={{ color: "var(--text-tertiary)", opacity: 0.6 }}
-            />
-            <input
-              value={styleHint}
-              onChange={(e) => setStyleHint(e.target.value)}
-              placeholder="Writing style..."
+          {/* Left: keyboard hint */}
+          <div style={{ justifySelf: "start" }}>
+            <span
               style={{
-                flex: 1,
                 fontSize: 11,
-                background: "transparent",
-                border: "none",
-                outline: "none",
+                fontWeight: 600,
                 color: "var(--text-secondary)",
-                fontFamily: "inherit",
+                padding: "5px 10px",
+                borderRadius: 8,
+                background: "var(--glass-control-bg)",
+                border: "1px solid var(--chip-border)",
+                boxShadow: "var(--chip-highlight)",
+                whiteSpace: "nowrap",
               }}
-            />
+            >
+              ⌃⏎
+            </span>
           </div>
 
-          <span
-            style={{
-              fontSize: 10,
-              color: "var(--text-tertiary)",
-              opacity: 0.6,
-            }}
-          >
-            Ctrl+Enter
-          </span>
+          {/* Center: language options (translate mode only) */}
+          <div style={{ justifySelf: "center" }}>
+            {ctx.currentMode === "Translate" && (
+              <LanguageBar
+                sourceLang={ctx.languageConfig.sourceLang.label}
+                targetLang={ctx.languageConfig.targetLang.label}
+                onSwap={handleSwapLanguages}
+                onTargetChange={handleTargetLangChange}
+              />
+            )}
+          </div>
 
+          {/* Right: provider badge */}
           <span
             style={{
-              fontSize: 10,
-              color: "var(--text-tertiary)",
-              fontWeight: 500,
-              padding: "2px 8px",
-              borderRadius: 6,
+              justifySelf: "end",
+              fontSize: 11,
+              color: "var(--text-secondary)",
+              fontWeight: 600,
+              padding: "5px 10px",
+              borderRadius: 8,
               background: "var(--glass-control-bg)",
+              border: "1px solid var(--chip-border)",
+              boxShadow: "var(--chip-highlight)",
+              whiteSpace: "nowrap",
             }}
           >
             {settings.provider?.label ?? "Refiner"}

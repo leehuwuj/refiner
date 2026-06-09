@@ -1,19 +1,34 @@
 import React from "react";
-import type { AppSettings, Provider, PromptSettings, ShortcutWindowType, TextSizeType } from "@/types/settings";
+import type {
+  AppSettings,
+  Provider,
+  PromptSettings,
+  ShortcutWindowType,
+  TextSizeType,
+} from "@/types/settings";
 import { providerMap } from "@/types/settings";
 import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 
 const SettingContext = React.createContext({} as AppSettings);
 
 const SettingProvider = ({ children }: { children: React.ReactNode }) => {
-  const [provider, setProvider] = React.useState<Provider>(providerMap["openai"]);
-  const [model, setModel] = React.useState<string>(providerMap["openai"].models?.[0] || "");
+  const [provider, setProvider] = React.useState<Provider>(
+    providerMap["openai"],
+  );
+  const [model, setModel] = React.useState<string>(
+    providerMap["openai"].models?.[0] || "",
+  );
   const [prompts, setPrompts] = React.useState<PromptSettings>({});
-  const [shortcutWindowType, setShortcutWindowType] = React.useState<ShortcutWindowType>("main");
+  const [shortcutWindowType, setShortcutWindowType] =
+    React.useState<ShortcutWindowType>("main");
   const [apiKey, setApiKey] = React.useState<string>("");
-  const [ollamaEndpoint, setOllamaEndpoint] = React.useState<string>("http://localhost:11434");
+  const [ollamaEndpoint, setOllamaEndpoint] = React.useState<string>(
+    "http://localhost:11434",
+  );
   const [ollamaThinking, setOllamaThinking] = React.useState<boolean>(true);
-  const [preferredLang, setPreferredLang] = React.useState<string>("Tiếng Việt");
+  const [preferredLang, setPreferredLang] =
+    React.useState<string>("Tiếng Việt");
   const [textSize, setTextSize] = React.useState<TextSizeType>("medium");
 
   React.useEffect(() => {
@@ -49,7 +64,9 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         if (saved.shortcut_window_type) {
-          setShortcutWindowType(saved.shortcut_window_type as ShortcutWindowType);
+          setShortcutWindowType(
+            saved.shortcut_window_type as ShortcutWindowType,
+          );
         }
 
         if (saved.api_key) {
@@ -60,7 +77,10 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
           setOllamaEndpoint(saved.ollama_endpoint);
         }
 
-        if (saved.ollama_thinking !== null && saved.ollama_thinking !== undefined) {
+        if (
+          saved.ollama_thinking !== null &&
+          saved.ollama_thinking !== undefined
+        ) {
           setOllamaThinking(saved.ollama_thinking);
         }
 
@@ -85,11 +105,25 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   React.useEffect(() => {
-    const scaleMap: Record<TextSizeType, string> = { small: "0.88", medium: "1", large: "1.14" };
-    document.documentElement.style.zoom = scaleMap[textSize] ?? "1";
+    // Use the webview's native page zoom rather than CSS `zoom` on <html>.
+    // CSS zoom breaks viewport units (100vh/100vw) and the coordinate math
+    // that portalled popovers (Radix Select) rely on, causing overflow and
+    // mispositioned dropdowns. Native zoom adjusts the viewport correctly.
+    const scaleMap: Record<TextSizeType, number> = {
+      small: 0.9,
+      medium: 1,
+      large: 1.1,
+    };
+    const factor = scaleMap[textSize] ?? 1;
+    getCurrentWebview()
+      .setZoom(factor)
+      .catch((err) => console.error("Failed to set webview zoom:", err));
   }, [textSize]);
 
-  const saveSettings = async (inputApiKey?: string, promptsOverride?: PromptSettings) => {
+  const saveSettings = async (
+    inputApiKey?: string,
+    promptsOverride?: PromptSettings,
+  ) => {
     const promptsToSave = promptsOverride ?? prompts;
     try {
       await invoke("save_settings", {
