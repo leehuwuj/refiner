@@ -51,7 +51,13 @@ async function runMode(
 
 const MODES: Mode[] = ["Translate", "Correct", "Refine"];
 
-function ModeTabs({ current, onChange }: { current: Mode; onChange: (mode: Mode) => void }) {
+function ModeTabs({
+  current,
+  onChange,
+}: {
+  current: Mode;
+  onChange: (mode: Mode) => void;
+}) {
   return (
     <div
       style={{
@@ -91,7 +97,8 @@ function ModeTabs({ current, onChange }: { current: Mode; onChange: (mode: Mode)
                   inset: 0,
                   borderRadius: 7,
                   background: "var(--glass-control-hover)",
-                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08), 0 1px 3px rgba(0,0,0,0.2)",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.08), 0 1px 3px rgba(0,0,0,0.2)",
                 }}
                 transition={{ type: "spring", stiffness: 500, damping: 35 }}
               />
@@ -215,7 +222,11 @@ function CopyButton({ text }: { text: string }) {
               <Check size={13} />
             </motion.div>
           ) : (
-            <motion.div key="copy" initial={{ scale: 1 }} animate={{ scale: 1 }}>
+            <motion.div
+              key="copy"
+              initial={{ scale: 1 }}
+              animate={{ scale: 1 }}
+            >
               <Copy size={13} />
             </motion.div>
           )}
@@ -253,7 +264,8 @@ export default function MainView() {
     setLoading(true);
     ctx.setTranslating(true);
     ctx.changeResult({});
-    const modeKey = ctx.currentMode.toLowerCase() as keyof typeof settings.prompts;
+    const modeKey =
+      ctx.currentMode.toLowerCase() as keyof typeof settings.prompts;
     runMode(
       ctx.inputText ?? "",
       ctx.currentMode,
@@ -280,7 +292,9 @@ export default function MainView() {
         let raw = event.payload as string;
         if (raw.includes("text:")) raw = raw.split("text:")[1].trim();
         raw = raw.replace(/^"|"$/g, "").trim();
-        window.dispatchEvent(new CustomEvent("shortcut-main-translate", { detail: raw }));
+        window.dispatchEvent(
+          new CustomEvent("shortcut-main-translate", { detail: raw }),
+        );
       });
     }
   }, []);
@@ -343,7 +357,8 @@ export default function MainView() {
   );
 
   const currentResult =
-    ctx.result?.[ctx.currentMode.toLowerCase() as keyof typeof ctx.result] ?? "";
+    ctx.result?.[ctx.currentMode.toLowerCase() as keyof typeof ctx.result] ??
+    "";
 
   const handleSwapLanguages = () => {
     ctx.changeLangConfig({
@@ -363,7 +378,16 @@ export default function MainView() {
   };
 
   return (
-    <div style={{ width: "100vw", height: "100vh", background: "transparent", display: "flex", borderRadius: "var(--radius-app)", overflow: "hidden" }}>
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        background: "transparent",
+        display: "flex",
+        borderRadius: "var(--radius-app)",
+        overflow: "hidden",
+      }}
+    >
       {/* ── Main surface ── */}
       <div
         style={{
@@ -397,7 +421,8 @@ export default function MainView() {
             left: "8%",
             right: "8%",
             height: 1,
-            background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)",
+            background:
+              "linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)",
             pointerEvents: "none",
             zIndex: 1,
           }}
@@ -420,14 +445,21 @@ export default function MainView() {
 
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             {settings.provider && (
-              <Select value={settings.model} onValueChange={(val) => settings.setModel(val)}>
-                <SelectTrigger compact className="w-auto max-w-[140px] text-[10px]">
+              <Select
+                value={settings.model}
+                onValueChange={(val) => settings.setModel(val)}
+              >
+                <SelectTrigger
+                  compact
+                  className="w-auto max-w-[140px] text-[10px]"
+                >
                   <SelectValue placeholder="Model" />
                 </SelectTrigger>
                 <SelectContent>
                   {[
                     ...(settings.provider.models ?? []),
-                    ...(settings.model && !settings.provider.models?.includes(settings.model)
+                    ...(settings.model &&
+                    !settings.provider.models?.includes(settings.model)
                       ? [settings.model]
                       : []),
                   ].map((m) => (
@@ -462,7 +494,16 @@ export default function MainView() {
         </div>
 
         {/* ── Body ── */}
-        <div style={{ flex: 1, display: "flex", minHeight: 0, gap: 0, position: "relative", zIndex: 2 }}>
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            minHeight: 0,
+            gap: 0,
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
           {/* Input panel */}
           <div
             style={{
@@ -473,14 +514,17 @@ export default function MainView() {
               margin: "0 0 0 10px",
               marginBottom: 8,
               borderRadius: 12,
-              background: "linear-gradient(180deg, var(--glass-panel-bg) 0%, transparent 100%)",
+              background:
+                "linear-gradient(180deg, var(--glass-panel-bg) 0%, transparent 100%)",
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
             }}
           >
             <textarea
               value={ctx.inputText}
               onChange={(e) => ctx.changeInputText(e.target.value)}
-              placeholder={"Paste or type text here...\n\nCtrl+Enter to process."}
+              placeholder={
+                "Paste or type text here...\n\nCtrl+Enter to process."
+              }
               style={{
                 flex: 1,
                 background: "transparent",
@@ -543,7 +587,10 @@ export default function MainView() {
                   initial={{ scale: 0.7, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.7, opacity: 0 }}
-                  onClick={() => { setLoading(false); ctx.setTranslating(false); }}
+                  onClick={() => {
+                    setLoading(false);
+                    ctx.setTranslating(false);
+                  }}
                   style={{
                     width: 30,
                     height: 30,
@@ -599,12 +646,18 @@ export default function MainView() {
               margin: "0 10px 0 0",
               marginBottom: 8,
               borderRadius: 12,
-              background: "linear-gradient(180deg, var(--glass-panel-bg) 0%, transparent 100%)",
+              background:
+                "linear-gradient(180deg, var(--glass-panel-bg) 0%, transparent 100%)",
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
             }}
           >
             <div
-              style={{ flex: 1, padding: "12px 14px", overflowY: "auto", position: "relative" }}
+              style={{
+                flex: 1,
+                padding: "12px 14px",
+                overflowY: "auto",
+                position: "relative",
+              }}
               className="scrollbar-hide"
             >
               {loading ? (
@@ -644,14 +697,16 @@ export default function MainView() {
                     justifyContent: "center",
                   }}
                 >
-                  <p style={{
-                    fontSize: 11,
-                    color: "var(--text-tertiary)",
-                    textAlign: "center",
-                    lineHeight: 1.6,
-                    maxWidth: 160,
-                    margin: 0,
-                  }}>
+                  <p
+                    style={{
+                      fontSize: 11,
+                      color: "var(--text-tertiary)",
+                      textAlign: "center",
+                      lineHeight: 1.6,
+                      maxWidth: 160,
+                      margin: 0,
+                    }}
+                  >
                     Result will appear here
                   </p>
                 </motion.div>
@@ -696,8 +751,19 @@ export default function MainView() {
             zIndex: 2,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, maxWidth: 240 }}>
-            <Sparkles size={10} style={{ color: "var(--text-tertiary)", opacity: 0.6 }} />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              flex: 1,
+              maxWidth: 240,
+            }}
+          >
+            <Sparkles
+              size={10}
+              style={{ color: "var(--text-tertiary)", opacity: 0.6 }}
+            />
             <input
               value={styleHint}
               onChange={(e) => setStyleHint(e.target.value)}
@@ -714,7 +780,13 @@ export default function MainView() {
             />
           </div>
 
-          <span style={{ fontSize: 10, color: "var(--text-tertiary)", opacity: 0.6 }}>
+          <span
+            style={{
+              fontSize: 10,
+              color: "var(--text-tertiary)",
+              opacity: 0.6,
+            }}
+          >
             Ctrl+Enter
           </span>
 

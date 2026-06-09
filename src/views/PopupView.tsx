@@ -143,7 +143,12 @@ function Section({
       <div style={{ flex: 1, overflowY: "auto" }} className="scrollbar-hide">
         <AnimatePresence mode="wait">
           {loading ? (
-            <motion.div key="skeleton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div
+              key="skeleton"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
               <SkeletonText lines={2} />
             </motion.div>
           ) : content ? (
@@ -186,19 +191,38 @@ export default function PopupView() {
 
   const ctxRef = useRef(ctx);
   const settingsRef = useRef(settings);
-  useEffect(() => { ctxRef.current = ctx; }, [ctx]);
-  useEffect(() => { settingsRef.current = settings; }, [settings]);
+  useEffect(() => {
+    ctxRef.current = ctx;
+  }, [ctx]);
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
 
   const runTranslation = useRef((text: string) => {
     const { provider, model, prompts, preferredLang } = settingsRef.current;
     ctxRef.current.setTranslating(true);
     ctxRef.current.changeResult({ translate: "", correct: "" });
 
-    translateText({ text, provider: provider?.name, model, prompt: prompts?.translate, preferredLang })
+    translateText({
+      text,
+      provider: provider?.name,
+      model,
+      prompt: prompts?.translate,
+      preferredLang,
+    })
       .then((translation) => {
         ctxRef.current.changeResult({ translate: translation, correct: "" });
-        return correctText({ text, provider: provider?.name, model, prompt: prompts?.correct, preferredLang }).then((correction) => {
-          ctxRef.current.changeResult({ translate: translation, correct: correction });
+        return correctText({
+          text,
+          provider: provider?.name,
+          model,
+          prompt: prompts?.correct,
+          preferredLang,
+        }).then((correction) => {
+          ctxRef.current.changeResult({
+            translate: translation,
+            correct: correction,
+          });
         });
       })
       .catch((e) => {
@@ -227,22 +251,33 @@ export default function PopupView() {
 
     // On first mount, read pending text from store (handles race condition
     // where the event was emitted before this JS loaded)
-    load("store.bin", { autoSave: false }).then((store) => {
-      store.get<string>("POPUP_PENDING_TEXT").then((text) => {
-        if (text) {
-          store.delete("POPUP_PENDING_TEXT");
-          store.save();
-          runTranslation.current(text);
-        }
-      });
-    }).catch(console.error);
+    load("store.bin", { autoSave: false })
+      .then((store) => {
+        store.get<string>("POPUP_PENDING_TEXT").then((text) => {
+          if (text) {
+            store.delete("POPUP_PENDING_TEXT");
+            store.save();
+            runTranslation.current(text);
+          }
+        });
+      })
+      .catch(console.error);
   }, []);
 
   const translateLoading = !!ctx.translating && !ctx.result?.translate;
   const correctLoading = !!ctx.translating && !ctx.result?.correct;
 
   return (
-    <div style={{ width: "100vw", height: "100vh", background: "transparent", display: "flex", borderRadius: "var(--radius-app)", overflow: "hidden" }}>
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        background: "transparent",
+        display: "flex",
+        borderRadius: "var(--radius-app)",
+        overflow: "hidden",
+      }}
+    >
       {/* Card */}
       <div
         style={{
@@ -277,7 +312,8 @@ export default function PopupView() {
             left: "12%",
             right: "12%",
             height: 1,
-            background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent)",
+            background:
+              "linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent)",
             pointerEvents: "none",
             zIndex: 1,
           }}
@@ -295,7 +331,16 @@ export default function PopupView() {
           }}
         />
 
-        <div style={{ position: "relative", zIndex: 2, flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
+        <div
+          style={{
+            position: "relative",
+            zIndex: 2,
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            minHeight: 0,
+          }}
+        >
           <Section
             label="Translation"
             content={ctx.result?.translate || ""}
@@ -303,7 +348,14 @@ export default function PopupView() {
           />
 
           {/* Subtle divider */}
-          <div style={{ margin: "0 12px", height: 1, background: "var(--glass-border)", flexShrink: 0 }} />
+          <div
+            style={{
+              margin: "0 12px",
+              height: 1,
+              background: "var(--glass-border)",
+              flexShrink: 0,
+            }}
+          />
 
           <Section
             label="Correction"
@@ -326,7 +378,7 @@ export default function PopupView() {
           <button
             onClick={openMainWindow}
             title="Open Refiner"
-            className="hover:text-[var(--text-primary)] hover:bg-[var(--glass-control-bg)]"
+            className="hover:bg-[var(--glass-control-bg)] hover:text-[var(--text-primary)]"
             style={{
               padding: "3px 5px",
               borderRadius: 6,
