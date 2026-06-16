@@ -23,10 +23,8 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
   const [shortcutWindowType, setShortcutWindowType] =
     React.useState<ShortcutWindowType>("main");
   const [apiKey, setApiKey] = React.useState<string>("");
-  const [ollamaEndpoint, setOllamaEndpoint] = React.useState<string>(
-    "http://localhost:11434",
-  );
-  const [ollamaThinking, setOllamaThinking] = React.useState<boolean>(true);
+  const [modelUrl, setModelUrl] = React.useState<string>("");
+  const [thinking, setThinking] = React.useState<boolean>(true);
   const [preferredLang, setPreferredLang] =
     React.useState<string>("Tiếng Việt");
   const [textSize, setTextSize] = React.useState<TextSizeType>("medium");
@@ -39,8 +37,8 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
           model: string | null;
           api_key: string | null;
           shortcut_window_type: string | null;
-          ollama_endpoint: string | null;
-          ollama_thinking: boolean | null;
+          model_url: string | null;
+          thinking: boolean | null;
           prompt_translate: string | null;
           prompt_correct: string | null;
           prompt_refine: string | null;
@@ -73,15 +71,12 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
           setApiKey(saved.api_key);
         }
 
-        if (saved.ollama_endpoint) {
-          setOllamaEndpoint(saved.ollama_endpoint);
+        if (saved.model_url) {
+          setModelUrl(saved.model_url);
         }
 
-        if (
-          saved.ollama_thinking !== null &&
-          saved.ollama_thinking !== undefined
-        ) {
-          setOllamaThinking(saved.ollama_thinking);
+        if (saved.thinking !== null && saved.thinking !== undefined) {
+          setThinking(saved.thinking);
         }
 
         setPrompts({
@@ -131,8 +126,8 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
         shortcutWindowType: shortcutWindowType,
         provider: provider.name,
         model: model,
-        ollamaEndpoint: ollamaEndpoint ?? null,
-        ollamaThinking: ollamaThinking,
+        modelUrl: modelUrl || null,
+        thinking: thinking,
         promptTranslate: promptsToSave.translate ?? "",
         promptCorrect: promptsToSave.correct ?? "",
         promptRefine: promptsToSave.refine ?? "",
@@ -159,15 +154,15 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
         prompts,
         shortcutWindowType,
         apiKey,
-        ollamaEndpoint,
-        ollamaThinking,
+        modelUrl,
+        thinking,
         preferredLang,
         setProvider,
         setModel,
         setPrompts,
         setShortcutWindowType,
-        setOllamaEndpoint,
-        setOllamaThinking,
+        setModelUrl,
+        setThinking,
         setPreferredLang,
         textSize,
         setTextSize,

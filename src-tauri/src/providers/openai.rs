@@ -1,18 +1,6 @@
 use crate::providers::base::Provider;
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize)]
-struct OpenAIChatCompletionRequest<'a> {
-    model: &'a str,
-    messages: Vec<OpenAIMessage<'a>>,
-}
-
-#[derive(Serialize)]
-struct OpenAIMessage<'a> {
-    role: &'a str,
-    content: &'a str,
-}
+use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 struct OpenAIChatCompletionResponse {
@@ -33,35 +21,44 @@ pub struct OpenAIProvider {
     client: Client,
     api_key: String,
     model: String,
+    base_url: String,
+    thinking: Option<bool>,
 }
 
 impl OpenAIProvider {
-    pub fn new(api_key: Option<&str>, model: Option<&str>) -> Self {
+    pub fn new(api_key: Option<&str>, model: Option<&str>, base_url: Option<String>, thinking: Option<bool>) -> Self {
         Self {
             client: Client::new(),
             api_key: api_key.unwrap_or("").to_string(),
             model: model.unwrap_or("gpt-4.1-nano").to_string(),
+            base_url: base_url.unwrap_or_else(|| "https://api.openai.com/v1".to_string()),
+            thinking,
         }
     }
 }
 
 impl Provider for OpenAIProvider {
     async fn completion(&self, prompt: &str) -> Result<String, String> {
-        let url = "https://api.openai.com/v1/chat/completions";
-        
-        let messages = vec![OpenAIMessage {
-            role: "user",
-            content: prompt,
-        }];
+        let url = format!("{}/chat/completions", self.base_url);
 
-        let body = OpenAIChatCompletionRequest {
-            model: &self.model,
-            messages,
-        };
+        let mut body = serde_json::json!({
+            "model": self.model,
+            "messages": [{ "role": "user", "content": prompt }]
+        });
+
+        if self.thinking == Some(false) {
+            if self.base_url.contains("api.openai.com") {
+                // Official OpenAI: disable reasoning on o-series models
+                body["reasoning"] = serde_json::json!({ "effort": "none" });
+            } else {
+                // llama.cpp and other OpenAI-compatible servers
+                body["chat_template_kwargs"] = serde_json::json!({ "enable_thinking": false });
+            }
+        }
 
         let res = self
             .client
-            .post(url)
+            .post(&url)
             .bearer_auth(&self.api_key)
             .json(&body)
             .send()

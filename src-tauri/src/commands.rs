@@ -10,7 +10,7 @@ const DEFAULT_CORRECTION_PROMPT: &str =
     "You are an expert in grammar. Correct the grammar of the following text in {target_lang}. Provide only the corrected text, without any additional explanations or formatting.";
 
 const DEFAULT_REFINE_PROMPT: &str =
-    "You are an expert editor. Rewrite the following text in a more conversational style, in {target_lang}. Provide only the rewritten text, without any additional explanations or formatting.";
+    "You are an expert editor. Rewrite the following text in a more conversational style, in {target_lang}. Output a single rewrite only — no options, no alternatives, no explanations, no labels, no formatting.";
 
 // Helper function to trim thinking blocks from model responses
 fn trim_thinking_blocks(response: &str) -> String {
@@ -74,8 +74,8 @@ pub struct AllSettings {
     pub model: Option<String>,
     pub api_key: Option<String>,
     pub shortcut_window_type: Option<String>,
-    pub ollama_endpoint: Option<String>,
-    pub ollama_thinking: Option<bool>,
+    pub model_url: Option<String>,
+    pub thinking: Option<bool>,
     pub prompt_translate: Option<String>,
     pub prompt_correct: Option<String>,
     pub prompt_refine: Option<String>,
@@ -91,8 +91,12 @@ pub async fn get_settings(app_handle: tauri::AppHandle) -> Result<AllSettings, S
         model: store.get("MODEL").and_then(|v| v.as_str().map(|s| s.to_string())),
         api_key: store.get("LLM_API_KEY").and_then(|v| v.as_str().map(|s| s.to_string())),
         shortcut_window_type: store.get("SHORTCUT_WINDOW_TYPE").and_then(|v| v.as_str().map(|s| s.to_string())),
-        ollama_endpoint: store.get("OLLAMA_ENDPOINT").and_then(|v| v.as_str().map(|s| s.to_string())),
-        ollama_thinking: store.get("OLLAMA_THINKING").and_then(|v| v.as_bool()),
+        model_url: store.get("MODEL_URL")
+            .or_else(|| store.get("OLLAMA_ENDPOINT"))
+            .and_then(|v| v.as_str().map(|s| s.to_string())),
+        thinking: store.get("THINKING")
+            .or_else(|| store.get("OLLAMA_THINKING"))
+            .and_then(|v| v.as_bool()),
         prompt_translate: store.get("PROMPT_TRANSLATE").and_then(|v| v.as_str().map(|s| s.to_string())),
         prompt_correct: store.get("PROMPT_CORRECT").and_then(|v| v.as_str().map(|s| s.to_string())),
         prompt_refine: store.get("PROMPT_REFINE").and_then(|v| v.as_str().map(|s| s.to_string())),
@@ -225,8 +229,8 @@ pub async fn save_settings(
     shortcut_window_type: Option<String>,
     provider: Option<String>,
     model: Option<String>,
-    ollama_endpoint: Option<String>,
-    ollama_thinking: Option<bool>,
+    model_url: Option<String>,
+    thinking: Option<bool>,
     prompt_translate: Option<String>,
     prompt_correct: Option<String>,
     prompt_refine: Option<String>,
@@ -259,14 +263,14 @@ pub async fn save_settings(
         }
     }
 
-    if let Some(endpoint) = ollama_endpoint {
-        if !endpoint.is_empty() {
-            store.set("OLLAMA_ENDPOINT", endpoint);
+    if let Some(url) = model_url {
+        if !url.is_empty() {
+            store.set("MODEL_URL", url);
         }
     }
 
-    if let Some(thinking) = ollama_thinking {
-        store.set("OLLAMA_THINKING", thinking);
+    if let Some(thinking) = thinking {
+        store.set("THINKING", thinking);
     }
 
     // Per-mode prompts: save if non-empty, delete key to reset to default

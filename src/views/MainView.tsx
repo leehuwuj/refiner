@@ -234,6 +234,13 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+function truncateMiddle(str: string, max = 22): string {
+  if (str.length <= max) return str;
+  const head = Math.ceil((max - 1) / 2);
+  const tail = Math.floor((max - 1) / 2);
+  return str.slice(0, head) + "…" + str.slice(-tail);
+}
+
 // ── Main View ─────────────────────────────────────────────────────────────────
 
 export default function MainView() {
@@ -441,31 +448,24 @@ export default function MainView() {
           <ModeTabs current={ctx.currentMode} onChange={handleModeChange} />
 
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            {settings.provider && (
-              <Select
-                value={settings.model}
-                onValueChange={(val) => settings.setModel(val)}
+            {settings.model && (
+              <span
+                style={{
+                  fontSize: 10,
+                  color: "var(--text-secondary)",
+                  fontWeight: 600,
+                  padding: "5px 10px",
+                  borderRadius: 8,
+                  background: "var(--glass-control-bg)",
+                  border: "1px solid var(--chip-border)",
+                  boxShadow: "var(--chip-highlight)",
+                  whiteSpace: "nowrap",
+                  display: "inline-block",
+                }}
+                title={settings.model}
               >
-                <SelectTrigger
-                  compact
-                  className="w-auto max-w-[140px] text-[10px]"
-                >
-                  <SelectValue placeholder="Model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[
-                    ...(settings.provider.models ?? []),
-                    ...(settings.model &&
-                    !settings.provider.models?.includes(settings.model)
-                      ? [settings.model]
-                      : []),
-                  ].map((m) => (
-                    <SelectItem key={m} value={m} className="text-xs">
-                      {m}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {truncateMiddle(settings.model)}
+              </span>
             )}
 
             <Tooltip content="Settings">

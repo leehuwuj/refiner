@@ -41,8 +41,8 @@ export interface AppSettings {
   prompts?: PromptSettings;
   shortcutWindowType?: ShortcutWindowType;
   apiKey?: string;
-  ollamaEndpoint?: string;
-  ollamaThinking?: boolean;
+  modelUrl?: string;
+  thinking?: boolean;
   preferredLang?: string;
   textSize?: TextSizeType;
 
@@ -50,8 +50,8 @@ export interface AppSettings {
   setModel: (model: string) => void;
   setPrompts: (prompts: PromptSettings) => void;
   setShortcutWindowType: (type: ShortcutWindowType) => void;
-  setOllamaEndpoint: (endpoint: string) => void;
-  setOllamaThinking: (thinking: boolean) => void;
+  setModelUrl: (url: string) => void;
+  setThinking: (thinking: boolean) => void;
   setPreferredLang: (lang: string) => void;
   setTextSize: (size: TextSizeType) => void;
   saveSettings: (apiKey?: string, prompts?: PromptSettings) => Promise<boolean>;

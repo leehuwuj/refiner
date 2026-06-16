@@ -80,7 +80,7 @@ const DEFAULT_PROMPTS = {
   correct:
     "You are an expert in grammar. Correct the grammar of the following text in {target_lang}. Provide only the corrected text, without any additional explanations or formatting.",
   refine:
-    "You are an expert editor. Rewrite the following text in a more conversational style, in {target_lang}. Provide only the rewritten text, without any additional explanations or formatting.",
+    "You are an expert editor. Rewrite the following text in a more conversational style, in {target_lang}. Output a single rewrite only — no options, no alternatives, no explanations, no labels, no formatting.",
 };
 
 export default function SettingsView() {
@@ -92,6 +92,7 @@ export default function SettingsView() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
 
   const isOllama = s.provider?.name === "ollama";
+  const defaultModelUrl = isOllama ? "http://localhost:11434" : "";
 
   useEffect(() => {
     if (s.apiKey) setLocalApiKey(s.apiKey);
@@ -179,42 +180,25 @@ export default function SettingsView() {
             </Select>
           </Row>
 
-          {isOllama ? (
-            <Input
-              label="Model"
-              value={s.model ?? ""}
-              onChange={(e) => s.setModel(e.target.value)}
-              placeholder="e.g. gemma3, llama3:8b"
-              description={`Suggestions: ${providerMap["ollama"].models?.join(", ")}`}
-            />
-          ) : (
-            <Row label="Model">
-              <Select value={s.model} onValueChange={(m) => s.setModel(m)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {s.provider?.models?.map((m) => (
-                    <SelectItem key={m} value={m}>
-                      {m}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Row>
-          )}
+          <Input
+            label="Model"
+            value={s.model ?? ""}
+            onChange={(e) => s.setModel(e.target.value)}
+            placeholder="Enter model name"
+            description={`Suggestions: ${s.provider?.models?.join(", ")}`}
+          />
         </Section>
 
         {/* API / Endpoint */}
         <Section icon={Key} title="Authentication">
-          {isOllama ? (
-            <Input
-              label="Ollama Endpoint"
-              value={s.ollamaEndpoint ?? "http://localhost:11434"}
-              onChange={(e) => s.setOllamaEndpoint(e.target.value)}
-              placeholder="http://localhost:11434"
-            />
-          ) : (
+          <Input
+            label="Base URL"
+            value={s.modelUrl ?? defaultModelUrl}
+            onChange={(e) => s.setModelUrl(e.target.value)}
+            placeholder={isOllama ? "http://localhost:11434" : "Leave empty to use default"}
+            description={isOllama ? undefined : "Override the default API endpoint (e.g. for proxies or compatible APIs)"}
+          />
+          {!isOllama && (
             <Input
               label="API Key"
               type="password"
@@ -225,20 +209,18 @@ export default function SettingsView() {
           )}
         </Section>
 
-        {/* Ollama-specific */}
-        {isOllama && (
-          <Section icon={Zap} title="Inference">
-            <Row
-              label="Enable Thinking"
-              description="Extended reasoning for models like qwen3"
-            >
-              <Switch
-                checked={s.ollamaThinking ?? true}
-                onCheckedChange={(v) => s.setOllamaThinking(v)}
-              />
-            </Row>
-          </Section>
-        )}
+        {/* Inference */}
+        <Section icon={Zap} title="Inference">
+          <Row
+            label="Enable Thinking"
+            description="Extended reasoning for models that support it"
+          >
+            <Switch
+              checked={s.thinking ?? true}
+              onCheckedChange={(v) => s.setThinking(v)}
+            />
+          </Row>
+        </Section>
 
         {/* Shortcuts */}
         <Section icon={Monitor} title="Shortcut Behavior">
