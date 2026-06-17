@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import { useContext, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -10,6 +9,8 @@ import { Copy, Check, ExternalLink, Languages, Sparkles } from "lucide-react";
 import { TranslateContext } from "@/providers/translate";
 import { SettingContext } from "@/providers/settings";
 import { SkeletonText } from "@/components/ui/skeleton";
+
+type Tab = "translate" | "correct";
 
 async function translateText(options: {
   text: string;
@@ -70,27 +71,24 @@ function MiniCopy({ text }: { text: string }) {
   return (
     <button
       onClick={copy}
-      className="hover:text-[var(--text-primary)]"
-      style={{
-        padding: "3px 5px",
-        borderRadius: 6,
-        border: "none",
-        background: "transparent",
-        color: "var(--text-tertiary)",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        transition: "color 0.15s",
-      }}
+      className="lg-chip"
+      title={copied ? "Copied!" : "Copy"}
+      style={{ width: 24, height: 24, borderRadius: 8, flexShrink: 0 }}
     >
       <AnimatePresence mode="wait">
         {copied ? (
-          <motion.div key="check" initial={{ scale: 0 }} animate={{ scale: 1 }}>
-            <Check size={10} />
+          <motion.div
+            key="check"
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.5, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            <Check size={12} />
           </motion.div>
         ) : (
           <motion.div key="copy">
-            <Copy size={10} />
+            <Copy size={12} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -98,9 +96,88 @@ function MiniCopy({ text }: { text: string }) {
   );
 }
 
-// ── Section ───────────────────────────────────────────────────────────────────
+// ── Mode Tabs (icon, sliding pill — matches MainView) ───────────────────────────
 
-function Section({
+const TABS: { id: Tab; icon: typeof Languages; label: string }[] = [
+  { id: "translate", icon: Languages, label: "Translate" },
+  { id: "correct", icon: Sparkles, label: "Correct" },
+];
+
+function ModeTabs({
+  current,
+  onChange,
+}: {
+  current: Tab;
+  onChange: (tab: Tab) => void;
+}) {
+  return (
+    <div
+      role="tablist"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 2,
+        borderRadius: 12,
+        padding: 3,
+        background: "var(--glass-control-bg)",
+        border: "1px solid var(--chip-border)",
+        boxShadow: "var(--chip-highlight)",
+      }}
+    >
+      {TABS.map(({ id, icon: Icon, label }) => {
+        const active = id === current;
+        return (
+          <button
+            key={id}
+            role="tab"
+            aria-selected={active}
+            title={label}
+            onClick={() => onChange(id)}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                onChange(id === "translate" ? "correct" : "translate");
+              }
+            }}
+            style={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "5px 12px",
+              borderRadius: 8,
+              border: "none",
+              cursor: "pointer",
+              background: "transparent",
+              color: active ? "var(--text-primary)" : "var(--text-tertiary)",
+              transition: "color 0.2s",
+            }}
+          >
+            {active && (
+              <motion.div
+                layoutId="popup-mode-pill"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  borderRadius: 8,
+                  background: "var(--glass-control-active)",
+                  border: "1px solid var(--chip-border)",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.14), 0 1px 4px rgba(0,0,0,0.25)",
+                }}
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+              />
+            )}
+            <Icon size={15} style={{ position: "relative", zIndex: 1 }} />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Result Panel ────────────────────────────────────────────────────────────────
+
+function ResultPanel({
   label,
   content,
   loading,
@@ -116,22 +193,29 @@ function Section({
         display: "flex",
         flexDirection: "column",
         minHeight: 0,
-        padding: "8px 12px 6px",
+        margin: "0 10px 8px",
+        borderRadius: 14,
+        background:
+          "linear-gradient(180deg, var(--glass-panel-bg) 0%, transparent 100%)",
+        border: "1px solid var(--glass-border)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
       }}
     >
+      {/* Panel header */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: 4,
+          padding: "8px 10px 4px",
+          flexShrink: 0,
         }}
       >
         <span
           style={{
             fontSize: 9,
-            fontWeight: 600,
-            letterSpacing: "0.06em",
+            fontWeight: 700,
+            letterSpacing: "0.07em",
             textTransform: "uppercase",
             color: "var(--text-tertiary)",
           }}
@@ -141,7 +225,11 @@ function Section({
         {content && <MiniCopy text={content} />}
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto" }} className="scrollbar-hide">
+      {/* Panel body */}
+      <div
+        style={{ flex: 1, overflowY: "auto", padding: "0 12px 10px" }}
+        className="scrollbar-hide"
+      >
         <AnimatePresence mode="wait">
           {loading ? (
             <motion.div
@@ -150,7 +238,7 @@ function Section({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <SkeletonText lines={2} />
+              <SkeletonText lines={3} />
             </motion.div>
           ) : content ? (
             <motion.p
@@ -159,8 +247,9 @@ function Section({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.15 }}
               style={{
-                fontSize: 11,
-                lineHeight: 1.6,
+                fontSize: 13,
+                fontWeight: 600,
+                lineHeight: 1.55,
                 color: "var(--text-primary)",
                 margin: 0,
               }}
@@ -168,66 +257,30 @@ function Section({
               {content}
             </motion.p>
           ) : (
-            <motion.p
+            <motion.div
               key="empty"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              style={{ fontSize: 10, color: "var(--text-tertiary)", margin: 0 }}
+              style={{
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             >
-              —
-            </motion.p>
+              <p
+                style={{
+                  fontSize: 11,
+                  fontWeight: 500,
+                  color: "var(--text-tertiary)",
+                  margin: 0,
+                }}
+              >
+                Waiting for selection…
+              </p>
+            </motion.div>
           )}
         </AnimatePresence>
-      </div>
-    </div>
-  );
-}
-
-// ── Mode Switcher ─────────────────────────────────────────────────────────────
-function ModeSwitcher({
-  activeTab,
-  setActiveTab,
-}: {
-  activeTab: "translate" | "correct";
-  setActiveTab: (tab: "translate" | "correct") => void;
-}) {
-  return (
-    <div role="tablist" className="flex justify-center p-[8px_4px_4px] relative z-10">
-      <div className="flex bg-[var(--glass-control-bg)] rounded-lg p-[3px] border border-[var(--glass-border)] backdrop-blur-[10px]">
-        <button
-          role="tab"
-          aria-selected={activeTab === "translate"}
-          onClick={() => setActiveTab("translate")}
-          onKeyDown={(e) => {
-            if (e.key === 'ArrowRight') setActiveTab('correct');
-            if (e.key === 'ArrowLeft') setActiveTab('translate');
-          }}
-          className={cn(
-            "p-[4px_8px] rounded-md border-none transition-all duration-200 flex items-center",
-            activeTab === "translate" 
-              ? "bg-[var(--glass-control-hover)] text-white" 
-              : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
-          )}
-        >
-          <Languages size={16} />
-        </button>
-        <button
-          role="tab"
-          aria-selected={activeTab === "correct"}
-          onClick={() => setActiveTab("correct")}
-          onKeyDown={(e) => {
-            if (e.key === 'ArrowRight') setActiveTab('translate');
-            if (e.key === 'ArrowLeft') setActiveTab('correct');
-          }}
-          className={cn(
-            "p-[4px_8px] rounded-md border-none transition-all duration-200 flex items-center",
-            activeTab === "correct" 
-              ? "bg-[var(--glass-control-hover)] text-white" 
-              : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
-          )}
-        >
-          <Sparkles size={16} />
-        </button>
       </div>
     </div>
   );
@@ -238,7 +291,7 @@ function ModeSwitcher({
 export default function PopupView() {
   const ctx = useContext(TranslateContext);
   const settings = useContext(SettingContext);
-  const [activeTab, setActiveTab] = useState<'translate' | 'correct'>('translate');
+  const [activeTab, setActiveTab] = useState<Tab>("translate");
   const isMounted = useRef(false);
 
   const ctxRef = useRef(ctx);
@@ -320,7 +373,17 @@ export default function PopupView() {
   const correctLoading = !!ctx.translating && !ctx.result?.correct;
 
   return (
-    <div style={{ width: "100%", height: "100%", background: "transparent", borderRadius: "var(--radius-app)", overflow: "hidden" }}>
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        background: "transparent",
+        display: "flex",
+        borderRadius: "var(--radius-app)",
+        overflow: "hidden",
+      }}
+    >
+      {/* ── Glass surface ── */}
       <div
         style={{
           flex: 1,
@@ -335,89 +398,100 @@ export default function PopupView() {
           borderRadius: "var(--radius-app)",
         }}
       >
-        {/* Noise */}
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "var(--noise-url)", opacity: 0.03, pointerEvents: "none", zIndex: 0 }} />
-        {/* Specular highlight */}
-        <div style={{ position: "absolute", top: 0, left: "12%", right: "12%", height: 1, background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent)", pointerEvents: "none", zIndex: 1 }} />
+        {/* Noise texture overlay */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: "var(--noise-url)",
+            opacity: 0.03,
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        />
+        {/* Specular highlight — top edge */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: "10%",
+            right: "10%",
+            height: 1,
+            background:
+              "linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)",
+            pointerEvents: "none",
+            zIndex: 1,
+          }}
+        />
 
-        {/* Drag handle */}
-        <div data-tauri-drag-region style={{ height: 6, flexShrink: 0, cursor: "grab", position: "relative", zIndex: 2 }} />
+        {/* ── Header ── */}
+        <div
+          data-tauri-drag-region
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "8px 10px 6px",
+            flexShrink: 0,
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
+          <ModeTabs current={activeTab} onChange={setActiveTab} />
 
-        {/* Mode Switcher */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 4px 4px', position: 'relative', zIndex: 10 }}>
-          <div style={{ display: 'flex', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px', padding: '3px', border: '1px solid rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)' }}>
-            <button
-              onClick={() => setActiveTab('translate')}
-              style={{
-                padding: '4px 8px',
-                borderRadius: '6px',
-                border: 'none',
-                background: activeTab === 'translate' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                color: activeTab === 'translate' ? '#fff' : 'var(--text-tertiary)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              <Languages size={16} />
-            </button>
-            <button
-              onClick={() => setActiveTab('correct')}
-              style={{
-                padding: '4px 8px',
-                borderRadius: '6px',
-                border: 'none',
-                background: activeTab === 'correct' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                color: activeTab === 'correct' ? '#fff' : 'var(--text-tertiary)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              <Sparkles size={16} />
-            </button>
-          </div>
+          <button
+            onClick={openMainWindow}
+            title="Open Refiner"
+            className="lg-chip"
+            style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0 }}
+          >
+            <ExternalLink size={13} />
+          </button>
         </div>
 
-        {/* Content Area */}
-        <div style={{ flex: 1, overflowY: "auto", position: "relative", zIndex: 2 }} className="scrollbar-hide">
+        {/* ── Content ── */}
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            minHeight: 0,
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
           <AnimatePresence mode="wait">
-            {activeTab === 'translate' ? (
+            {activeTab === "translate" ? (
               <motion.div
                 key="translate"
-                initial={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, x: 8 }}
+                transition={{ duration: 0.18 }}
+                style={{ flex: 1, display: "flex", minHeight: 0 }}
               >
-                <Section label="Translation" content={ctx.result?.translate || ""} loading={translateLoading} />
+                <ResultPanel
+                  label="Translation"
+                  content={ctx.result?.translate || ""}
+                  loading={translateLoading}
+                />
               </motion.div>
             ) : (
               <motion.div
                 key="correct"
-                initial={{ opacity: 0, x: 10 }}
+                initial={{ opacity: 0, x: 8 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, x: -8 }}
+                transition={{ duration: 0.18 }}
+                style={{ flex: 1, display: "flex", minHeight: 0 }}
               >
-                <Section label="Correction" content={ctx.result?.correct || ""} loading={correctLoading} />
+                <ResultPanel
+                  label="Correction"
+                  content={ctx.result?.correct || ""}
+                  loading={correctLoading}
+                />
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-
-        {/* Footer */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", padding: "2px 10px 6px", position: "relative", zIndex: 2 }}>
-          <button
-            onClick={openMainWindow}
-            title="Open Refiner"
-            className="hover:bg-[var(--glass-control-bg)] hover:text-[var(--text-primary)]"
-            style={{ padding: "3px 5px", borderRadius: 6, border: "none", background: "transparent", color: "var(--text-tertiary)", cursor: "pointer", display: "flex", alignItems: "center", transition: "all 0.15s" }}
-          >
-            <ExternalLink size={10} />
-          </button>
         </div>
       </div>
     </div>
