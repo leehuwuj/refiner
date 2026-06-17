@@ -1,10 +1,11 @@
+import { cn } from "@/lib/utils";
 import { useContext, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { load } from "@tauri-apps/plugin-store";
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy, Check, ExternalLink } from "lucide-react";
+import { Copy, Check, ExternalLink, Languages, Sparkles } from "lucide-react";
 
 import { TranslateContext } from "@/providers/translate";
 import { SettingContext } from "@/providers/settings";
@@ -182,11 +183,62 @@ function Section({
   );
 }
 
+// ── Mode Switcher ─────────────────────────────────────────────────────────────
+function ModeSwitcher({
+  activeTab,
+  setActiveTab,
+}: {
+  activeTab: "translate" | "correct";
+  setActiveTab: (tab: "translate" | "correct") => void;
+}) {
+  return (
+    <div role="tablist" className="flex justify-center p-[8px_4px_4px] relative z-10">
+      <div className="flex bg-[var(--glass-control-bg)] rounded-lg p-[3px] border border-[var(--glass-border)] backdrop-blur-[10px]">
+        <button
+          role="tab"
+          aria-selected={activeTab === "translate"}
+          onClick={() => setActiveTab("translate")}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowRight') setActiveTab('correct');
+            if (e.key === 'ArrowLeft') setActiveTab('translate');
+          }}
+          className={cn(
+            "p-[4px_8px] rounded-md border-none transition-all duration-200 flex items-center",
+            activeTab === "translate" 
+              ? "bg-[var(--glass-control-hover)] text-white" 
+              : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+          )}
+        >
+          <Languages size={16} />
+        </button>
+        <button
+          role="tab"
+          aria-selected={activeTab === "correct"}
+          onClick={() => setActiveTab("correct")}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowRight') setActiveTab('translate');
+            if (e.key === 'ArrowLeft') setActiveTab('correct');
+          }}
+          className={cn(
+            "p-[4px_8px] rounded-md border-none transition-all duration-200 flex items-center",
+            activeTab === "correct" 
+              ? "bg-[var(--glass-control-hover)] text-white" 
+              : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+          )}
+        >
+          <Sparkles size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Popup View ────────────────────────────────────────────────────────────────
 
 export default function PopupView() {
   const ctx = useContext(TranslateContext);
   const settings = useContext(SettingContext);
+  const [activeTab, setActiveTab] = useState<'translate' | 'correct'>('translate');
   const isMounted = useRef(false);
 
   const ctxRef = useRef(ctx);
@@ -268,17 +320,7 @@ export default function PopupView() {
   const correctLoading = !!ctx.translating && !ctx.result?.correct;
 
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        background: "transparent",
-        display: "flex",
-        borderRadius: "var(--radius-app)",
-        overflow: "hidden",
-      }}
-    >
-      {/* Card */}
+    <div style={{ width: "100%", height: "100%", background: "transparent", borderRadius: "var(--radius-app)", overflow: "hidden" }}>
       <div
         style={{
           flex: 1,
@@ -294,102 +336,85 @@ export default function PopupView() {
         }}
       >
         {/* Noise */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage: "var(--noise-url)",
-            opacity: 0.03,
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "var(--noise-url)", opacity: 0.03, pointerEvents: "none", zIndex: 0 }} />
         {/* Specular highlight */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: "12%",
-            right: "12%",
-            height: 1,
-            background:
-              "linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent)",
-            pointerEvents: "none",
-            zIndex: 1,
-          }}
-        />
+        <div style={{ position: "absolute", top: 0, left: "12%", right: "12%", height: 1, background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent)", pointerEvents: "none", zIndex: 1 }} />
 
         {/* Drag handle */}
-        <div
-          data-tauri-drag-region
-          style={{
-            height: 6,
-            flexShrink: 0,
-            cursor: "grab",
-            position: "relative",
-            zIndex: 2,
-          }}
-        />
+        <div data-tauri-drag-region style={{ height: 6, flexShrink: 0, cursor: "grab", position: "relative", zIndex: 2 }} />
 
-        <div
-          style={{
-            position: "relative",
-            zIndex: 2,
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            minHeight: 0,
-          }}
-        >
-          <Section
-            label="Translation"
-            content={ctx.result?.translate || ""}
-            loading={translateLoading}
-          />
+        {/* Mode Switcher */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 4px 4px', position: 'relative', zIndex: 10 }}>
+          <div style={{ display: 'flex', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px', padding: '3px', border: '1px solid rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)' }}>
+            <button
+              onClick={() => setActiveTab('translate')}
+              style={{
+                padding: '4px 8px',
+                borderRadius: '6px',
+                border: 'none',
+                background: activeTab === 'translate' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                color: activeTab === 'translate' ? '#fff' : 'var(--text-tertiary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <Languages size={16} />
+            </button>
+            <button
+              onClick={() => setActiveTab('correct')}
+              style={{
+                padding: '4px 8px',
+                borderRadius: '6px',
+                border: 'none',
+                background: activeTab === 'correct' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                color: activeTab === 'correct' ? '#fff' : 'var(--text-tertiary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <Sparkles size={16} />
+            </button>
+          </div>
+        </div>
 
-          {/* Subtle divider */}
-          <div
-            style={{
-              margin: "0 12px",
-              height: 1,
-              background: "var(--glass-border)",
-              flexShrink: 0,
-            }}
-          />
-
-          <Section
-            label="Correction"
-            content={ctx.result?.correct || ""}
-            loading={correctLoading}
-          />
+        {/* Content Area */}
+        <div style={{ flex: 1, overflowY: "auto", position: "relative", zIndex: 2 }} className="scrollbar-hide">
+          <AnimatePresence mode="wait">
+            {activeTab === 'translate' ? (
+              <motion.div
+                key="translate"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Section label="Translation" content={ctx.result?.translate || ""} loading={translateLoading} />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="correct"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Section label="Correction" content={ctx.result?.correct || ""} loading={correctLoading} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Footer */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            padding: "2px 10px 6px",
-            position: "relative",
-            zIndex: 2,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", padding: "2px 10px 6px", position: "relative", zIndex: 2 }}>
           <button
             onClick={openMainWindow}
             title="Open Refiner"
             className="hover:bg-[var(--glass-control-bg)] hover:text-[var(--text-primary)]"
-            style={{
-              padding: "3px 5px",
-              borderRadius: 6,
-              border: "none",
-              background: "transparent",
-              color: "var(--text-tertiary)",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              transition: "all 0.15s",
-            }}
+            style={{ padding: "3px 5px", borderRadius: 6, border: "none", background: "transparent", color: "var(--text-tertiary)", cursor: "pointer", display: "flex", alignItems: "center", transition: "all 0.15s" }}
           >
             <ExternalLink size={10} />
           </button>
