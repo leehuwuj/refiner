@@ -10,8 +10,6 @@
   </tr>
 </table>
 
-***Note***: This app is still in development
-
 Features:
  - [x] Translation: Translate inputted text to a target language.
  - [x] Local LLM: Use Ollama as local LLM (offline mode).
@@ -19,15 +17,17 @@ Features:
  - [x] Hot key: Quickly translate a selected text via shortcut key (Currently is: `Cmd + E`)
  - [] Linux support.
  - [x] Windows support.
- - [WIP] Custom prompt: Adjust the translation or text refining in different style.
-
+ - [x] Custom prompt: Adjust the translation or text refining in different style.
 
 
 ## Screenshots:
-- Home:
-![Refiner Home](./docs/images/home_sc.png)
-- Settings:
-![Refiner settings](./docs/images/setting_sc.png)
+
+| Section | Image |
+|---------|-------|
+| Home | <img src="./docs/images/main.png" height="150"> |
+| Settings | <img src="./docs/images/settings.png" height="150"> |
+| Analysis | <img src="./docs/images/analysis.png" height="150"> |
+| Report | <img src="./docs/images/report.png" height="150"> |
 
 
 ## Installation

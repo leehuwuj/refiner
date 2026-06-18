@@ -12,9 +12,14 @@
   --glass-panel-bg: rgba(255, 255, 255, 0.04);
   --glass-panel-hover: rgba(255, 255, 255, 0.065);
   --glass-input-bg: rgba(255, 255, 255, 0.04);
-  --glass-control-bg: rgba(255, 255, 255, 0.07);
-  --glass-control-hover: rgba(255, 255, 255, 0.12);
-  --glass-control-active: rgba(255, 255, 255, 0.18);
+  --glass-control-bg: rgba(255, 255, 255, 0.1);
+  --glass-control-hover: rgba(255, 255, 255, 0.16);
+  --glass-control-active: rgba(255, 255, 255, 0.22);
+
+  /* Liquid-glass chip controls */
+  --chip-border: rgba(255, 255, 255, 0.14);
+  --chip-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --chip-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
 
   /* Blur */
   --glass-blur: blur(40px) saturate(150%);
@@ -34,8 +39,12 @@
   --accent-alt: rgba(255, 255, 255, 0.6);
   --accent-rgb: 255, 255, 255;
   --accent-subtle: rgba(255, 255, 255, 0.06);
-  --accent-subtle-hover: rgba(255, 255, 255, 0.10);
-  --accent-gradient: linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 100%);
+  --accent-subtle-hover: rgba(255, 255, 255, 0.1);
+  --accent-gradient: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
   --accent-glow: 0 0 16px rgba(255, 255, 255, 0.06);
 
   /* Text */
@@ -53,7 +62,7 @@
   /* Solid surfaces — non-transparent windows, dropdowns, tooltips */
   --surface-bg: #0c0c10;
   --dropdown-bg: #141418;
-  --dropdown-border: rgba(255, 255, 255, 0.10);
+  --dropdown-border: rgba(255, 255, 255, 0.1);
 
   /* Noise texture for authentic glass */
   --noise-url: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
@@ -62,21 +71,22 @@
 /* Light mode overrides */
 .light {
   --glass-app-bg: rgba(242, 242, 248, 0.94);
-  --glass-panel-bg: rgba(255, 255, 255, 0.50);
+  --glass-panel-bg: rgba(255, 255, 255, 0.5);
   --glass-panel-hover: rgba(255, 255, 255, 0.65);
   --glass-input-bg: rgba(255, 255, 255, 0.55);
   --glass-control-bg: rgba(255, 255, 255, 0.55);
-  --glass-control-hover: rgba(255, 255, 255, 0.70);
+  --glass-control-hover: rgba(255, 255, 255, 0.7);
   --glass-control-active: rgba(255, 255, 255, 0.85);
 
   --glass-border: rgba(0, 0, 0, 0.06);
   --glass-border-subtle: rgba(0, 0, 0, 0.03);
   --glass-border-bright: rgba(0, 0, 0, 0.12);
 
-  --glass-shadow: 0 24px 80px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.05);
-  --glass-inner-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.80);
+  --glass-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.08), 0 2px 16px rgba(0, 0, 0, 0.05);
+  --glass-inner-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 
-  --accent: rgba(0, 0, 0, 0.80);
+  --accent: rgba(0, 0, 0, 0.8);
   --accent-subtle: rgba(0, 0, 0, 0.04);
   --accent-subtle-hover: rgba(0, 0, 0, 0.08);
 
@@ -88,32 +98,44 @@
   --text-secondary: rgba(0, 0, 0, 0.48);
   --text-tertiary: rgba(0, 0, 0, 0.26);
   --text-placeholder: rgba(0, 0, 0, 0.18);
+
+  /* Liquid-glass chip controls */
+  --chip-border: rgba(0, 0, 0, 0.1);
+  --chip-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --chip-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 /* ============================================================
    BASE RESET
    ============================================================ */
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* Transparent root for frameless windows */
-html {
-  background: transparent;
+html,
+body,
+#root {
+  background: transparent !important;
 }
 
 body {
-  background: transparent;
   color: var(--text-primary);
 }
 
@@ -132,7 +154,7 @@ body {
 
 /* Noise overlay for authentic glass texture */
 .glass-app::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background-image: var(--noise-url);
@@ -150,7 +172,7 @@ body {
 }
 
 .glass-panel::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background-image: var(--noise-url);
@@ -177,8 +199,12 @@ body {
    ============================================================ */
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .skeleton {
@@ -198,13 +224,23 @@ body {
    ============================================================ */
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-in {
@@ -241,17 +277,20 @@ body {
    TEXTAREA / INPUT BASE
    ============================================================ */
 
-textarea, input {
+textarea,
+input {
   background: transparent;
   color: var(--text-primary);
   caret-color: var(--text-secondary);
 }
 
-textarea::placeholder, input::placeholder {
+textarea::placeholder,
+input::placeholder {
   color: var(--text-placeholder);
 }
 
-textarea:focus, input:focus {
+textarea:focus,
+input:focus {
   outline: none;
 }
 
@@ -267,4 +306,65 @@ textarea:focus, input:focus {
 [data-tauri-drag-region] * {
   -webkit-app-region: no-drag;
   app-region: no-drag;
+}
+
+/* ============================================================
+   LIQUID-GLASS CHIP CONTROLS
+   ============================================================ */
+
+.lg-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--chip-border);
+  background: var(--glass-control-bg);
+  color: var(--text-secondary);
+  box-shadow: var(--chip-highlight), var(--chip-shadow);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.08s ease;
+}
+
+.lg-chip:hover {
+  background: var(--glass-control-hover);
+  color: var(--text-primary);
+}
+
+.lg-chip:active {
+  transform: scale(0.94);
+  background: var(--glass-control-active);
+}
+
+/* Primary (frosted glass) action chip */
+.lg-chip-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--glass-border-bright);
+  background: var(--glass-control-active);
+  color: var(--text-primary);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  backdrop-filter: blur(12px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 4px 14px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.lg-chip-primary:hover {
+  background: var(--glass-control-hover);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 6px 18px rgba(0, 0, 0, 0.22);
+}
+
+.lg-chip-primary:active {
+  transform: scale(0.93);
 }

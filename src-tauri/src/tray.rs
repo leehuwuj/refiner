@@ -1,17 +1,48 @@
 use tauri::{App, Manager, Emitter};
-use tauri::menu::{Menu, MenuItem};
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri_plugin_positioner::{Position, WindowExt};
+use crate::window_management::{create_or_focus_settings_window, create_or_focus_settings_window_tab};
 
 pub fn setup_tray(app: &App) -> Result<(), String> {
     let app_handler = app.app_handle();
     let tray = app_handler.tray_by_id("refiner").unwrap();
     let menu = Menu::with_items(
         app_handler,
-        &[&MenuItem::with_id(app_handler, "quit", "Quit", true, None::<String>).unwrap()],
+        &[
+            &MenuItem::with_id(app_handler, "settings", "Settings", true, None::<String>).unwrap(),
+            &MenuItem::with_id(app_handler, "analysis", "Analysis", true, None::<String>).unwrap(),
+            &PredefinedMenuItem::separator(app_handler).unwrap(),
+            &MenuItem::with_id(app_handler, "quit", "Quit", true, None::<String>).unwrap(),
+        ],
     )
     .unwrap();
     tray.set_menu(Some(menu).clone()).unwrap();
     tray.on_menu_event(move |handler, event| match event.id.as_ref() {
+        "settings" => {
+            let h = handler.clone();
+            tauri::async_runtime::spawn(async move {
+                if let Ok(win) = create_or_focus_settings_window(&h).await {
+                    let _ = win.show();
+                    let _ = win.set_focus();
+                }
+            });
+        }
+        "analysis" => {
+            let h = handler.clone();
+            tauri::async_runtime::spawn(async move {
+                // create_or_focus_settings_window_tab embeds ?tab=analysis in the URL for new
+                // windows so React reads it on init. For already-open windows we emit the event
+                // after focus — the listener is already registered by then.
+                let existing = h.get_webview_window("settings").is_some();
+                if let Ok(win) = create_or_focus_settings_window_tab(&h, "analysis").await {
+                    let _ = win.show();
+                    let _ = win.set_focus();
+                    if existing {
+                        let _ = h.emit("show-analysis-tab", ());
+                    }
+                }
+            });
+        }
         "quit" => {
             handler.exit(0);
         }

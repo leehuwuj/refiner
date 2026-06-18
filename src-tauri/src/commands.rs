@@ -10,10 +10,10 @@ const DEFAULT_CORRECTION_PROMPT: &str =
     "You are an expert in grammar. Correct the grammar of the following text in {target_lang}. Provide only the corrected text, without any additional explanations or formatting.";
 
 const DEFAULT_REFINE_PROMPT: &str =
-    "You are an expert editor. Rewrite the following text in a more conversational style, in {target_lang}. Provide only the rewritten text, without any additional explanations or formatting.";
+    "You are an expert editor. Rewrite the following text in a more conversational style, in {target_lang}. Output a single rewrite only — no options, no alternatives, no explanations, no labels, no formatting.";
 
 // Helper function to trim thinking blocks from model responses
-fn trim_thinking_blocks(response: &str) -> String {
+pub(crate) fn trim_thinking_blocks(response: &str) -> String {
     let mut result = response.to_string();
     
     // Remove <think>...</think> blocks
@@ -74,8 +74,13 @@ pub struct AllSettings {
     pub model: Option<String>,
     pub api_key: Option<String>,
     pub shortcut_window_type: Option<String>,
-    pub ollama_endpoint: Option<String>,
-    pub ollama_thinking: Option<bool>,
+    pub model_url: Option<String>,
+    pub thinking: Option<bool>,
+    pub prompt_translate: Option<String>,
+    pub prompt_correct: Option<String>,
+    pub prompt_refine: Option<String>,
+    pub preferred_lang: Option<String>,
+    pub text_size: Option<String>,
 }
 
 #[tauri::command]
@@ -86,8 +91,17 @@ pub async fn get_settings(app_handle: tauri::AppHandle) -> Result<AllSettings, S
         model: store.get("MODEL").and_then(|v| v.as_str().map(|s| s.to_string())),
         api_key: store.get("LLM_API_KEY").and_then(|v| v.as_str().map(|s| s.to_string())),
         shortcut_window_type: store.get("SHORTCUT_WINDOW_TYPE").and_then(|v| v.as_str().map(|s| s.to_string())),
-        ollama_endpoint: store.get("OLLAMA_ENDPOINT").and_then(|v| v.as_str().map(|s| s.to_string())),
-        ollama_thinking: store.get("OLLAMA_THINKING").and_then(|v| v.as_bool()),
+        model_url: store.get("MODEL_URL")
+            .or_else(|| store.get("OLLAMA_ENDPOINT"))
+            .and_then(|v| v.as_str().map(|s| s.to_string())),
+        thinking: store.get("THINKING")
+            .or_else(|| store.get("OLLAMA_THINKING"))
+            .and_then(|v| v.as_bool()),
+        prompt_translate: store.get("PROMPT_TRANSLATE").and_then(|v| v.as_str().map(|s| s.to_string())),
+        prompt_correct: store.get("PROMPT_CORRECT").and_then(|v| v.as_str().map(|s| s.to_string())),
+        prompt_refine: store.get("PROMPT_REFINE").and_then(|v| v.as_str().map(|s| s.to_string())),
+        preferred_lang: store.get("PREFERRED_LANG").and_then(|v| v.as_str().map(|s| s.to_string())),
+        text_size: store.get("TEXT_SIZE").and_then(|v| v.as_str().map(|s| s.to_string())),
     })
 }
 
@@ -120,13 +134,22 @@ pub async fn translate(
         .replace("{target_lang}", target_lang.unwrap_or("English"));
     
     // Init provider based on the provider name
-    let provider_obj = get_provider(app_handle, provider, model);
+    let provider_obj = get_provider(app_handle.clone(), provider, model);
 
     let res = provider_obj
         .completion(&format!("<start_of_turn>user\n{}\n\nText to translate: {}\n<end_of_turn>\n<start_of_turn>model", new_prompt, text))
         .await;
     match res {
-        Ok(text) => Ok(trim_thinking_blocks(&text)),
+        Ok(output) => {
+            crate::history::append_entry_if_enabled(
+                &app_handle,
+                "translate",
+                text,
+                source_lang.unwrap_or("auto"),
+                target_lang.unwrap_or("English"),
+            );
+            Ok(trim_thinking_blocks(&output))
+        }
         Err(e) => Ok(format!("Error: {}", e)),
     }
 }
@@ -152,12 +175,21 @@ pub async fn correct(
     let new_prompt = prompt
         .replace("{original_lang}", source_lang.unwrap_or("English"))
         .replace("{target_lang}", target_lang.unwrap_or("English"));
-    let provider = get_provider(app_handle, provider, model);
+    let provider = get_provider(app_handle.clone(), provider, model);
     let res = provider
         .completion(&format!("<start_of_turn>user\n{}\n\nText to correct: {}\n<end_of_turn>\n<start_of_turn>model", new_prompt, text))
         .await;
     match res {
-        Ok(text) => Ok(trim_thinking_blocks(&text)),
+        Ok(output) => {
+            crate::history::append_entry_if_enabled(
+                &app_handle,
+                "correct",
+                text,
+                source_lang.unwrap_or("auto"),
+                target_lang.unwrap_or("English"),
+            );
+            Ok(trim_thinking_blocks(&output))
+        }
         Err(e) => Ok(format!("Error: {}", e)),
     }
 }
@@ -183,12 +215,21 @@ pub async fn refine(
     let new_prompt = prompt
         .replace("{original_lang}", source_lang.unwrap_or("English"))
         .replace("{target_lang}", target_lang.unwrap_or("English"));
-    let provider = get_provider(app_handle, provider, model);
+    let provider = get_provider(app_handle.clone(), provider, model);
     let res = provider
         .completion(&format!("<start_of_turn>user\n{}\n\nText to refine: {}\n<end_of_turn>\n<start_of_turn>model", new_prompt, text))
         .await;
     match res {
-        Ok(text) => Ok(trim_thinking_blocks(&text)),
+        Ok(output) => {
+            crate::history::append_entry_if_enabled(
+                &app_handle,
+                "refine",
+                text,
+                source_lang.unwrap_or("auto"),
+                target_lang.unwrap_or("English"),
+            );
+            Ok(trim_thinking_blocks(&output))
+        }
         Err(e) => Ok(format!("Error: {}", e)),
     }
 }
@@ -215,53 +256,80 @@ pub async fn save_settings(
     shortcut_window_type: Option<String>,
     provider: Option<String>,
     model: Option<String>,
-    prompt: Option<String>,
-    ollama_endpoint: Option<String>,
-    ollama_thinking: Option<bool>,
+    model_url: Option<String>,
+    thinking: Option<bool>,
+    prompt_translate: Option<String>,
+    prompt_correct: Option<String>,
+    prompt_refine: Option<String>,
+    preferred_lang: Option<String>,
+    text_size: Option<String>,
 ) -> Result<(), String> {
     let store = app_handle.store("store.bin").map_err(|e| format!("Failed to get store: {}", e))?;
-    
+
     if let Some(key) = api_key {
         if !key.is_empty() {
             store.set("LLM_API_KEY", key);
         }
     }
-    
+
     if let Some(window_type) = shortcut_window_type {
         if !window_type.is_empty() {
             store.set("SHORTCUT_WINDOW_TYPE", window_type);
         }
     }
-    
+
     if let Some(provider_name) = provider {
         if !provider_name.is_empty() {
             store.set("PROVIDER", provider_name);
         }
     }
-    
+
     if let Some(model_name) = model {
         if !model_name.is_empty() {
             store.set("MODEL", model_name);
         }
     }
-    
-    if let Some(prompt_data) = prompt {
-        if !prompt_data.is_empty() && prompt_data != "undefined" && prompt_data != "null" {
-            store.set("PROMPT", prompt_data);
+
+    if let Some(url) = model_url {
+        if !url.is_empty() {
+            store.set("MODEL_URL", url);
         }
     }
 
-    if let Some(endpoint) = ollama_endpoint {
-        if !endpoint.is_empty() {
-            store.set("OLLAMA_ENDPOINT", endpoint);
+    if let Some(thinking) = thinking {
+        store.set("THINKING", thinking);
+    }
+
+    // Per-mode prompts: save if non-empty, delete key to reset to default
+    match prompt_translate {
+        Some(p) if !p.is_empty() => { store.set("PROMPT_TRANSLATE", p); }
+        Some(_) => { store.delete("PROMPT_TRANSLATE"); }
+        None => {}
+    }
+    match prompt_correct {
+        Some(p) if !p.is_empty() => { store.set("PROMPT_CORRECT", p); }
+        Some(_) => { store.delete("PROMPT_CORRECT"); }
+        None => {}
+    }
+    match prompt_refine {
+        Some(p) if !p.is_empty() => { store.set("PROMPT_REFINE", p); }
+        Some(_) => { store.delete("PROMPT_REFINE"); }
+        None => {}
+    }
+
+    if let Some(lang) = preferred_lang {
+        if !lang.is_empty() {
+            store.set("PREFERRED_LANG", lang);
         }
     }
 
-    if let Some(thinking) = ollama_thinking {
-        store.set("OLLAMA_THINKING", thinking);
+    if let Some(size) = text_size {
+        if !size.is_empty() {
+            store.set("TEXT_SIZE", size);
+        }
     }
 
     store.save().map_err(|e| format!("Failed to save store: {}", e))?;
-    
+
     Ok(())
 }

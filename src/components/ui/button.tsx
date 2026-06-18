@@ -9,7 +9,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[var(--accent)] text-white hover:opacity-90 active:opacity-80 shadow-[0_0_16px_rgba(139,92,246,0.3)]",
+          "bg-[var(--glass-control-bg)] border border-[var(--glass-border)] text-[var(--text-primary)] hover:bg-[var(--glass-control-hover)] active:bg-[var(--glass-control-active)]",
         ghost:
           "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-control-bg)]",
         glass:

@@ -2,6 +2,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
+mod history;
+mod language_analysis;
 pub mod providers;
 mod selected_text;
 mod window_management;
@@ -9,7 +11,10 @@ mod tray;
 mod shortcuts;
 
 use commands::{correct, refine, translate, save_settings, get_settings, get_shortcut_window_type, open_settings_window};
+use history::{get_history_enabled, toggle_history, get_history_count, export_history_json, clear_history};
+use language_analysis::{get_analysis_status, open_last_report, run_language_analysis, open_reports_folder, list_reports, open_report, AppAnalysisState, AnalysisStatus};
 use device_query::{DeviceQuery, DeviceState};
+use std::sync::{Arc, Mutex};
 
 use crate::tray::setup_tray;
 use crate::shortcuts::setup_shortcuts;
@@ -29,13 +34,11 @@ pub fn run() {
         .plugin(tauri_plugin_positioner::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::default().build())
+        .manage(AppAnalysisState(Arc::new(Mutex::new(AnalysisStatus::default()))))
         .setup(move |app| {
-            // Setup global shortcuts
             setup_shortcuts(app)?;
-            // Setup tray icon
             setup_tray(app).unwrap();
 
-            // Hide the app icon from the dock
             #[cfg(target_os = "macos")]
             {
                 use tauri::ActivationPolicy;
@@ -44,27 +47,36 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(|window, event| {
-            match event {
-                tauri::WindowEvent::Focused(is_focused) => {
-                    if !is_focused {
-                        match window.label() {
-                            "compact-popup" => {
-                                if let Err(e) = window.hide() {
-                                    println!("Failed to hide compact popup on focus loss: {}", e);
-                                }
-                            }
-                            _ => {
-                                if let Err(e) = window.hide() {
-                                    println!("Failed to hide window on focus loss: {}", e);
-                                }
-                            }
-                        }
-                    }
+            if let tauri::WindowEvent::Focused(false) = event {
+                match window.label() {
+                    // Settings stays open when the user clicks elsewhere
+                    "settings" => {}
+                    _ => { let _ = window.hide(); }
                 }
-                _ => {}
             }
         })
-        .invoke_handler(tauri::generate_handler![translate, correct, refine, get_mouse_position, get_shortcut_window_type, save_settings, get_settings, open_settings_window])
+        .invoke_handler(tauri::generate_handler![
+            // core
+            translate, correct, refine,
+            get_mouse_position,
+            get_shortcut_window_type,
+            save_settings,
+            get_settings,
+            open_settings_window,
+            // history
+            get_history_enabled,
+            toggle_history,
+            get_history_count,
+            export_history_json,
+            clear_history,
+            // language analysis
+            get_analysis_status,
+            run_language_analysis,
+            open_last_report,
+            open_reports_folder,
+            list_reports,
+            open_report,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -72,4 +84,3 @@ pub fn run() {
 fn main() {
     run();
 }
-

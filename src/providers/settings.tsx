@@ -1,18 +1,33 @@
 import React from "react";
-import type { AppSettings, Provider, Prompts, ShortcutWindowType } from "@/types/settings";
+import type {
+  AppSettings,
+  Provider,
+  PromptSettings,
+  ShortcutWindowType,
+  TextSizeType,
+} from "@/types/settings";
 import { providerMap } from "@/types/settings";
 import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 
 const SettingContext = React.createContext({} as AppSettings);
 
 const SettingProvider = ({ children }: { children: React.ReactNode }) => {
-  const [provider, setProvider] = React.useState<Provider>(providerMap["openai"]);
-  const [model, setModel] = React.useState<string>(providerMap["openai"].models?.[0] || "");
-  const [prompt, setPrompt] = React.useState<Prompts>();
-  const [shortcutWindowType, setShortcutWindowType] = React.useState<ShortcutWindowType>("main");
+  const [provider, setProvider] = React.useState<Provider>(
+    providerMap["openai"],
+  );
+  const [model, setModel] = React.useState<string>(
+    providerMap["openai"].models?.[0] || "",
+  );
+  const [prompts, setPrompts] = React.useState<PromptSettings>({});
+  const [shortcutWindowType, setShortcutWindowType] =
+    React.useState<ShortcutWindowType>("main");
   const [apiKey, setApiKey] = React.useState<string>("");
-  const [ollamaEndpoint, setOllamaEndpoint] = React.useState<string>("http://localhost:11434");
-  const [ollamaThinking, setOllamaThinking] = React.useState<boolean>(true);
+  const [modelUrl, setModelUrl] = React.useState<string>("");
+  const [thinking, setThinking] = React.useState<boolean>(true);
+  const [preferredLang, setPreferredLang] =
+    React.useState<string>("Tiếng Việt");
+  const [textSize, setTextSize] = React.useState<TextSizeType>("medium");
 
   React.useEffect(() => {
     const loadSettings = async () => {
@@ -22,8 +37,13 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
           model: string | null;
           api_key: string | null;
           shortcut_window_type: string | null;
-          ollama_endpoint: string | null;
-          ollama_thinking: boolean | null;
+          model_url: string | null;
+          thinking: boolean | null;
+          prompt_translate: string | null;
+          prompt_correct: string | null;
+          prompt_refine: string | null;
+          preferred_lang: string | null;
+          text_size: string | null;
         }>("get_settings");
 
         let loadedProvider = provider;
@@ -42,19 +62,35 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         if (saved.shortcut_window_type) {
-          setShortcutWindowType(saved.shortcut_window_type as ShortcutWindowType);
+          setShortcutWindowType(
+            saved.shortcut_window_type as ShortcutWindowType,
+          );
         }
 
         if (saved.api_key) {
           setApiKey(saved.api_key);
         }
 
-        if (saved.ollama_endpoint) {
-          setOllamaEndpoint(saved.ollama_endpoint);
+        if (saved.model_url) {
+          setModelUrl(saved.model_url);
         }
 
-        if (saved.ollama_thinking !== null && saved.ollama_thinking !== undefined) {
-          setOllamaThinking(saved.ollama_thinking);
+        if (saved.thinking !== null && saved.thinking !== undefined) {
+          setThinking(saved.thinking);
+        }
+
+        setPrompts({
+          translate: saved.prompt_translate ?? undefined,
+          correct: saved.prompt_correct ?? undefined,
+          refine: saved.prompt_refine ?? undefined,
+        });
+
+        if (saved.preferred_lang) {
+          setPreferredLang(saved.preferred_lang);
+        }
+
+        if (saved.text_size) {
+          setTextSize(saved.text_size as TextSizeType);
         }
       } catch (error) {
         console.error("Failed to load settings:", error);
@@ -63,21 +99,40 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
     loadSettings();
   }, []);
 
-  const saveSettings = async (inputApiKey?: string) => {
-    try {
-      let promptToSave = null;
-      if (prompt && typeof prompt === "object") {
-        promptToSave = JSON.stringify(prompt);
-      }
+  React.useEffect(() => {
+    // Use the webview's native page zoom rather than CSS `zoom` on <html>.
+    // CSS zoom breaks viewport units (100vh/100vw) and the coordinate math
+    // that portalled popovers (Radix Select) rely on, causing overflow and
+    // mispositioned dropdowns. Native zoom adjusts the viewport correctly.
+    const scaleMap: Record<TextSizeType, number> = {
+      small: 0.9,
+      medium: 1,
+      large: 1.1,
+    };
+    const factor = scaleMap[textSize] ?? 1;
+    getCurrentWebview()
+      .setZoom(factor)
+      .catch((err) => console.error("Failed to set webview zoom:", err));
+  }, [textSize]);
 
+  const saveSettings = async (
+    inputApiKey?: string,
+    promptsOverride?: PromptSettings,
+  ) => {
+    const promptsToSave = promptsOverride ?? prompts;
+    try {
       await invoke("save_settings", {
         apiKey: inputApiKey || null,
         shortcutWindowType: shortcutWindowType,
         provider: provider.name,
         model: model,
-        prompt: promptToSave,
-        ollamaEndpoint: ollamaEndpoint ?? null,
-        ollamaThinking: ollamaThinking,
+        modelUrl: modelUrl || null,
+        thinking: thinking,
+        promptTranslate: promptsToSave.translate ?? "",
+        promptCorrect: promptsToSave.correct ?? "",
+        promptRefine: promptsToSave.refine ?? "",
+        preferredLang: preferredLang,
+        textSize: textSize,
       });
 
       if (inputApiKey) {
@@ -96,17 +151,21 @@ const SettingProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         provider,
         model,
-        prompt,
+        prompts,
         shortcutWindowType,
         apiKey,
-        ollamaEndpoint,
-        ollamaThinking,
+        modelUrl,
+        thinking,
+        preferredLang,
         setProvider,
         setModel,
-        setPrompt,
+        setPrompts,
         setShortcutWindowType,
-        setOllamaEndpoint,
-        setOllamaThinking,
+        setModelUrl,
+        setThinking,
+        setPreferredLang,
+        textSize,
+        setTextSize,
         saveSettings,
       }}
     >

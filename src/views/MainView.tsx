@@ -9,7 +9,6 @@ import {
   Copy,
   Check,
   ArrowLeftRight,
-  Sparkles,
 } from "lucide-react";
 
 import { TranslateContext } from "@/providers/translate";
@@ -34,6 +33,7 @@ async function runMode(
   model?: string,
   sourceLang?: string,
   targetLang?: string,
+  customPrompt?: string,
 ): Promise<string> {
   const fn = mode.toLowerCase();
   return invoke<string>(fn, {
@@ -42,7 +42,7 @@ async function runMode(
     text,
     sourceLang: sourceLang ?? "English",
     targetLang: targetLang ?? "Tiếng Việt",
-    prompt: null,
+    prompt: customPrompt || null,
   });
 }
 
@@ -50,16 +50,24 @@ async function runMode(
 
 const MODES: Mode[] = ["Translate", "Correct", "Refine"];
 
-function ModeTabs({ current, onChange }: { current: Mode; onChange: (mode: Mode) => void }) {
+function ModeTabs({
+  current,
+  onChange,
+}: {
+  current: Mode;
+  onChange: (mode: Mode) => void;
+}) {
   return (
     <div
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 1,
-        borderRadius: 10,
-        padding: 3,
+        gap: 2,
+        borderRadius: 12,
+        padding: 4,
         background: "var(--glass-control-bg)",
+        border: "1px solid var(--chip-border)",
+        boxShadow: "var(--chip-highlight)",
       }}
     >
       {MODES.map((mode) => {
@@ -70,14 +78,14 @@ function ModeTabs({ current, onChange }: { current: Mode; onChange: (mode: Mode)
             onClick={() => onChange(mode)}
             style={{
               position: "relative",
-              padding: "4px 14px",
-              fontSize: 11,
-              fontWeight: 500,
-              borderRadius: 7,
+              padding: "6px 16px",
+              fontSize: 12,
+              fontWeight: 600,
+              borderRadius: 8,
               border: "none",
               cursor: "pointer",
               background: "transparent",
-              color: active ? "var(--text-primary)" : "var(--text-tertiary)",
+              color: active ? "var(--text-primary)" : "var(--text-secondary)",
               transition: "color 0.2s",
               userSelect: "none",
             }}
@@ -88,9 +96,11 @@ function ModeTabs({ current, onChange }: { current: Mode; onChange: (mode: Mode)
                 style={{
                   position: "absolute",
                   inset: 0,
-                  borderRadius: 7,
-                  background: "var(--glass-control-hover)",
-                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08), 0 1px 3px rgba(0,0,0,0.2)",
+                  borderRadius: 8,
+                  background: "var(--glass-control-active)",
+                  border: "1px solid var(--chip-border)",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.14), 0 1px 4px rgba(0,0,0,0.25)",
                 }}
                 transition={{ type: "spring", stiffness: 500, damping: 35 }}
               />
@@ -131,35 +141,37 @@ function LanguageBar({
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
       <span
         style={{
-          fontSize: 10,
+          display: "inline-flex",
+          alignItems: "center",
+          height: 32,
+          fontSize: 12,
           color: "var(--text-secondary)",
-          fontWeight: 500,
-          padding: "2px 8px",
-          borderRadius: 6,
+          fontWeight: 600,
+          padding: "0 12px",
+          borderRadius: 8,
+          whiteSpace: "nowrap",
           background: "var(--glass-control-bg)",
+          border: "1px solid var(--chip-border)",
+          boxShadow: "var(--chip-highlight)",
         }}
       >
         {sourceLang}
       </span>
       <button
         onClick={onSwap}
-        className="hover:text-[var(--text-primary)]"
+        title="Swap languages"
+        className="lg-chip"
         style={{
-          padding: 4,
-          borderRadius: 6,
-          border: "none",
-          background: "transparent",
-          color: "var(--text-tertiary)",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          transition: "color 0.15s",
+          width: 32,
+          height: 32,
+          borderRadius: "50%",
+          flexShrink: 0,
         }}
       >
-        <ArrowLeftRight size={11} />
+        <ArrowLeftRight size={13} />
       </button>
       <Select value={targetLang} onValueChange={onTargetChange}>
-        <SelectTrigger compact className="w-auto min-w-[80px] text-[10px]">
+        <SelectTrigger compact className="w-auto min-w-[96px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -189,17 +201,11 @@ function CopyButton({ text }: { text: string }) {
     <Tooltip content={copied ? "Copied!" : "Copy"} open={copied || undefined}>
       <button
         onClick={handleCopy}
-        className="hover:bg-[var(--glass-control-hover)] hover:text-[var(--text-primary)]"
+        className="lg-chip"
         style={{
-          padding: 6,
-          borderRadius: 8,
-          border: "none",
-          background: "var(--glass-control-bg)",
-          color: "var(--text-tertiary)",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          transition: "all 0.15s",
+          width: 30,
+          height: 30,
+          borderRadius: 9,
         }}
       >
         <AnimatePresence mode="wait">
@@ -211,11 +217,15 @@ function CopyButton({ text }: { text: string }) {
               exit={{ scale: 0.5, opacity: 0 }}
               transition={{ duration: 0.15 }}
             >
-              <Check size={13} />
+              <Check size={14} />
             </motion.div>
           ) : (
-            <motion.div key="copy" initial={{ scale: 1 }} animate={{ scale: 1 }}>
-              <Copy size={13} />
+            <motion.div
+              key="copy"
+              initial={{ scale: 1 }}
+              animate={{ scale: 1 }}
+            >
+              <Copy size={14} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -224,19 +234,42 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+function truncateMiddle(str: string, max = 22): string {
+  if (str.length <= max) return str;
+  const head = Math.ceil((max - 1) / 2);
+  const tail = Math.floor((max - 1) / 2);
+  return str.slice(0, head) + "…" + str.slice(-tail);
+}
+
 // ── Main View ─────────────────────────────────────────────────────────────────
 
 export default function MainView() {
   const ctx = useContext(TranslateContext);
   const settings = useContext(SettingContext);
   const [triggerByShortcut, setTriggerByShortcut] = useState(false);
-  const [styleHint, setStyleHint] = useState("");
+  const [loading, setLoading] = useState(false);
   const isMounted = useRef(false);
 
+  // Sync preferred language from settings into target language
+  useEffect(() => {
+    if (settings.preferredLang) {
+      const lang = LANGUAGES.find((l) => l.label === settings.preferredLang);
+      if (lang) {
+        ctx.changeLangConfig({
+          ...ctx.languageConfig,
+          targetLang: { code: lang.value, label: lang.label },
+        });
+      }
+    }
+  }, [settings.preferredLang]);
+
   const trigger = useCallback(() => {
-    if (ctx.translating) return;
+    if (loading) return;
+    setLoading(true);
     ctx.setTranslating(true);
     ctx.changeResult({});
+    const modeKey =
+      ctx.currentMode.toLowerCase() as keyof typeof settings.prompts;
     runMode(
       ctx.inputText ?? "",
       ctx.currentMode,
@@ -244,13 +277,17 @@ export default function MainView() {
       settings.model,
       ctx.languageConfig.sourceLang.label,
       ctx.languageConfig.targetLang.label,
+      settings.prompts?.[modeKey],
     )
       .then((answer) => {
         ctx.changeResult({ [ctx.currentMode.toLowerCase()]: answer });
       })
       .catch(console.error)
-      .finally(() => ctx.setTranslating(false));
-  }, [ctx, settings]);
+      .finally(() => {
+        setLoading(false);
+        ctx.setTranslating(false);
+      });
+  }, [loading, ctx, settings]);
 
   useEffect(() => {
     if (!isMounted.current) {
@@ -259,7 +296,9 @@ export default function MainView() {
         let raw = event.payload as string;
         if (raw.includes("text:")) raw = raw.split("text:")[1].trim();
         raw = raw.replace(/^"|"$/g, "").trim();
-        window.dispatchEvent(new CustomEvent("shortcut-main-translate", { detail: raw }));
+        window.dispatchEvent(
+          new CustomEvent("shortcut-main-translate", { detail: raw }),
+        );
       });
     }
   }, []);
@@ -285,20 +324,22 @@ export default function MainView() {
       if (e.key === "Escape") {
         window.__TAURI__.window.getCurrentWindow().hide();
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !ctx.translating) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !loading) {
         trigger();
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [ctx.translating, trigger]);
+  }, [loading, trigger]);
 
   const handleModeChange = useCallback(
     (mode: Mode) => {
       ctx.setCurrentMode(mode);
       if (ctx.inputText?.trim()) {
+        setLoading(true);
         ctx.setTranslating(true);
         ctx.changeResult({});
+        const modeKey = mode.toLowerCase() as keyof typeof settings.prompts;
         runMode(
           ctx.inputText,
           mode,
@@ -306,17 +347,22 @@ export default function MainView() {
           settings.model,
           ctx.languageConfig.sourceLang.label,
           ctx.languageConfig.targetLang.label,
+          settings.prompts?.[modeKey],
         )
           .then((answer) => ctx.changeResult({ [mode.toLowerCase()]: answer }))
           .catch(console.error)
-          .finally(() => ctx.setTranslating(false));
+          .finally(() => {
+            setLoading(false);
+            ctx.setTranslating(false);
+          });
       }
     },
     [ctx, settings],
   );
 
   const currentResult =
-    ctx.result?.[ctx.currentMode.toLowerCase() as keyof typeof ctx.result] ?? "";
+    ctx.result?.[ctx.currentMode.toLowerCase() as keyof typeof ctx.result] ??
+    "";
 
   const handleSwapLanguages = () => {
     ctx.changeLangConfig({
@@ -336,7 +382,16 @@ export default function MainView() {
   };
 
   return (
-    <div style={{ width: "100vw", height: "100vh", background: "transparent", display: "flex" }}>
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        background: "transparent",
+        display: "flex",
+        borderRadius: "var(--radius-app)",
+        overflow: "hidden",
+      }}
+    >
       {/* ── Main surface ── */}
       <div
         style={{
@@ -348,6 +403,7 @@ export default function MainView() {
           backdropFilter: "blur(40px) saturate(150%)",
           WebkitBackdropFilter: "blur(40px) saturate(150%)",
           boxShadow: "var(--glass-shadow)",
+          borderRadius: "var(--radius-app)",
         }}
       >
         {/* Noise texture overlay */}
@@ -369,7 +425,8 @@ export default function MainView() {
             left: "8%",
             right: "8%",
             height: 1,
-            background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)",
+            background:
+              "linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)",
             pointerEvents: "none",
             zIndex: 1,
           }}
@@ -391,45 +448,53 @@ export default function MainView() {
           <ModeTabs current={ctx.currentMode} onChange={handleModeChange} />
 
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            {settings.provider?.models && (
-              <Select value={settings.model} onValueChange={(val) => settings.setModel(val)}>
-                <SelectTrigger compact className="w-auto max-w-[140px] text-[10px]">
-                  <SelectValue placeholder="Model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {settings.provider.models.map((m) => (
-                    <SelectItem key={m} value={m} className="text-xs">
-                      {m}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {settings.model && (
+              <span
+                style={{
+                  fontSize: 10,
+                  color: "var(--text-secondary)",
+                  fontWeight: 600,
+                  padding: "5px 10px",
+                  borderRadius: 8,
+                  background: "var(--glass-control-bg)",
+                  border: "1px solid var(--chip-border)",
+                  boxShadow: "var(--chip-highlight)",
+                  whiteSpace: "nowrap",
+                  display: "inline-block",
+                }}
+                title={settings.model}
+              >
+                {truncateMiddle(settings.model)}
+              </span>
             )}
 
             <Tooltip content="Settings">
               <button
                 onClick={() => invoke("open_settings_window")}
-                className="hover:bg-[var(--glass-control-hover)] hover:text-[var(--text-primary)]"
+                className="lg-chip"
                 style={{
-                  padding: 6,
-                  borderRadius: 8,
-                  border: "none",
-                  background: "transparent",
-                  color: "var(--text-tertiary)",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  transition: "all 0.15s",
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
                 }}
               >
-                <Settings size={14} />
+                <Settings size={15} />
               </button>
             </Tooltip>
           </div>
         </div>
 
         {/* ── Body ── */}
-        <div style={{ flex: 1, display: "flex", minHeight: 0, gap: 0, position: "relative", zIndex: 2 }}>
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            minHeight: 0,
+            gap: 0,
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
           {/* Input panel */}
           <div
             style={{
@@ -439,15 +504,19 @@ export default function MainView() {
               overflow: "hidden",
               margin: "0 0 0 10px",
               marginBottom: 8,
-              borderRadius: 12,
-              background: "linear-gradient(180deg, var(--glass-panel-bg) 0%, transparent 100%)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
+              borderRadius: 14,
+              background:
+                "linear-gradient(180deg, var(--glass-panel-bg) 0%, transparent 100%)",
+              border: "1px solid var(--glass-border)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
             }}
           >
             <textarea
               value={ctx.inputText}
               onChange={(e) => ctx.changeInputText(e.target.value)}
-              placeholder={"Paste or type text here...\n\nCtrl+Enter to process."}
+              placeholder={
+                "Paste or type text here...\n\nCtrl+Enter to process."
+              }
               style={{
                 flex: 1,
                 background: "transparent",
@@ -495,7 +564,7 @@ export default function MainView() {
           {/* Action column */}
           <div
             style={{
-              width: 44,
+              width: 56,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -504,53 +573,45 @@ export default function MainView() {
             }}
           >
             <AnimatePresence mode="wait">
-              {ctx.translating ? (
+              {loading ? (
                 <motion.button
                   key="stop"
+                  className="lg-chip"
                   initial={{ scale: 0.7, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.7, opacity: 0 }}
-                  onClick={() => ctx.setTranslating(false)}
-                  style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: "50%",
-                    border: "none",
-                    background: "var(--glass-control-bg)",
-                    color: "var(--text-secondary)",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+                  onClick={() => {
+                    setLoading(false);
+                    ctx.setTranslating(false);
                   }}
+                  style={{
+                    width: 42,
+                    height: 42,
+                    borderRadius: "50%",
+                    color: "var(--text-primary)",
+                  }}
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.92 }}
                 >
-                  <Square size={10} />
+                  <Square size={13} fill="currentColor" />
                 </motion.button>
               ) : (
                 <motion.button
                   key="run"
+                  className="lg-chip-primary"
                   initial={{ scale: 0.7, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.7, opacity: 0 }}
                   onClick={trigger}
                   style={{
-                    width: 30,
-                    height: 30,
+                    width: 42,
+                    height: 42,
                     borderRadius: "50%",
-                    border: "none",
-                    background: "var(--accent)",
-                    color: "var(--glass-app-bg)",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "0 2px 12px rgba(255,255,255,0.08), inset 0 1px 0 rgba(255,255,255,0.2)",
                   }}
-                  whileHover={{ scale: 1.1 }}
+                  whileHover={{ scale: 1.08 }}
                   whileTap={{ scale: 0.92 }}
                 >
-                  <ArrowRight size={13} strokeWidth={2.5} />
+                  <ArrowRight size={18} strokeWidth={2.5} />
                 </motion.button>
               )}
             </AnimatePresence>
@@ -565,89 +626,78 @@ export default function MainView() {
               overflow: "hidden",
               margin: "0 10px 0 0",
               marginBottom: 8,
-              borderRadius: 12,
-              background: "linear-gradient(180deg, var(--glass-panel-bg) 0%, transparent 100%)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
+              borderRadius: 14,
+              background:
+                "linear-gradient(180deg, var(--glass-panel-bg) 0%, transparent 100%)",
+              border: "1px solid var(--glass-border)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
             }}
           >
             <div
-              style={{ flex: 1, padding: "12px 14px", overflowY: "auto", position: "relative" }}
+              style={{
+                flex: 1,
+                padding: "12px 14px",
+                overflowY: "auto",
+                position: "relative",
+              }}
               className="scrollbar-hide"
             >
-              <AnimatePresence mode="wait">
-                {ctx.translating && !currentResult ? (
-                  <motion.div
-                    key="skeleton"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <SkeletonText lines={4} />
-                  </motion.div>
-                ) : currentResult ? (
-                  <motion.p
-                    key="result"
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
+              {loading ? (
+                <motion.div
+                  key="skeleton"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <SkeletonText lines={4} />
+                </motion.div>
+              ) : currentResult ? (
+                <motion.p
+                  key="result"
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  style={{
+                    fontSize: 13,
+                    lineHeight: 1.65,
+                    color: "var(--text-primary)",
+                    margin: 0,
+                    paddingRight: 28,
+                  }}
+                >
+                  {currentResult}
+                </motion.p>
+              ) : (
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <p
                     style={{
-                      fontSize: 13,
-                      lineHeight: 1.65,
-                      color: "var(--text-primary)",
-                      margin: 0,
-                      paddingRight: 28,
-                    }}
-                  >
-                    {currentResult}
-                  </motion.p>
-                ) : (
-                  <motion.div
-                    key="empty"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    style={{
-                      height: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <p style={{
                       fontSize: 11,
                       color: "var(--text-tertiary)",
                       textAlign: "center",
                       lineHeight: 1.6,
                       maxWidth: 160,
                       margin: 0,
-                    }}>
-                      Result will appear here
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    }}
+                  >
+                    Result will appear here
+                  </p>
+                </motion.div>
+              )}
 
               {currentResult && (
                 <div style={{ position: "absolute", top: 8, right: 8 }}>
                   <CopyButton text={currentResult} />
                 </div>
-              )}
-            </div>
-
-            <div
-              style={{
-                padding: "4px 12px 8px",
-                minHeight: 28,
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              {ctx.currentMode === "Translate" && (
-                <LanguageBar
-                  sourceLang={ctx.languageConfig.sourceLang.label}
-                  targetLang={ctx.languageConfig.targetLang.label}
-                  onSwap={handleSwapLanguages}
-                  onTargetChange={handleTargetLangChange}
-                />
               )}
             </div>
           </div>
@@ -656,45 +706,59 @@ export default function MainView() {
         {/* ── Footer ── */}
         <div
           style={{
-            display: "flex",
+            display: "grid",
+            gridTemplateColumns: "1fr auto 1fr",
             alignItems: "center",
-            justifyContent: "space-between",
-            padding: "4px 14px 8px",
+            padding: "6px 14px 10px",
             flexShrink: 0,
             position: "relative",
             zIndex: 2,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, maxWidth: 240 }}>
-            <Sparkles size={10} style={{ color: "var(--text-tertiary)", opacity: 0.6 }} />
-            <input
-              value={styleHint}
-              onChange={(e) => setStyleHint(e.target.value)}
-              placeholder="Writing style..."
+          {/* Left: keyboard hint */}
+          <div style={{ justifySelf: "start" }}>
+            <span
               style={{
-                flex: 1,
                 fontSize: 11,
-                background: "transparent",
-                border: "none",
-                outline: "none",
+                fontWeight: 600,
                 color: "var(--text-secondary)",
-                fontFamily: "inherit",
+                padding: "5px 10px",
+                borderRadius: 8,
+                background: "var(--glass-control-bg)",
+                border: "1px solid var(--chip-border)",
+                boxShadow: "var(--chip-highlight)",
+                whiteSpace: "nowrap",
               }}
-            />
+            >
+              ⌃⏎
+            </span>
           </div>
 
-          <span style={{ fontSize: 10, color: "var(--text-tertiary)", opacity: 0.6 }}>
-            Ctrl+Enter
-          </span>
+          {/* Center: language options (translate mode only) */}
+          <div style={{ justifySelf: "center" }}>
+            {ctx.currentMode === "Translate" && (
+              <LanguageBar
+                sourceLang={ctx.languageConfig.sourceLang.label}
+                targetLang={ctx.languageConfig.targetLang.label}
+                onSwap={handleSwapLanguages}
+                onTargetChange={handleTargetLangChange}
+              />
+            )}
+          </div>
 
+          {/* Right: provider badge */}
           <span
             style={{
-              fontSize: 10,
-              color: "var(--text-tertiary)",
-              fontWeight: 500,
-              padding: "2px 8px",
-              borderRadius: 6,
+              justifySelf: "end",
+              fontSize: 11,
+              color: "var(--text-secondary)",
+              fontWeight: 600,
+              padding: "5px 10px",
+              borderRadius: 8,
               background: "var(--glass-control-bg)",
+              border: "1px solid var(--chip-border)",
+              boxShadow: "var(--chip-highlight)",
+              whiteSpace: "nowrap",
             }}
           >
             {settings.provider?.label ?? "Refiner"}
