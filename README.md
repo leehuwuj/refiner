@@ -21,14 +21,13 @@ Features:
 
 
 ## Screenshots:
-- Home:
-![Main window](./docs/images/main.png)
-- Settings:
-![Settings](./docs/images/settings.png)
-- Analysis:
-![Analysis](./docs/images/analysis.png)
-- Report:
-![Report](./docs/images/report.png)
+
+| Section | Image |
+|---------|-------|
+| Home | <img src="./docs/images/main.png" height="150"> |
+| Settings | <img src="./docs/images/settings.png" height="150"> |
+| Analysis | <img src="./docs/images/analysis.png" height="150"> |
+| Report | <img src="./docs/images/report.png" height="150"> |
 
 
 ## Installation
