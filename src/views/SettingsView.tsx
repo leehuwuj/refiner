@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
-import { Save, Bot, Key, Zap, Monitor, Palette, Check, AlertCircle, MessageSquare, Languages } from "lucide-react";
+import { Save, Bot, Key, Zap, Monitor, Palette, Check, AlertCircle, MessageSquare, Languages, BarChart3, Download, Trash2, ExternalLink, Loader2 } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { SettingContext } from "@/providers/settings";
@@ -82,6 +83,165 @@ const DEFAULT_PROMPTS = {
   refine:
     "You are an expert editor. Rewrite the following text in a more conversational style, in {target_lang}. Output a single rewrite only — no options, no alternatives, no explanations, no labels, no formatting.",
 };
+
+// ── Language Analysis Section ─────────────────────────────────────────────────
+
+function LanguageAnalysisSection() {
+  const [enabled, setEnabled] = useState(false);
+  const [count, setCount] = useState(0);
+  const [analysisRunning, setAnalysisRunning] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
+
+  useEffect(() => {
+    invoke<boolean>("get_history_enabled").then(setEnabled).catch(() => {});
+    invoke<number>("get_history_count").then(setCount).catch(() => {});
+  }, []);
+
+  async function handleToggle(val: boolean) {
+    setEnabled(val);
+    await invoke("toggle_history", { enabled: val }).catch(() => {});
+  }
+
+  async function handleExport() {
+    try {
+      await invoke("export_history_json");
+      setFeedback({ type: "ok", msg: "Exported and opened." });
+    } catch (e) {
+      setFeedback({ type: "err", msg: String(e) });
+    }
+    setTimeout(() => setFeedback(null), 3000);
+  }
+
+  async function handleClear() {
+    if (!window.confirm(`Clear all ${count} history entries? This cannot be undone.`)) return;
+    await invoke("clear_history").catch(() => {});
+    setCount(0);
+    setFeedback({ type: "ok", msg: "History cleared." });
+    setTimeout(() => setFeedback(null), 3000);
+  }
+
+  async function handleRunAnalysis() {
+    setAnalysisRunning(true);
+    try {
+      await invoke("open_analysis_window");
+      await invoke("run_language_analysis");
+    } catch (e) {
+      setFeedback({ type: "err", msg: String(e) });
+      setTimeout(() => setFeedback(null), 5000);
+    } finally {
+      setAnalysisRunning(false);
+    }
+  }
+
+  async function handleOpenLastReport() {
+    try {
+      await invoke("open_last_report");
+    } catch (e) {
+      setFeedback({ type: "err", msg: String(e) });
+      setTimeout(() => setFeedback(null), 4000);
+    }
+  }
+
+  return (
+    <Section icon={BarChart3} title="Language Analysis">
+      <Row
+        label="Store input history"
+        description="Record every input so AI can analyse your language skills over time"
+      >
+        {/* reuse the Switch already imported via @/components/ui/switch */}
+        <Switch checked={enabled} onCheckedChange={handleToggle} />
+      </Row>
+
+      {count > 0 && (
+        <div className="flex items-center justify-between gap-2 pt-1">
+          <span className="text-[11px] text-[var(--text-tertiary)]">
+            {count} {count === 1 ? "entry" : "entries"} collected
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium"
+              style={{
+                background: "var(--glass-control-bg)",
+                border: "1px solid var(--chip-border)",
+                color: "var(--text-secondary)",
+                cursor: "pointer",
+              }}
+            >
+              <Download size={11} />
+              Export JSON
+            </button>
+            <button
+              onClick={handleClear}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium"
+              style={{
+                background: "rgba(248,113,113,0.08)",
+                border: "1px solid rgba(248,113,113,0.25)",
+                color: "#f87171",
+                cursor: "pointer",
+              }}
+            >
+              <Trash2 size={11} />
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex gap-2 pt-1">
+        <button
+          onClick={handleRunAnalysis}
+          disabled={analysisRunning || count === 0}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-semibold flex-1 justify-center"
+          style={{
+            background: count > 0 ? "var(--accent)" : "var(--glass-control-bg)",
+            color: count > 0 ? "#fff" : "var(--text-tertiary)",
+            border: "none",
+            cursor: count > 0 ? "pointer" : "not-allowed",
+            opacity: analysisRunning ? 0.7 : 1,
+          }}
+          title={count === 0 ? "Enable history and use the app first" : undefined}
+        >
+          {analysisRunning ? (
+            <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />
+          ) : (
+            <BarChart3 size={13} />
+          )}
+          {analysisRunning ? "Opening…" : "Run Analysis"}
+        </button>
+        <button
+          onClick={handleOpenLastReport}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-semibold"
+          style={{
+            background: "var(--glass-control-bg)",
+            border: "1px solid var(--chip-border)",
+            color: "var(--text-secondary)",
+            cursor: "pointer",
+          }}
+          title="Open previous report"
+        >
+          <ExternalLink size={13} />
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {feedback && (
+          <motion.p
+            initial={{ opacity: 0, y: 2 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="text-[11px] mt-1"
+            style={{ color: feedback.type === "ok" ? "#34d399" : "#f87171" }}
+          >
+            {feedback.msg}
+          </motion.p>
+        )}
+      </AnimatePresence>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </Section>
+  );
+}
 
 export default function SettingsView() {
   const s = useContext(SettingContext);
@@ -319,6 +479,9 @@ export default function SettingsView() {
             </Select>
           </Row>
         </Section>
+
+        {/* ── Language Analysis ── */}
+        <LanguageAnalysisSection />
 
         {/* Status message */}
         <AnimatePresence>

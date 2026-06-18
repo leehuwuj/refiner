@@ -6,7 +6,8 @@
     "main",
     "compact-popup",
     "selection-icon",
-    "settings"
+    "settings",
+    "language-analysis"
   ],
   "permissions": [
     "core:path:default",

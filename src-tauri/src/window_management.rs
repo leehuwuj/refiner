@@ -144,6 +144,28 @@ fn get_smart_position(app: &tauri::AppHandle, mouse_x: i32, mouse_y: i32) -> (f6
     (mouse_x as f64, mouse_y as f64)
 }
 
+pub async fn create_analysis_window(app: &tauri::AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("language-analysis") {
+        window.show().map_err(|e| e.to_string())?;
+        window.set_focus().map_err(|e| e.to_string())?;
+        return Ok(());
+    }
+    WebviewWindowBuilder::new(
+        app,
+        "language-analysis",
+        WebviewUrl::App("language-analysis".into()),
+    )
+    .title("Language Analysis")
+    .inner_size(580.0, 540.0)
+    .resizable(true)
+    .decorations(true)
+    .always_on_top(false)
+    .skip_taskbar(false)
+    .build()
+    .map(|_| ())
+    .map_err(|e| format!("Failed to create analysis window: {}", e))
+}
+
 pub async fn create_or_focus_compact_window(app: &tauri::AppHandle) -> Result<tauri::WebviewWindow, String> {
     let mouse = get_mouse_position();
     let (px, py) = get_smart_position(app, mouse.0, mouse.1);

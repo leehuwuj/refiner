@@ -13,7 +13,7 @@ const DEFAULT_REFINE_PROMPT: &str =
     "You are an expert editor. Rewrite the following text in a more conversational style, in {target_lang}. Output a single rewrite only — no options, no alternatives, no explanations, no labels, no formatting.";
 
 // Helper function to trim thinking blocks from model responses
-fn trim_thinking_blocks(response: &str) -> String {
+pub(crate) fn trim_thinking_blocks(response: &str) -> String {
     let mut result = response.to_string();
     
     // Remove <think>...</think> blocks
@@ -134,13 +134,22 @@ pub async fn translate(
         .replace("{target_lang}", target_lang.unwrap_or("English"));
     
     // Init provider based on the provider name
-    let provider_obj = get_provider(app_handle, provider, model);
+    let provider_obj = get_provider(app_handle.clone(), provider, model);
 
     let res = provider_obj
         .completion(&format!("<start_of_turn>user\n{}\n\nText to translate: {}\n<end_of_turn>\n<start_of_turn>model", new_prompt, text))
         .await;
     match res {
-        Ok(text) => Ok(trim_thinking_blocks(&text)),
+        Ok(output) => {
+            crate::history::append_entry_if_enabled(
+                &app_handle,
+                "translate",
+                text,
+                source_lang.unwrap_or("auto"),
+                target_lang.unwrap_or("English"),
+            );
+            Ok(trim_thinking_blocks(&output))
+        }
         Err(e) => Ok(format!("Error: {}", e)),
     }
 }
@@ -166,12 +175,21 @@ pub async fn correct(
     let new_prompt = prompt
         .replace("{original_lang}", source_lang.unwrap_or("English"))
         .replace("{target_lang}", target_lang.unwrap_or("English"));
-    let provider = get_provider(app_handle, provider, model);
+    let provider = get_provider(app_handle.clone(), provider, model);
     let res = provider
         .completion(&format!("<start_of_turn>user\n{}\n\nText to correct: {}\n<end_of_turn>\n<start_of_turn>model", new_prompt, text))
         .await;
     match res {
-        Ok(text) => Ok(trim_thinking_blocks(&text)),
+        Ok(output) => {
+            crate::history::append_entry_if_enabled(
+                &app_handle,
+                "correct",
+                text,
+                source_lang.unwrap_or("auto"),
+                target_lang.unwrap_or("English"),
+            );
+            Ok(trim_thinking_blocks(&output))
+        }
         Err(e) => Ok(format!("Error: {}", e)),
     }
 }
@@ -197,12 +215,21 @@ pub async fn refine(
     let new_prompt = prompt
         .replace("{original_lang}", source_lang.unwrap_or("English"))
         .replace("{target_lang}", target_lang.unwrap_or("English"));
-    let provider = get_provider(app_handle, provider, model);
+    let provider = get_provider(app_handle.clone(), provider, model);
     let res = provider
         .completion(&format!("<start_of_turn>user\n{}\n\nText to refine: {}\n<end_of_turn>\n<start_of_turn>model", new_prompt, text))
         .await;
     match res {
-        Ok(text) => Ok(trim_thinking_blocks(&text)),
+        Ok(output) => {
+            crate::history::append_entry_if_enabled(
+                &app_handle,
+                "refine",
+                text,
+                source_lang.unwrap_or("auto"),
+                target_lang.unwrap_or("English"),
+            );
+            Ok(trim_thinking_blocks(&output))
+        }
         Err(e) => Ok(format!("Error: {}", e)),
     }
 }

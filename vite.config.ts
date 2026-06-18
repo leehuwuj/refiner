@@ -21,6 +21,7 @@ export default defineConfig({
         main: path.resolve(__dirname, "index.html"),
         settings: path.resolve(__dirname, "settings.html"),
         "compact-popup": path.resolve(__dirname, "compact-popup.html"),
+        "language-analysis": path.resolve(__dirname, "language-analysis.html"),
       },
     },
   },
