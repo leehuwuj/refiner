@@ -4,6 +4,15 @@ use std::path::PathBuf;
 use tauri::Manager;
 use tauri_plugin_store::StoreExt;
 
+pub(crate) fn open_path(path: &str) {
+    #[cfg(target_os = "macos")]
+    let _ = std::process::Command::new("open").arg(path).spawn();
+    #[cfg(target_os = "windows")]
+    let _ = std::process::Command::new("explorer").arg(path).spawn();
+    #[cfg(target_os = "linux")]
+    let _ = std::process::Command::new("xdg-open").arg(path).spawn();
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct HistoryEntry {
     pub id: u64,
@@ -111,8 +120,7 @@ pub async fn export_history_json(app_handle: tauri::AppHandle) -> Result<String,
     fs::write(&export_path, content).map_err(|e| e.to_string())?;
 
     let path_str = export_path.to_string_lossy().to_string();
-    use tauri_plugin_shell::ShellExt;
-    let _ = app_handle.shell().open(&path_str, None);
+    open_path(&path_str);
     Ok(path_str)
 }
 

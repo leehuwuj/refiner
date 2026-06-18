@@ -12,7 +12,7 @@ mod shortcuts;
 
 use commands::{correct, refine, translate, save_settings, get_settings, get_shortcut_window_type, open_settings_window};
 use history::{get_history_enabled, toggle_history, get_history_count, export_history_json, clear_history};
-use language_analysis::{get_analysis_status, open_analysis_window, open_last_report, run_language_analysis, AppAnalysisState, AnalysisStatus};
+use language_analysis::{get_analysis_status, open_last_report, run_language_analysis, open_reports_folder, list_reports, open_report, AppAnalysisState, AnalysisStatus};
 use device_query::{DeviceQuery, DeviceState};
 use std::sync::{Arc, Mutex};
 
@@ -48,10 +48,10 @@ pub fn run() {
         })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::Focused(false) = event {
-                // The language-analysis window stays visible when unfocused so
-                // the user can read progress without the window disappearing.
-                if window.label() != "language-analysis" {
-                    let _ = window.hide();
+                match window.label() {
+                    // Settings stays open when the user clicks elsewhere
+                    "settings" => {}
+                    _ => { let _ = window.hide(); }
                 }
             }
         })
@@ -71,9 +71,11 @@ pub fn run() {
             clear_history,
             // language analysis
             get_analysis_status,
-            open_analysis_window,
             run_language_analysis,
             open_last_report,
+            open_reports_folder,
+            list_reports,
+            open_report,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

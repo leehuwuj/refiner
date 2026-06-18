@@ -1,12 +1,48 @@
-use crate::history::load_history_file;
+use crate::history::{load_history_file, open_path};
 use crate::providers::base::{get_provider, Provider};
-use crate::window_management::create_analysis_window;
 use serde::Serialize;
 use std::fs;
 use std::sync::{Arc, Mutex};
 use tauri::Emitter;
 use tauri::Manager;
 use tauri_plugin_store::StoreExt;
+
+// ── Date helpers ───────────────────────────────────────────────────────────────
+
+/// Returns a filename-safe timestamp string: `analysis_YYYY-MM-DD_HH-MM.html`
+fn timestamped_report_name() -> String {
+    let secs = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+
+    let days = secs / 86400;
+    let rem = secs % 86400;
+    let h = rem / 3600;
+    let min = (rem % 3600) / 60;
+
+    // Howard Hinnant civil-from-days algorithm
+    let z = days as i64 + 719468;
+    let era = (if z >= 0 { z } else { z - 146096 }) / 146097;
+    let doe = (z - era * 146097) as u64;
+    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+    let y = yoe as i64 + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let mon: i64 = if mp < 10 { mp as i64 + 3 } else { mp as i64 - 9 };
+    let year = if mon <= 2 { y + 1 } else { y };
+
+    format!("analysis_{:04}-{:02}-{:02}_{:02}-{:02}.html", year, mon, d, h, min)
+}
+
+// ── Report listing ─────────────────────────────────────────────────────────────
+
+#[derive(Serialize)]
+pub struct ReportInfo {
+    pub filename: String,
+    pub path: String,
+}
 
 // ── Shared analysis state (lets the window query status after mounting) ────────
 
@@ -220,35 +256,63 @@ pub async fn get_analysis_status(app_handle: tauri::AppHandle) -> AnalysisStatus
         .unwrap_or_default()
 }
 
-/// Opens (or focuses) the analysis window.
+/// Opens a specific report by full path.
 #[tauri::command]
-pub async fn open_analysis_window(app_handle: tauri::AppHandle) -> Result<(), String> {
-    create_analysis_window(&app_handle).await
+pub async fn open_report(path: String) -> Result<(), String> {
+    if !std::path::Path::new(&path).exists() {
+        return Err("Report file not found.".to_string());
+    }
+    open_path(&path);
+    Ok(())
 }
 
-/// Opens the last saved HTML report in the default browser.
+/// Opens the app-data directory (where all reports live) in Finder / Explorer.
+#[tauri::command]
+pub async fn open_reports_folder(app_handle: tauri::AppHandle) -> Result<(), String> {
+    let dir = app_handle.path().app_data_dir().map_err(|e| e.to_string())?;
+    let _ = fs::create_dir_all(&dir);
+    open_path(dir.to_string_lossy().as_ref());
+    Ok(())
+}
+
+/// Lists all saved analysis reports, newest first.
+#[tauri::command]
+pub async fn list_reports(app_handle: tauri::AppHandle) -> Result<Vec<ReportInfo>, String> {
+    let dir = app_handle.path().app_data_dir().map_err(|e| e.to_string())?;
+    let mut reports = Vec::new();
+    if let Ok(entries) = fs::read_dir(&dir) {
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().to_string();
+            if name.starts_with("analysis_") && name.ends_with(".html") {
+                reports.push(ReportInfo {
+                    filename: name,
+                    path: entry.path().to_string_lossy().to_string(),
+                });
+            }
+        }
+    }
+    reports.sort_by(|a, b| b.filename.cmp(&a.filename));
+    Ok(reports)
+}
+
+/// Opens the most recently saved report.
 #[tauri::command]
 pub async fn open_last_report(app_handle: tauri::AppHandle) -> Result<(), String> {
-    let dir = app_handle
-        .path()
-        .app_data_dir()
-        .map_err(|e| e.to_string())?;
-    let path = dir.join("language_analysis_report.html");
-    if !path.exists() {
-        return Err("No report found. Run analysis first.".to_string());
-    }
-    use tauri_plugin_shell::ShellExt;
-    app_handle
-        .shell()
-        .open(path.to_string_lossy().as_ref(), None)
-        .map_err(|e| e.to_string())
+    let reports = list_reports(app_handle).await?;
+    let latest = reports.into_iter().next()
+        .ok_or_else(|| "No report found. Run analysis first.".to_string())?;
+    open_path(&latest.path);
+    Ok(())
 }
 
 /// Spawns the background analysis job.  Returns quickly; progress arrives via
 /// `analysis-progress`, `analysis-complete`, and `analysis-error` events, and
 /// is also queryable via `get_analysis_status`.
 #[tauri::command]
-pub async fn run_language_analysis(app_handle: tauri::AppHandle) -> Result<(), String> {
+pub async fn run_language_analysis(
+    app_handle: tauri::AppHandle,
+    days_back: Option<u32>,
+) -> Result<(), String> {
     let history = load_history_file(&app_handle)?;
     if history.entries.is_empty() {
         return Err(
@@ -257,7 +321,6 @@ pub async fn run_language_analysis(app_handle: tauri::AppHandle) -> Result<(), S
         );
     }
 
-    // Mark as running immediately (window may query before events arrive)
     set_status(
         &app_handle,
         AnalysisStatus {
@@ -270,14 +333,14 @@ pub async fn run_language_analysis(app_handle: tauri::AppHandle) -> Result<(), S
 
     let app = app_handle.clone();
     tauri::async_runtime::spawn(async move {
-        run_analysis_inner(app).await;
+        run_analysis_inner(app, days_back).await;
     });
 
     Ok(())
 }
 
-async fn run_analysis_inner(app: tauri::AppHandle) {
-    // 1 – Load entries
+async fn run_analysis_inner(app: tauri::AppHandle, days_back: Option<u32>) {
+    // 1 – Load and optionally filter entries by date range
     set_status(
         &app,
         AnalysisStatus {
@@ -291,18 +354,24 @@ async fn run_analysis_inner(app: tauri::AppHandle) {
     let history = match load_history_file(&app) {
         Ok(h) => h,
         Err(e) => {
-            set_status(
-                &app,
-                AnalysisStatus {
-                    error: Some(e),
-                    ..Default::default()
-                },
-            );
+            set_status(&app, AnalysisStatus { error: Some(e), ..Default::default() });
             return;
         }
     };
 
-    let entries = &history.entries;
+    let cutoff_ms = days_back.map(|d| {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|t| t.as_millis() as u64)
+            .unwrap_or(0);
+        now.saturating_sub(d as u64 * 86_400 * 1_000)
+    });
+
+    let filtered: Vec<_> = history.entries.iter()
+        .filter(|e| cutoff_ms.map_or(true, |c| e.timestamp >= c))
+        .cloned()
+        .collect();
+    let entries = &filtered;
 
     // Resolve the user's native language from settings so we can isolate L2
     let native_lang = {
@@ -430,15 +499,10 @@ async fn run_analysis_inner(app: tauri::AppHandle) {
         }
     };
     let _ = fs::create_dir_all(&dir);
-    let report_path = dir.join("language_analysis_report.html");
+    let filename = timestamped_report_name();
+    let report_path = dir.join(&filename);
     if let Err(e) = fs::write(&report_path, html) {
-        set_status(
-            &app,
-            AnalysisStatus {
-                error: Some(format!("Failed to save report: {}", e)),
-                ..Default::default()
-            },
-        );
+        set_status(&app, AnalysisStatus { error: Some(format!("Failed to save report: {}", e)), ..Default::default() });
         return;
     }
 
@@ -456,7 +520,5 @@ async fn run_analysis_inner(app: tauri::AppHandle) {
         },
     );
 
-    // Auto-open the report in the default browser
-    use tauri_plugin_shell::ShellExt;
-    let _ = app.shell().open(&path_str, None);
+    open_path(&path_str);
 }

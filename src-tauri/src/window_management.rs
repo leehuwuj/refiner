@@ -6,24 +6,30 @@ const POPUP_HEIGHT: f64 = 200.0;
 const CURSOR_OFFSET: f64 = 6.0;
 
 pub async fn create_or_focus_settings_window(app: &tauri::AppHandle) -> Result<tauri::WebviewWindow, String> {
+    create_or_focus_settings_window_tab(app, "general").await
+}
+
+/// Opens the settings window on a specific tab.
+/// - If the window already exists, focuses it and returns it (caller emits event to switch tab).
+/// - If a new window is created, the tab name is passed as a URL query param so React reads it on init.
+pub async fn create_or_focus_settings_window_tab(app: &tauri::AppHandle, tab: &str) -> Result<tauri::WebviewWindow, String> {
     if let Some(window) = app.get_webview_window("settings") {
         window.show().map_err(|e| e.to_string())?;
         window.set_focus().map_err(|e| e.to_string())?;
-        Ok(window)
-    } else {
-        match WebviewWindowBuilder::new(
-            app,
-            "settings",
-            WebviewUrl::App("settings".into()),
-        )
+        return Ok(window);
+    }
+    let url = format!("settings?tab={}", tab);
+    match WebviewWindowBuilder::new(app, "settings", WebviewUrl::App(url.into()))
         .title("Settings")
-        .inner_size(480.0, 520.0)
+        .inner_size(500.0, 600.0)
+        .transparent(true)
+        .decorations(true)
         .resizable(false)
+        .always_on_top(false)
         .build()
-        {
-            Ok(window) => Ok(window),
-            Err(e) => Err(format!("Failed to create settings window: {}", e)),
-        }
+    {
+        Ok(window) => Ok(window),
+        Err(e) => Err(format!("Failed to create settings window: {}", e)),
     }
 }
 
