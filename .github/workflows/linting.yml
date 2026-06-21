@@ -1,4 +1,4 @@
-name: 'Linting'
+name: 'CI'
 
 on:
   push:
@@ -7,7 +7,27 @@ on:
     branches: [ main ]
 
 jobs:
-  cargo-check:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'pnpm'
+
+      - name: install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: typecheck
+        run: pnpm exec tsc --noEmit
+
+  cargo:
     strategy:
       fail-fast: false
       matrix:
@@ -21,12 +41,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust stable
+      - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || '' }}
 
-      - name: Run Cargo check
-        run: |
-          cd src-tauri
-          cargo check
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: cargo check
+        run: cd src-tauri && cargo check

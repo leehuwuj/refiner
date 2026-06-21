@@ -1,6 +1,6 @@
 [package]
 name = "refiner"
-version = "0.1.0"
+version = "0.1.4"
 description = "The quick and easy way to translate text"
 authors = ["leehuwuj <leehuwuj@gmail.com>"]
 license = ""
