@@ -1,6 +1,6 @@
 [package]
 name = "refiner"
-version = "0.1.0"
+version = "0.1.4"
 description = "The quick and easy way to translate text"
 authors = ["leehuwuj <leehuwuj@gmail.com>"]
 license = ""
@@ -17,7 +17,7 @@ tauri-build = { version = "2.0.0-rc.0", features = [] }
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "2.6.2", features = [ "macos-private-api", "tray-icon"] }
+tauri = { version = "2.11.1", features = [ "macos-private-api", "tray-icon"] }
 tauri-plugin-positioner = { version = "2.3.0", features = ["tray-icon"] }
 tauri-plugin-store = "2.3.0"
 tauri-plugin-shell = "2.3.0"
