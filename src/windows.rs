@@ -13,10 +13,10 @@ use crate::ui::selection_icon::SelectionIcon;
 use crate::ui::settings_view::{SettingsTab, SettingsView};
 use crate::ui::apply_appearance;
 
-pub const MAIN_SIZE: (f32, f32) = (750., 360.);
-pub const POPUP_SIZE: (f32, f32) = (300., 200.);
+pub const MAIN_SIZE: (f32, f32) = (660., 340.);
+pub const POPUP_SIZE: (f32, f32) = (320., 200.);
 pub const SELECTION_ICON_SIZE: f32 = 22.;
-pub const SETTINGS_SIZE: (f32, f32) = (520., 680.);
+pub const SETTINGS_SIZE: (f32, f32) = (560., 560.);
 const CURSOR_OFFSET: f32 = 6.;
 const EDGE_MARGIN: f32 = 8.;
 
@@ -190,6 +190,7 @@ pub fn show_settings(tab: SettingsTab, cx: &mut App) {
         let alive = handle
             .update(cx, |_, window, cx| {
                 window.activate_window();
+                window.set_window_title(tab.label());
                 let _ = view.update(cx, |v, cx| v.set_tab(tab, cx));
             })
             .is_ok();
@@ -232,7 +233,9 @@ pub fn close_on_blur<V: 'static>(window: &mut Window, cx: &mut Context<V>) -> Su
         if std::env::var_os("REFINER_DEBUG").is_some() {
             eprintln!("refiner: activation changed: active={}", window.is_window_active());
         }
-        if !window.is_window_active() {
+        // Snapshot runs must not depend on which app is frontmost.
+        let snapshot = cfg!(feature = "snapshot") && std::env::var_os("REFINER_SNAPSHOT").is_some();
+        if !window.is_window_active() && !snapshot {
             window.remove_window();
         }
     })

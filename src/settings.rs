@@ -71,6 +71,9 @@ pub fn provider_info(id: &str) -> &'static ProviderInfo {
         .unwrap_or(&PROVIDERS[0])
 }
 
+/// Source-language choice that lets the model detect the language.
+pub const DETECT_LANGUAGE: &str = "Detect Language";
+
 /// Languages offered as translation targets / preferred language.
 pub const LANGUAGES: &[&str] = &[
     "English",

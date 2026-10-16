@@ -10,6 +10,14 @@ use crate::state::AppState;
 use crate::ui::settings_view::SettingsTab;
 use crate::windows;
 
+/// Closes every window so the next one draws a fresh frame even when the app
+/// isn't visible (GPUI skips redrawing hidden windows).
+fn close_all(cx: &mut App) {
+    for handle in cx.windows() {
+        let _ = handle.update(cx, |_, window, _| window.remove_window());
+    }
+}
+
 fn capture(dir: &Path, step: &str, cx: &mut App) {
     eprintln!("snapshot: {step}: {} window(s)", cx.windows().len());
     for (n, handle) in cx.windows().into_iter().enumerate() {
@@ -58,10 +66,16 @@ pub fn run(cx: &mut App) {
         });
         wait(1200).await;
         cx.update(|cx| capture(&dir, "2-popup", cx));
-        cx.update(|cx| windows::show_settings(SettingsTab::General, cx));
+        cx.update(|cx| { close_all(cx); windows::show_settings(SettingsTab::General, cx) });
         wait(1200).await;
         cx.update(|cx| capture(&dir, "3-settings", cx));
-        cx.update(|cx| windows::show_settings(SettingsTab::Analysis, cx));
+        cx.update(|cx| { close_all(cx); windows::show_settings(SettingsTab::Model, cx) });
+        wait(800).await;
+        cx.update(|cx| capture(&dir, "3b-model", cx));
+        cx.update(|cx| { close_all(cx); windows::show_settings(SettingsTab::Prompts, cx) });
+        wait(800).await;
+        cx.update(|cx| capture(&dir, "3c-prompts", cx));
+        cx.update(|cx| { close_all(cx); windows::show_settings(SettingsTab::Analysis, cx) });
         wait(1000).await;
         cx.update(|cx| capture(&dir, "4-analysis", cx));
         cx.update(|cx| {

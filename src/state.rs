@@ -11,7 +11,7 @@ use gpui_kit::*;
 use crate::analysis::{self, Phase, ReportInfo};
 use crate::history;
 use crate::refine::{self, Mode, Request};
-use crate::settings::Settings;
+use crate::settings::{DETECT_LANGUAGE, Settings};
 
 /// Outcome of one request: the text, or an error message.
 pub type Outcome = Result<String, String>;
@@ -85,7 +85,7 @@ impl MainModel {
         Self {
             input: String::new(),
             mode: Mode::Translate,
-            source_lang: "English".into(),
+            source_lang: DETECT_LANGUAGE.into(),
             target_lang,
             results: [None, None, None],
             loading: false,
@@ -114,8 +114,20 @@ impl MainModel {
         }
     }
 
+    /// Swapping needs a concrete source language.
+    pub fn can_swap(&self) -> bool {
+        self.source_lang != DETECT_LANGUAGE
+    }
+
     pub fn swap_languages(&mut self, cx: &mut Context<Self>) {
-        std::mem::swap(&mut self.source_lang, &mut self.target_lang);
+        if self.can_swap() {
+            std::mem::swap(&mut self.source_lang, &mut self.target_lang);
+            cx.notify();
+        }
+    }
+
+    pub fn set_source_lang(&mut self, lang: String, cx: &mut Context<Self>) {
+        self.source_lang = lang;
         cx.notify();
     }
 
@@ -134,7 +146,11 @@ impl MainModel {
         let req = Request {
             mode,
             text: self.input.clone(),
-            source_lang: self.source_lang.clone(),
+            source_lang: if self.source_lang == DETECT_LANGUAGE {
+                refine::AUTO_LANG.into()
+            } else {
+                self.source_lang.clone()
+            },
             target_lang: self.target_lang.clone(),
         };
         self.results[mode.index()] = None;
@@ -207,13 +223,13 @@ impl PopupModel {
         let translate = Request {
             mode: Mode::Translate,
             text: text.clone(),
-            source_lang: "auto".into(),
+            source_lang: refine::AUTO_LANG.into(),
             target_lang: settings.preferred_lang.clone(),
         };
         let correct = Request {
             mode: Mode::Correct,
             text,
-            source_lang: "auto".into(),
+            source_lang: refine::AUTO_LANG.into(),
             target_lang: "the original language of the text".into(),
         };
         for (req, is_translation) in [(translate, true), (correct, false)] {

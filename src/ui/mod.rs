@@ -5,14 +5,14 @@ pub mod popup_view;
 pub mod selection_icon;
 pub mod settings_view;
 
-use gpui_kit::component::{ActiveTheme as _, Theme, ThemeMode, h_flex};
+use gpui_kit::component::{ActiveTheme as _, Theme, ThemeMode};
 use gpui_kit::*;
 
 use crate::settings::ThemePref;
 use crate::state::AppState;
 
 /// Base font size before the user's text-size scale.
-const BASE_FONT_SIZE: f32 = 15.;
+const BASE_FONT_SIZE: f32 = 13.;
 
 /// Applies the saved theme and text size.
 pub fn apply_appearance(window: &mut Window, cx: &mut App) {
@@ -46,47 +46,36 @@ pub fn track_appearance<V: 'static>(window: &mut Window, cx: &mut Context<V>) ->
     ]
 }
 
-/// The translucent, rounded surface of the panel windows.
-pub fn glass_surface(cx: &App) -> Div {
+/// Corner radius of the floating panels (macOS popovers use ~10–12pt).
+pub const PANEL_RADIUS: f32 = 12.;
+
+/// The translucent surface of the floating panels. The window is created
+/// with a blurred background, so a partly transparent fill reads as macOS
+/// vibrancy.
+pub fn panel_surface(cx: &App) -> Div {
     let theme = cx.theme();
     div()
         .size_full()
         .flex()
         .flex_col()
         .overflow_hidden()
-        .rounded(px(14.))
+        .rounded(px(PANEL_RADIUS))
         .border_1()
-        .border_color(theme.border.opacity(0.6))
-        .bg(theme.background.opacity(0.88))
+        .border_color(hairline(cx))
+        .bg(theme.background.opacity(0.78))
         .text_color(theme.foreground)
 }
 
-/// A rounded inner card (input/output panels).
-pub fn panel(cx: &App) -> Div {
-    let theme = cx.theme();
-    div()
-        .flex()
-        .flex_col()
-        .overflow_hidden()
-        .rounded(px(12.))
-        .border_1()
-        .border_color(theme.border.opacity(0.7))
-        .bg(theme.muted.opacity(0.35))
+/// The thin separator colour used between toolbar, panes and footers.
+pub fn hairline(cx: &App) -> Hsla {
+    cx.theme().border.opacity(0.55)
 }
 
-/// A small non-interactive pill (model, provider, shortcut hint).
-pub fn chip(text: impl Into<SharedString>, cx: &App) -> Div {
-    let theme = cx.theme();
-    h_flex()
-        .h(px(26.))
-        .px_2p5()
-        .rounded(px(8.))
-        .border_1()
-        .border_color(theme.border.opacity(0.7))
-        .bg(theme.secondary.opacity(0.6))
+/// Small secondary text (status lines, captions).
+pub fn caption(text: impl Into<SharedString>, cx: &App) -> Div {
+    div()
         .text_xs()
-        .font_weight(FontWeight::SEMIBOLD)
-        .text_color(theme.muted_foreground)
+        .text_color(cx.theme().muted_foreground)
         .whitespace_nowrap()
         .child(text.into())
 }

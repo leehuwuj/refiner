@@ -8,6 +8,10 @@ pub const DEFAULT_TRANSLATE_PROMPT: &str = "You are an expert translator. Transl
 pub const DEFAULT_CORRECT_PROMPT: &str = "You are an expert in grammar. Correct the grammar of the following text in {target_lang}. Provide only the corrected text, without any additional explanations or formatting.";
 pub const DEFAULT_REFINE_PROMPT: &str = "You are an expert editor. Rewrite the following text in a more conversational style, in {target_lang}. Output a single rewrite only — no options, no alternatives, no explanations, no labels, no formatting.";
 
+/// Source language meaning "let the model detect it". Stored as-is in
+/// history; spelled out only inside the prompt.
+pub const AUTO_LANG: &str = "auto";
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum Mode {
     #[default]
@@ -85,8 +89,13 @@ pub fn build_prompt(settings: &Settings, req: &Request) -> String {
     } else {
         custom
     };
+    let source = if req.source_lang == AUTO_LANG {
+        "the language of the text (detect it)"
+    } else {
+        &req.source_lang
+    };
     let instructions = template
-        .replace("{original_lang}", &req.source_lang)
+        .replace("{original_lang}", source)
         .replace("{target_lang}", &req.target_lang);
     format!(
         "<start_of_turn>user\n{instructions}\n\n{}: {}\n<end_of_turn>\n<start_of_turn>model",
@@ -122,6 +131,12 @@ mod tests {
         let p = build_prompt(&s, &req);
         assert!(p.contains("from English to Français"));
         assert!(p.contains("Text to translate: hello"));
+
+        let auto = Request {
+            source_lang: AUTO_LANG.into(),
+            ..req.clone()
+        };
+        assert!(build_prompt(&s, &auto).contains("from the language of the text (detect it) to"));
 
         s.prompt_translate = "Say {target_lang}".into();
         assert!(build_prompt(&s, &req).contains("Say Français"));
