@@ -1,0 +1,68 @@
+[package]
+name = "refiner"
+version = "0.2.0"
+edition = "2024"
+rust-version = "1.92"
+description = "A simple AI-powered app for translating, correcting and refining text, built with GPUI Kit."
+authors = ["leehuwuj <leehuwuj@gmail.com>"]
+license = "MIT"
+publish = false
+
+[[bin]]
+name = "refiner"
+path = "src/main.rs"
+
+[dependencies]
+# One dependency pulls GPUI (via gpui-pre), gpui-base, gpui-component and default assets.
+gpui-kit = "0.7"
+anyhow = "1"
+dirs = "6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+smol = "2"
+# Blocking HTTP client; requests run on GPUI's background executor.
+ureq = { version = "3", features = ["json"] }
+# System tray + global shortcut (Cmd/Ctrl+E). GPUI exposes neither.
+tray-icon = "0.26"
+global-hotkey = "0.9"
+image = { version = "0.25", default-features = false, features = ["png"] }
+# Only for the dev `snapshot` feature: turns on GPUI's offscreen rendering.
+gpui-pre = { version = "0.3", optional = true, features = ["test-support"] }
+
+[features]
+# Dev only: `REFINER_SNAPSHOT=<dir> cargo run --features snapshot` renders each
+# window with demo content to PNGs, then quits.
+snapshot = ["dep:gpui-pre", "dep:gpui-pre-macos"]
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+gpui-pre-macos = { version = "0.3", optional = true, features = ["test-support"] }
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "block2", "libc", "NSApplication", "NSResponder", "NSRunningApplication", "NSWorkspace", "NSEvent", "NSImage"] }
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSGeometry", "NSData"] }
+# Reading the selected text and watching mouse selections.
+accessibility-sys = "0.2"
+core-foundation = "0.10"
+block2 = "0.6"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_WindowsAndMessaging", "Win32_UI_HiDpi"] }
+
+# Keep the UI stack optimized in debug builds so the app stays responsive.
+[profile.dev.package]
+gpui-pre = { opt-level = 3 }
+gpui-pre-platform = { opt-level = 3 }
+gpui-pre-macros = { opt-level = 3 }
+gpui-pre-sum-tree = { opt-level = 3 }
+gpui-base = { opt-level = 3 }
+gpui-component = { opt-level = 3 }
+gpui-kit = { opt-level = 3 }
+gpui-kit-assets = { opt-level = 3 }
+rustybuzz = { opt-level = 3 }
+taffy = { opt-level = 3 }
+ttf-parser = { opt-level = 3 }
+resvg = { opt-level = 3 }
+
+[profile.release]
+opt-level = 3
+strip = true
+lto = "thin"
