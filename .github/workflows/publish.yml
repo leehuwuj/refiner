@@ -21,7 +21,7 @@ jobs:
   build:
     uses: ./.github/workflows/build-native.yml
     with:
-      ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+      ref: ${{ format('refs/tags/{0}', github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name) }}
       release_tag: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
 
   publish:
@@ -34,18 +34,21 @@ jobs:
       GH_REPO: ${{ github.repository }}
       RELEASE_TAG: ${{ needs.build.outputs.tag }}
       RELEASE_VERSION: ${{ needs.build.outputs.version }}
+      RELEASE_REVISION: ${{ needs.build.outputs.revision }}
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ needs.build.outputs.tag }}
+          ref: refs/tags/${{ needs.build.outputs.tag }}
           persist-credentials: false
       - uses: actions/download-artifact@v8
         with:
           pattern: refiner-*
           merge-multiple: true
           path: dist
-      - name: Verify complete release and generate checksums
-        run: python3 script/release-checksums.py
+      - name: Verify built revision and complete release
+        run: |
+          test "$(git rev-parse HEAD)" = "$RELEASE_REVISION"
+          python3 script/release-checksums.py
       - name: Upload and publish release
         shell: bash
         run: |
@@ -58,11 +61,11 @@ jobs:
             gh release upload "$RELEASE_TAG" dist/* --clobber
           else
             gh release create "$RELEASE_TAG" dist/* --verify-tag --draft \
-              --title "Refiner v$RELEASE_VERSION" --generate-notes \
+              --title "Refiner v$RELEASE_VERSION" \
               --notes-file .github/release-notes.md
           fi
           # Keep incomplete uploads private; publish only after every upload succeeds.
-          if [[ "$RELEASE_VERSION" == *-* ]]; then
+          if [[ "${RELEASE_VERSION%%+*}" == *-* ]]; then
             gh release edit "$RELEASE_TAG" --draft=false --prerelease --latest=false
           else
             gh release edit "$RELEASE_TAG" --draft=false --prerelease=false --latest

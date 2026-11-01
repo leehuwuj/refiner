@@ -17,7 +17,7 @@ expected = {
     ]
     for extension in extensions
 }
-actual = {path.name for path in dist.iterdir() if path.is_file()}
+actual = {path.name for path in dist.iterdir() if path.is_file() and path.name != "SHA256SUMS"}
 if actual != expected:
     raise SystemExit(
         f"Incomplete release: missing={sorted(expected - actual)}, unexpected={sorted(actual - expected)}"

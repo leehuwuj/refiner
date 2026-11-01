@@ -16,6 +16,8 @@ on:
         value: ${{ jobs.metadata.outputs.version }}
       tag:
         value: ${{ jobs.metadata.outputs.tag }}
+      revision:
+        value: ${{ jobs.metadata.outputs.revision }}
 
 permissions:
   contents: read
@@ -33,10 +35,12 @@ jobs:
     outputs:
       version: ${{ steps.metadata.outputs.version }}
       tag: ${{ steps.metadata.outputs.tag }}
+      revision: ${{ steps.source.outputs.commit }}
     steps:
       - uses: actions/checkout@v6
+        id: source
         with:
-          ref: ${{ inputs.ref || github.ref }}
+          ref: ${{ inputs.ref || github.sha }}
           persist-credentials: false
       - name: Validate package version and release tag
         id: metadata
@@ -78,7 +82,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.ref || github.ref }}
+          ref: ${{ needs.metadata.outputs.revision }}
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
         with:
