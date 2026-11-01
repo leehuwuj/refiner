@@ -37,8 +37,8 @@ snapshot = ["dep:gpui-pre", "dep:gpui-pre-macos", "dep:gpui-pre-windows"]
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"
 gpui-pre-macos = { version = "0.3", optional = true, features = ["test-support"] }
-objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "block2", "libc", "NSApplication", "NSResponder", "NSRunningApplication", "NSWorkspace", "NSEvent", "NSImage"] }
-objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSGeometry", "NSData"] }
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "block2", "libc", "NSApplication", "NSResponder", "NSRunningApplication", "NSWorkspace", "NSEvent", "NSImage", "NSPanel", "NSWindow", "NSView", "NSButton", "NSControl", "NSCell", "NSButtonCell", "NSColor", "NSGraphics", "NSScreen", "NSCursor", "NSBitmapImageRep", "NSImageRep"] }
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "block2", "NSGeometry", "NSData", "NSNotification", "NSOperation", "NSString", "NSDictionary", "NSValue"] }
 # Reading the selected text and watching mouse selections.
 accessibility-sys = "0.2"
 core-foundation = "0.10"

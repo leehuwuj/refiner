@@ -10,7 +10,7 @@ use crate::platform;
 use crate::ui::apply_appearance;
 use crate::ui::main_view::MainView;
 use crate::ui::popup_view::PopupView;
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 use crate::ui::selection_icon::SelectionIcon;
 use crate::ui::settings_view::{SettingsTab, SettingsView};
 
@@ -25,7 +25,7 @@ const EDGE_MARGIN: f32 = 8.;
 struct OpenWindows {
     main: Option<AnyWindowHandle>,
     popup: Option<AnyWindowHandle>,
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
     selection_icon: Option<(AnyWindowHandle, WeakEntity<SelectionIcon>)>,
     settings: Option<(AnyWindowHandle, WeakEntity<SettingsView>)>,
 }
@@ -67,6 +67,8 @@ fn panel_options(bounds: Bounds<Pixels>) -> WindowOptions {
 /// Shows the main window: near the menu bar (macOS, top-right) or the top
 /// of the screen (elsewhere).
 pub fn show_main(cx: &mut App) {
+    #[cfg(target_os = "macos")]
+    crate::macos_selection_watch::dismiss(cx);
     let existing = open_windows(cx).main;
     if focus_existing(existing, cx) {
         return;
@@ -101,6 +103,8 @@ pub fn show_main(cx: &mut App) {
 
 /// Opens the quick popup next to the mouse cursor, kept fully on screen.
 pub fn show_popup(cx: &mut App) {
+    #[cfg(target_os = "macos")]
+    crate::macos_selection_watch::dismiss(cx);
     if let Some(old) = open_windows(cx).popup.take() {
         let _ = old.update(cx, |_, window, _| close_panel(window));
     }
@@ -139,6 +143,11 @@ pub fn show_popup(cx: &mut App) {
     let screen = target_display
         .as_ref()
         .map(|display| display.visible_bounds());
+    let display_id = target_display.as_ref().map(|display| display.id());
+    #[cfg(target_os = "macos")]
+    let (cursor, screen, display_id) = crate::macos_selection_button::popup_location()
+        .map(|(cursor, screen, display)| (cursor, Some(screen), Some(display)))
+        .unwrap_or((cursor, screen, display_id));
     let offset = px(CURSOR_OFFSET);
     let mut origin = point(cursor.x + offset, cursor.y + offset);
     if let Some(s) = screen {
@@ -160,7 +169,7 @@ pub fn show_popup(cx: &mut App) {
     }
     let bounds = Bounds::new(origin, size(w, h));
     let mut options = panel_options(bounds);
-    options.display_id = target_display.as_ref().map(|display| display.id());
+    options.display_id = display_id;
 
     match gpui_kit::open_window(options, cx, |window, cx| {
         apply_appearance(window, cx);
@@ -177,9 +186,27 @@ pub fn show_popup(cx: &mut App) {
     }
 }
 
-/// Shows the selection button above the text's top-left on Windows, or beside
-/// the selection-ending cursor on macOS, without taking focus from its app.
-#[cfg(any(not(target_os = "windows"), feature = "snapshot", test))]
+/// Render the native macOS selection icon in the development snapshot flow.
+#[cfg(all(target_os = "macos", feature = "snapshot"))]
+pub fn show_selection_icon(at: Point<Pixels>, text: String, cx: &mut App) {
+    crate::macos_selection_button::show_at_text(
+        crate::ax::SelectionRect {
+            x: f32::from(at.x) as f64,
+            y: f32::from(at.y) as f64,
+            width: 40.,
+            height: 16.,
+        },
+        text,
+        cx,
+    );
+}
+
+/// Snapshot/unsupported-platform selection icon. Live Windows selections use
+/// their native text-bound placement routine.
+#[cfg(any(
+    not(any(target_os = "windows", target_os = "macos")),
+    all(target_os = "windows", any(feature = "snapshot", test))
+))]
 pub fn show_selection_icon(at: Point<Pixels>, text: String, cx: &mut App) {
     let side = px(SELECTION_ICON_SIZE);
     let mut origin = if cfg!(target_os = "windows") {
@@ -242,15 +269,19 @@ pub fn show_selection_icon(at: Point<Pixels>, text: String, cx: &mut App) {
 }
 
 pub fn hide_selection_icon(cx: &mut App) {
+    #[cfg(target_os = "macos")]
+    crate::macos_selection_button::hide(cx);
     #[cfg(target_os = "windows")]
     crate::windows_selection_button::hide(cx);
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
     if let Some((handle, _)) = open_windows(cx).selection_icon.take() {
         let _ = handle.update(cx, |_, window, _| window.remove_window());
     }
 }
 /// Opens (or focuses) the settings window on `tab`.
 pub fn show_settings(tab: SettingsTab, cx: &mut App) {
+    #[cfg(target_os = "macos")]
+    crate::macos_selection_watch::dismiss(cx);
     cx.activate(true);
     if let Some((handle, view)) = open_windows(cx).settings.clone() {
         let alive = handle

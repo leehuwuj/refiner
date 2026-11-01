@@ -24,6 +24,10 @@ fn capture(dir: &Path, step: &str, cx: &mut App) {
     if step == "5-icon" {
         crate::windows_selection_button::snapshot(cx, &dir.join("5-icon-native.png"));
     }
+    #[cfg(target_os = "macos")]
+    if step == "5-icon" {
+        crate::macos_selection_button::snapshot(cx, &dir.join("5-icon-native.png"));
+    }
     eprintln!("snapshot: {step}: {} window(s)", cx.windows().len());
     for (n, handle) in cx.windows().into_iter().enumerate() {
         let result = handle.update(cx, |_, window, _| window.render_to_image());
@@ -71,21 +75,31 @@ pub fn run(cx: &mut App) {
         });
         wait(1200).await;
         cx.update(|cx| capture(&dir, "2-popup", cx));
-        cx.update(|cx| { close_all(cx); windows::show_settings(SettingsTab::General, cx) });
+        cx.update(|cx| {
+            close_all(cx);
+            windows::show_settings(SettingsTab::General, cx)
+        });
         wait(1200).await;
         cx.update(|cx| capture(&dir, "3-settings", cx));
-        cx.update(|cx| { close_all(cx); windows::show_settings(SettingsTab::Model, cx) });
+        cx.update(|cx| {
+            close_all(cx);
+            windows::show_settings(SettingsTab::Model, cx)
+        });
         wait(800).await;
         cx.update(|cx| capture(&dir, "3b-model", cx));
-        cx.update(|cx| { close_all(cx); windows::show_settings(SettingsTab::Prompts, cx) });
+        cx.update(|cx| {
+            close_all(cx);
+            windows::show_settings(SettingsTab::Prompts, cx)
+        });
         wait(800).await;
         cx.update(|cx| capture(&dir, "3c-prompts", cx));
-        cx.update(|cx| { close_all(cx); windows::show_settings(SettingsTab::Analysis, cx) });
+        cx.update(|cx| {
+            close_all(cx);
+            windows::show_settings(SettingsTab::Analysis, cx)
+        });
         wait(1000).await;
         cx.update(|cx| capture(&dir, "4-analysis", cx));
-        cx.update(|cx| {
-            windows::show_selection_icon(point(px(400.), px(300.)), "hello".into(), cx)
-        });
+        cx.update(|cx| windows::show_selection_icon(point(px(400.), px(300.)), "hello".into(), cx));
         wait(800).await;
         cx.update(|cx| capture(&dir, "5-icon", cx));
         cx.update(|cx| cx.quit());

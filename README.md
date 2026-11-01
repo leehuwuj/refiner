@@ -85,7 +85,26 @@ Security → Accessibility**; macOS asks on first launch. Apps that don't expose
 their selection (some terminals, Electron and Java apps) fall back to sending
 `⌘C` through System Events, which asks once to allow controlling System
 Events. The selection icon never uses `⌘C`, so it only appears in apps that
-expose their selection.
+expose their selection and usable text bounds.
+
+The macOS selection button is a native, nonactivating 22-point circle using
+Refiner's app artwork, with a transparent background and no window shadow.
+Enable **Settings → General → Shortcut → Selection button**, then select text
+by dragging, double/triple-clicking, Shift-clicking, Shift+navigation keys, or
+`⌘A`. The button appears above the first selected visible line when the app
+exposes line geometry, and stays hidden during the gesture. Beginning another
+selection, typing, scrolling, or switching apps dismisses it. Clicking the
+button opens the compact result popup. Accessibility reads run on a dedicated
+worker and never change the clipboard. Native text ranges and browser text
+markers are supported; apps without usable geometry get no button. Display
+placement uses native screen coordinates, including Retina and secondary
+screens, and respects the menu bar and Dock.
+
+After building, launch the bundle with:
+
+```bash
+open target/release/Refiner.app
+```
 
 ## Data
 
@@ -122,7 +141,9 @@ REFINER_SNAPSHOT=/tmp/shots cargo run --features snapshot
 | `hotkey.rs`       | Global shortcut and selected-text capture                |
 | `platform.rs`     | macOS / Windows specifics (⌘C, cursor, accessory app)    |
 | `ax.rs`           | macOS Accessibility: read the selected text              |
-| `selection_watch.rs` | Global mouse monitor behind the selection icon        |
+| `selection_watch.rs` | Platform routing for the selection icon               |
+| `macos_selection_watch.rs` | macOS gesture gating and Accessibility observers |
+| `macos_selection_button.rs` | Native macOS selection button and screen placement |
 | `ui/`             | Main window, popup and settings views                    |
 
 ## License

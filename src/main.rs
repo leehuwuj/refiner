@@ -25,6 +25,10 @@ mod ax;
 mod history;
 mod hotkey;
 mod llm;
+#[cfg(target_os = "macos")]
+mod macos_selection_button;
+#[cfg(target_os = "macos")]
+mod macos_selection_watch;
 mod platform;
 mod refine;
 mod selection_watch;
@@ -38,11 +42,11 @@ mod windows;
 #[cfg(target_os = "windows")]
 mod windows_selection;
 #[cfg(target_os = "windows")]
-mod windows_selection_watch;
+mod windows_selection_button;
 #[cfg(target_os = "windows")]
 mod windows_selection_input;
 #[cfg(target_os = "windows")]
-mod windows_selection_button;
+mod windows_selection_watch;
 
 use crate::assets::AppAssets;
 use crate::state::AppState;
