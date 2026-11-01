@@ -1,61 +1,72 @@
-name: 'publish'
+name: Publish native release
 
 on:
-  workflow_dispatch:
   push:
-    tags:
-      - 'refiner-v*'
+    tags: ['refiner-v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to release, matching Cargo.toml (for example refiner-v0.2.0)
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
-  publish-refiner:
+  build:
+    uses: ./.github/workflows/build-native.yml
+    with:
+      ref: ${{ format('refs/tags/{0}', github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name) }}
+      release_tag: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin'
-          - platform: 'macos-latest'
-            args: '--target x86_64-apple-darwin'
-          - platform: 'windows-latest'
-            args: '--target x86_64-pc-windows-msvc'
-          - platform: 'windows-latest'
-            args: '--target aarch64-pc-windows-msvc'
-
-    runs-on: ${{ matrix.platform }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TAG: ${{ needs.build.outputs.tag }}
+      RELEASE_VERSION: ${{ needs.build.outputs.version }}
+      RELEASE_REVISION: ${{ needs.build.outputs.revision }}
     steps:
-      - uses: actions/checkout@v6.0.3
-
-      - name: install pnpm
-        uses: pnpm/action-setup@v6.0.8
-
-      - name: setup node
-        uses: actions/setup-node@v6
+      - uses: actions/checkout@v6
         with:
-          node-version: lts/*
-          cache: 'pnpm'
-
-      - name: install Rust stable
-        uses: dtolnay/rust-toolchain@stable
+          ref: refs/tags/${{ needs.build.outputs.tag }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || (contains(matrix.args, 'aarch64-pc-windows-msvc') && 'aarch64-pc-windows-msvc') || '' }}
-
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: './src-tauri -> target'
-
-      - name: install frontend dependencies
-        run: pnpm install --frozen-lockfile
-
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: refiner-v__VERSION__
-          releaseName: 'Refiner v__VERSION__'
-          releaseDraft: true
-          prerelease: false
-          generateReleaseNotes: true
-          args: ${{ matrix.args }}
+          pattern: refiner-*
+          merge-multiple: true
+          path: dist
+      - name: Verify built revision and complete release
+        run: |
+          test "$(git rev-parse HEAD)" = "$RELEASE_REVISION"
+          python3 script/release-checksums.py
+      - name: Upload and publish release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if draft=$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft); then
+            if [[ "$draft" != true ]]; then
+              echo "Release $RELEASE_TAG is already published; refusing to replace its assets." >&2
+              exit 1
+            fi
+            gh release upload "$RELEASE_TAG" dist/* --clobber
+          else
+            gh release create "$RELEASE_TAG" dist/* --verify-tag --draft \
+              --title "Refiner v$RELEASE_VERSION" \
+              --notes-file .github/release-notes.md
+          fi
+          # Keep incomplete uploads private; publish only after every upload succeeds.
+          if [[ "${RELEASE_VERSION%%+*}" == *-* ]]; then
+            gh release edit "$RELEASE_TAG" --draft=false --prerelease --latest=false
+          else
+            gh release edit "$RELEASE_TAG" --draft=false --prerelease=false --latest
+          fi

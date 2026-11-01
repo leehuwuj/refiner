@@ -1,0 +1,121 @@
+name: Build native GPUI app
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit or tag to build (defaults to the caller's ref)
+        type: string
+        default: ''
+      release_tag:
+        description: If supplied, must equal refiner-v followed by Cargo.toml's version
+        type: string
+        default: ''
+    outputs:
+      version:
+        value: ${{ jobs.metadata.outputs.version }}
+      tag:
+        value: ${{ jobs.metadata.outputs.tag }}
+      revision:
+        value: ${{ jobs.metadata.outputs.revision }}
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_BUILD_JOBS: 2
+  CARGO_PROFILE_DEV_DEBUG: 0
+  CARGO_PROFILE_TEST_DEBUG: 0
+  MACOSX_DEPLOYMENT_TARGET: '11.0'
+
+jobs:
+  metadata:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      tag: ${{ steps.metadata.outputs.tag }}
+      revision: ${{ steps.source.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v6
+        id: source
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          persist-credentials: false
+      - name: Validate package version and release tag
+        id: metadata
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: python3 script/release-metadata.py
+
+  build:
+    name: ${{ matrix.name }}
+    needs: metadata
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS Apple Silicon
+            runner: macos-15
+            target: aarch64-apple-darwin
+            artifact: refiner-macos-arm64
+            rustflags: ''
+          - name: macOS Intel
+            runner: macos-15-intel
+            target: x86_64-apple-darwin
+            artifact: refiner-macos-x64
+            rustflags: ''
+          - name: Windows x64
+            runner: windows-2025
+            target: x86_64-pc-windows-msvc
+            artifact: refiner-windows-x64
+            rustflags: '-C target-feature=+crt-static'
+          - name: Windows ARM64
+            runner: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            artifact: refiner-windows-arm64
+            rustflags: '-C target-feature=+crt-static'
+    runs-on: ${{ matrix.runner }}
+    env:
+      RUSTFLAGS: ${{ matrix.rustflags }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.metadata.outputs.revision }}
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+          # Fork PRs can read caches but only branch/tag builds save them.
+          save-if: ${{ github.event_name != 'pull_request' }}
+      - name: Find Windows SDK shader compiler
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $compiler = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\fxc.exe" -File |
+            Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $compiler) { throw 'Windows SDK fxc.exe was not found' }
+          "GPUI_FXC_PATH=$($compiler.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Test
+        run: cargo test --locked --target ${{ matrix.target }}
+      - name: Clippy (including snapshot code)
+        run: cargo clippy --locked --target ${{ matrix.target }} --all-targets --features snapshot -- -D warnings
+      - name: Build and package macOS app
+        if: runner.os == 'macOS'
+        run: ./script/package-macos.sh '${{ matrix.target }}'
+      - name: Build and package Windows app
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./script/package-windows.ps1 -Target '${{ matrix.target }}'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/Refiner_*
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0

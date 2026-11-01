@@ -1,55 +1,18 @@
-name: 'CI'
+name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: ['**']
   pull_request:
-    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6.0.3
-
-      - name: install pnpm
-        uses: pnpm/action-setup@v6.0.8
-
-      - name: setup node
-        uses: actions/setup-node@v6
-        with:
-          node-version: lts/*
-          cache: 'pnpm'
-
-      - name: install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: typecheck
-        run: pnpm exec tsc --noEmit
-
-  cargo:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin'
-          - platform: 'windows-latest'
-            args: ''
-
-    runs-on: ${{ matrix.platform }}
-    steps:
-      - uses: actions/checkout@v6.0.3
-
-      - name: install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || '' }}
-
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: './src-tauri -> target'
-
-      - name: cargo check
-        run: cd src-tauri && cargo check
+  native:
+    uses: ./.github/workflows/build-native.yml
