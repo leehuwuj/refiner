@@ -1,16 +1,30 @@
 #!/usr/bin/env bash
-# Builds target/release/Refiner.app: a menu-bar app (LSUIElement) with the
-# Refiner icon. Grant it Accessibility access to use the ⌘E shortcut.
+# Builds a menu-bar Refiner.app (LSUIElement). An optional Rust target puts
+# the bundle under target/<target>/release; no argument keeps target/release.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
-cargo build --release --locked
+if (( $# > 1 )); then
+  echo "Usage: $0 [aarch64-apple-darwin|x86_64-apple-darwin]" >&2
+  exit 2
+fi
+TARGET="${1:-}"
+case "$TARGET" in
+  ""|aarch64-apple-darwin|x86_64-apple-darwin) ;;
+  *) echo "Unsupported macOS target: $TARGET" >&2; exit 2 ;;
+esac
+export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-11.0}"
+BUILD_ARGS=(build --release --locked)
+if [[ -n "$TARGET" ]]; then BUILD_ARGS+=(--target "$TARGET"); fi
+RELEASE_DIR="${CARGO_TARGET_DIR:-target}/${TARGET:+$TARGET/}release"
 
-APP=target/release/Refiner.app
+VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+cargo "${BUILD_ARGS[@]}"
+
+APP="$RELEASE_DIR/Refiner.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp target/release/refiner "$APP/Contents/MacOS/refiner"
+cp "$RELEASE_DIR/refiner" "$APP/Contents/MacOS/refiner"
 cp assets/icons/icon.icns "$APP/Contents/Resources/icon.icns"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
@@ -26,7 +40,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleExecutable</key><string>refiner</string>
   <key>CFBundleIconFile</key><string>icon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>LSMinimumSystemVersion</key><string>11.0</string>
+  <key>LSMinimumSystemVersion</key><string>${MACOSX_DEPLOYMENT_TARGET}</string>
   <key>LSUIElement</key><true/>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSAppleEventsUsageDescription</key><string>Refiner sends ⌘C to the frontmost app to read the selected text.</string>
@@ -35,5 +49,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 
 # Ad-hoc signature so macOS remembers the Accessibility grant between launches.
-codesign --force --deep --sign - "$APP" >/dev/null 2>&1 || true
+plutil -lint "$APP/Contents/Info.plist"
+codesign --force --deep --sign - "$APP"
+codesign --verify --deep --strict "$APP"
 echo "Built $APP"

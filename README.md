@@ -75,7 +75,8 @@ The icon sits just above the top-left corner of the first visible
 selected line, using UI Automation's text bounds for mouse and keyboard
 selections. If no visible bounds are available, the icon stays hidden.
 
-The Windows CI workflow runs unit tests and produces a release x64 executable.
+CI tests and builds the native app on macOS (Apple Silicon and Intel) and
+Windows (x64 and ARM64). Each build uploads the same packages used by releases.
 
 ### macOS permissions
 
@@ -105,6 +106,52 @@ After building, launch the bundle with:
 ```bash
 open target/release/Refiner.app
 ```
+
+## Releases
+
+The workflows build the root Cargo package directly. They do not use pnpm,
+`src-tauri`, or `tauri-action`.
+
+- Every branch push and pull request runs tests, Clippy (including snapshot
+  code), and release packaging on all four native platforms.
+- macOS artifacts include an architecture-specific DMG and a ZIP containing
+  `Refiner.app`. Windows artifacts are portable ZIPs containing `Refiner.exe`,
+  the README, and the license; the MSVC runtime is linked statically.
+- Pushing a `refiner-v*` tag builds all four platforms, verifies that the tag
+  matches `Cargo.toml`, and publishes a GitHub Release with six downloads and
+  `SHA256SUMS`. Failed builds or incomplete uploads do not publish a release.
+  Existing published releases are never overwritten. Prerelease Cargo versions
+  produce GitHub prereleases.
+
+To release version 0.2.0, tag the native-app commit you want to distribute:
+
+```bash
+git tag refiner-v0.2.0
+git push origin refiner-v0.2.0
+```
+
+The **Publish native release** workflow can also be dispatched for an existing
+matching tag. Both CI and releases call the same reusable build workflow.
+macOS bundles are ad-hoc signed but not notarized; Windows executables are
+unsigned. Developer ID signing and notarization are not configured.
+
+To produce the release packages locally:
+
+```bash
+./script/package-macos.sh aarch64-apple-darwin
+# Or on an Intel Mac:
+./script/package-macos.sh x86_64-apple-darwin
+```
+
+```powershell
+./script/package-windows.ps1 -Target x86_64-pc-windows-msvc
+# On a Windows ARM64 machine:
+./script/package-windows.ps1 -Target aarch64-pc-windows-msvc
+```
+
+Packages are written to `dist/`. macOS scripts accept `CARGO_TARGET_DIR` and
+`MACOSX_DEPLOYMENT_TARGET`; the bundle's minimum system version matches the
+build target (11.0 by default).
 
 ## Data
 
