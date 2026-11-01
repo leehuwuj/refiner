@@ -251,11 +251,13 @@ mod live {
             base_url: std::env::var("REFINER_LIVE_URL").unwrap_or_default(),
             thinking: false,
         };
-        let mut settings = Settings::default();
-        settings.provider = cfg.provider.clone();
-        settings.model = cfg.model.clone();
-        settings.model_url = cfg.base_url.clone();
-        settings.thinking = false;
+        let settings = Settings {
+            provider: cfg.provider.clone(),
+            model: cfg.model.clone(),
+            model_url: cfg.base_url.clone(),
+            thinking: false,
+            ..Settings::default()
+        };
         let req = crate::refine::Request {
             mode: crate::refine::Mode::Translate,
             text: "Good morning, how are you?".into(),

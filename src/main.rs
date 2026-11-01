@@ -35,6 +35,14 @@ mod state;
 mod tray;
 mod ui;
 mod windows;
+#[cfg(target_os = "windows")]
+mod windows_selection;
+#[cfg(target_os = "windows")]
+mod windows_selection_watch;
+#[cfg(target_os = "windows")]
+mod windows_selection_input;
+#[cfg(target_os = "windows")]
+mod windows_selection_button;
 
 use crate::assets::AppAssets;
 use crate::state::AppState;
@@ -42,6 +50,9 @@ use crate::state::AppState;
 fn main() {
     let app = gpui_kit::application().with_assets(AppAssets);
     app.run(|cx| {
+        // Panels close on blur; the tray and global shortcut must keep working
+        // with no open windows. GPUI otherwise quits on Windows at that point.
+        cx.set_quit_mode(gpui_kit::QuitMode::Explicit);
         // Installs themes, key maps and component globals.
         gpui_kit::init(cx);
         AppState::init(cx);

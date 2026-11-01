@@ -2,17 +2,22 @@
 //! frontmost app, the global cursor position, and running as a menu-bar
 //! (accessory) app on macOS.
 
+#[cfg(target_os = "macos")]
 use std::time::Duration;
 
 /// The text selected in the frontmost app, read without touching the
-/// clipboard (macOS Accessibility). `None` means "unknown": fall back to
-/// [`copy_selection`]. Blocking; run it in the background.
+/// clipboard (macOS Accessibility / Windows UI Automation). `None` means
+/// no readable selection. Blocking; run it in the background.
 pub fn selected_text() -> Option<String> {
     #[cfg(target_os = "macos")]
     {
         crate::ax::selected_text()
     }
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "windows")]
+    {
+        crate::windows_selection::selected_text()
+    }
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     {
         None
     }
@@ -32,9 +37,8 @@ pub fn selection_access(prompt: bool) -> bool {
     }
 }
 
-/// Copies the current selection in the frontmost app to the clipboard by
-/// simulating Cmd+C (macOS) / Ctrl+C (Windows). Blocking; run it in the
-/// background, then read the clipboard on the main thread.
+/// macOS-only compatibility path. Windows never synthesizes copy shortcuts.
+#[cfg(target_os = "macos")]
 pub fn copy_selection() -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
@@ -51,21 +55,10 @@ pub fn copy_selection() -> Result<(), String> {
         std::thread::sleep(Duration::from_millis(120));
         Ok(())
     }
-    #[cfg(target_os = "windows")]
-    {
-        std::thread::sleep(Duration::from_millis(150));
-        windows::send_ctrl_c()?;
-        std::thread::sleep(Duration::from_millis(200));
-        Ok(())
-    }
-    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
-    {
-        let _ = Duration::ZERO;
-        Err("Reading the selected text is not supported on this platform".into())
-    }
 }
 
 /// Explains how to grant the permission `copy_selection` needs.
+#[cfg(target_os = "macos")]
 pub fn show_permission_help() {
     #[cfg(target_os = "macos")]
     {
@@ -82,11 +75,11 @@ pub fn show_permission_help() {
 /// Global cursor position in GPUI screen coordinates (logical pixels, origin
 /// at the top-left of the primary display). `primary_height` is the primary
 /// display's height, needed to flip AppKit's bottom-left origin.
-pub fn cursor_position(primary_height: f32) -> Option<(f32, f32)> {
+pub fn cursor_position(primary_height: f32) -> Option<(f32, f32, Option<u64>)> {
     #[cfg(target_os = "macos")]
     {
         let p = objc2_app_kit::NSEvent::mouseLocation();
-        Some((p.x as f32, primary_height - p.y as f32))
+        Some((p.x as f32, primary_height - p.y as f32, None))
     }
     #[cfg(target_os = "windows")]
     {
@@ -117,58 +110,25 @@ pub fn set_accessory_app() {
 #[allow(unsafe_code)]
 mod windows {
     use windows_sys::Win32::Foundation::POINT;
-    use windows_sys::Win32::UI::HiDpi::GetDpiForSystem;
-    use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
-        INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, SendInput, VK_C, VK_CONTROL,
-    };
+    use windows_sys::Win32::Graphics::Gdi::{MONITOR_DEFAULTTONEAREST, MonitorFromPoint};
+    use windows_sys::Win32::UI::HiDpi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI};
     use windows_sys::Win32::UI::WindowsAndMessaging::GetCursorPos;
 
-    fn key(vk: u16, up: bool) -> INPUT {
-        INPUT {
-            r#type: INPUT_KEYBOARD,
-            Anonymous: INPUT_0 {
-                ki: KEYBDINPUT {
-                    wVk: vk,
-                    wScan: 0,
-                    dwFlags: if up { KEYEVENTF_KEYUP } else { 0 },
-                    time: 0,
-                    dwExtraInfo: 0,
-                },
-            },
-        }
-    }
-
-    pub fn send_ctrl_c() -> Result<(), String> {
-        let inputs = [
-            key(VK_CONTROL, false),
-            key(VK_C, false),
-            key(VK_C, true),
-            key(VK_CONTROL, true),
-        ];
-        // SAFETY: `inputs` is a valid array of INPUT structs for the duration of the call.
-        let sent = unsafe {
-            SendInput(
-                inputs.len() as u32,
-                inputs.as_ptr(),
-                std::mem::size_of::<INPUT>() as i32,
-            )
-        };
-        if sent as usize == inputs.len() {
-            Ok(())
-        } else {
-            Err("Failed to send Ctrl+C".into())
-        }
-    }
-
-    pub fn cursor_position() -> Option<(f32, f32)> {
+    pub fn cursor_position() -> Option<(f32, f32, Option<u64>)> {
         let mut p = POINT { x: 0, y: 0 };
         // SAFETY: `p` is a valid, writable POINT.
         if unsafe { GetCursorPos(&mut p) } == 0 {
             return None;
         }
-        // SAFETY: no preconditions.
-        let scale = unsafe { GetDpiForSystem() } as f32 / 96.0;
+        // Match GPUI's per-monitor coordinate conversion, including mixed-DPI
+        // displays. System DPI is only correct on the primary monitor.
+        let monitor = unsafe { MonitorFromPoint(p, MONITOR_DEFAULTTONEAREST) };
+        let (mut x_dpi, mut y_dpi) = (96, 96);
+        if unsafe { GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &mut x_dpi, &mut y_dpi) } < 0 {
+            return None;
+        }
+        let scale = x_dpi as f32 / 96.0;
         let scale = if scale > 0.0 { scale } else { 1.0 };
-        Some((p.x as f32 / scale, p.y as f32 / scale))
+        Some((p.x as f32 / scale, p.y as f32 / scale, Some(monitor as u64)))
     }
 }

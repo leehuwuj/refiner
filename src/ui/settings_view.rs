@@ -437,10 +437,10 @@ impl SettingsView {
                         select_box(&self.shortcut_window),
                         cx,
                     )];
-                    if cfg!(target_os = "macos") {
+                    if cfg!(any(target_os = "macos", target_os = "windows")) {
                         rows.push(row(
                             "Selection button",
-                            Some("Show a button next to text you select with the mouse."),
+                            Some("Show a button next to selected text in supported apps."),
                             Switch::new("selection-icon")
                                 .checked(self.draft.selection_icon)
                                 .on_click(cx.listener(|this, checked: &bool, _, cx| {
@@ -449,6 +449,8 @@ impl SettingsView {
                                 })),
                             cx,
                         ));
+                    }
+                    if cfg!(target_os = "macos") {
                         rows.push(row(
                             "Accessibility access",
                             Some("Needed to read the text selected in other apps."),

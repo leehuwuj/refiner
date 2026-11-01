@@ -131,7 +131,7 @@ impl Render for PopupView {
         panel_surface(cx)
             .key_context(CONTEXT)
             .track_focus(&self.focus)
-            .on_action(cx.listener(|_, _: &ClosePopup, window, _| window.remove_window()))
+            .on_action(cx.listener(|_, _: &ClosePopup, window, _| windows::close_panel(window)))
             .on_action(cx.listener(|this, _: &NextTab, _, cx| {
                 this.tab = match this.tab {
                     PopupTab::Translation => PopupTab::Correction,
@@ -171,7 +171,7 @@ impl Render for PopupView {
                             .icon(IconName::ExternalLink)
                             .tooltip("Open in Refiner")
                             .on_click(|_, window, cx| {
-                                window.remove_window();
+                                windows::close_panel(window);
                                 windows::show_main(cx);
                             }),
                     ),

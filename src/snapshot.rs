@@ -13,12 +13,17 @@ use crate::windows;
 /// Closes every window so the next one draws a fresh frame even when the app
 /// isn't visible (GPUI skips redrawing hidden windows).
 fn close_all(cx: &mut App) {
+    windows::hide_selection_icon(cx);
     for handle in cx.windows() {
         let _ = handle.update(cx, |_, window, _| window.remove_window());
     }
 }
 
 fn capture(dir: &Path, step: &str, cx: &mut App) {
+    #[cfg(target_os = "windows")]
+    if step == "5-icon" {
+        crate::windows_selection_button::snapshot(cx, &dir.join("5-icon-native.png"));
+    }
     eprintln!("snapshot: {step}: {} window(s)", cx.windows().len());
     for (n, handle) in cx.windows().into_iter().enumerate() {
         let result = handle.update(cx, |_, window, _| window.render_to_image());

@@ -11,9 +11,10 @@ lives in the menu bar (system tray on Windows), and is a native rewrite of the
 - **Global shortcut** (`⌘E` on macOS, `Ctrl+E` on Windows): reads the text
   selected in any app and processes it in the main window or in a compact
   popup next to the cursor (popup shows a translation and a correction).
-- **Selection icon** (macOS, opt-in under Settings → Shortcut Behavior): select
-  text with the mouse in any app and a small button appears next to the
-  cursor; click it for the compact popup.
+- **Selection icon** (macOS and Windows, opt-in under Settings → General →
+  Shortcut → Selection button): select text in a supported app and a small
+  button appears beside it; click it for the compact popup. Windows uses UI
+  Automation selection-change events and leaves the clipboard untouched.
 - **Providers**: Ollama (local / offline), OpenAI and OpenAI-compatible
   servers, Gemini, Groq. Optional "thinking" switch for reasoning models.
 - **Custom prompts** per mode, with `{original_lang}` and `{target_lang}`.
@@ -41,6 +42,40 @@ Build a `Refiner.app` bundle (menu-bar only, no Dock icon):
 ```bash
 ./script/bundle-macos.sh
 ```
+
+### Windows
+
+Install Rust 1.92+ with the MSVC toolchain and Visual Studio Build Tools
+with **Desktop development with C++** and a Windows 10/11 SDK. Use the
+toolchain matching your machine (`x86_64-pc-windows-msvc` for x64 or
+`aarch64-pc-windows-msvc` for ARM64).
+
+```powershell
+cargo test --locked
+cargo run --release --locked
+```
+
+The executable is `target\release\refiner.exe`. Release builds compile GPUI's
+HLSL shaders with the Windows SDK's `fxc.exe`. If SDK discovery fails, set
+`GPUI_FXC_PATH` to the full path of that executable before building.
+
+Left-click the tray icon to reopen Refiner; right-click for Settings,
+Analysis, or Quit. `Ctrl+E` reads the active application's selection through
+Windows UI Automation. It never sends Ctrl+C or reads or changes the clipboard.
+If the application does not expose its selected text through UI Automation,
+no text is submitted. Capturing text from an elevated application requires
+appropriate Windows privileges.
+Enable **Selection button** in Settings to show an icon beside selections
+exposed by UI Automation. The icon does not take focus from the source app;
+clearing the selection or changing focus dismisses it.
+The Windows icon appears only after mouse release or after releasing a
+keyboard selection key (Shift+arrows/Home/End/Page Up/Page Down or Ctrl+A).
+Starting another selection hides it; dragging does not create icon windows.
+The icon sits just above the top-left corner of the first visible
+selected line, using UI Automation's text bounds for mouse and keyboard
+selections. If no visible bounds are available, the icon stays hidden.
+
+The Windows CI workflow runs unit tests and produces a release x64 executable.
 
 ### macOS permissions
 

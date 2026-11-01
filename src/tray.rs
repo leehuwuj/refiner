@@ -53,18 +53,25 @@ pub fn init(cx: &mut App) {
     ];
     let quit = MenuItem::with_id("quit", "Quit Refiner", true, None);
     let built = menu
-        .append_items(&[&items[0], &items[1], &PredefinedMenuItem::separator(), &quit])
+        .append_items(&[
+            &items[0],
+            &items[1],
+            &PredefinedMenuItem::separator(),
+            &quit,
+        ])
         .map_err(anyhow::Error::from)
         .and_then(|_| load_icon())
         .and_then(|icon| {
-            TrayIconBuilder::new()
+            let builder = TrayIconBuilder::new()
                 .with_id("refiner")
                 .with_menu(Box::new(menu))
                 .with_menu_on_left_click(false)
-                .with_icon_templated(icon)
-                .with_tooltip("Refiner")
-                .build()
-                .map_err(anyhow::Error::from)
+                .with_tooltip("Refiner");
+            #[cfg(target_os = "macos")]
+            let builder = builder.with_icon_templated(icon);
+            #[cfg(not(target_os = "macos"))]
+            let builder = builder.with_icon(icon);
+            builder.build().map_err(anyhow::Error::from)
         });
     let icon = match built {
         Ok(icon) => icon,

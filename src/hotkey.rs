@@ -59,24 +59,36 @@ pub fn init(cx: &mut App) {
             }
             last = Some(Instant::now());
             debug_log!("hotkey: pressed");
-            // Accessibility first: no clipboard side effects. Apps that don't
-            // expose their selection (terminals, some Electron/Java apps)
-            // fall back to simulating ⌘C.
+            // Windows uses UIA exclusively. The clipboard compatibility path
+            // is compiled only on macOS.
             let grabbed = cx
                 .background_executor()
                 .spawn(async {
                     if let Some(text) = platform::selected_text() {
                         return Ok(Some(text));
                     }
-                    debug_log!("hotkey: no AX selection, falling back to ⌘C");
-                    platform::copy_selection().map(|()| None)
+                    #[cfg(target_os = "macos")]
+                    {
+                        debug_log!("hotkey: no AX selection, falling back to ⌘C");
+                        platform::copy_selection().map(|()| None)
+                    }
+                    #[cfg(not(target_os = "macos"))]
+                    {
+                        Ok::<Option<String>, String>(None)
+                    }
                 })
                 .await;
             cx.update(|cx| match grabbed {
                 Ok(Some(text)) => process_text(text, cx),
-                Ok(None) => process_clipboard(cx),
+                Ok(None) => {
+                    #[cfg(target_os = "macos")]
+                    process_clipboard(cx);
+                    #[cfg(not(target_os = "macos"))]
+                    debug_log!("hotkey: no accessible selection");
+                }
                 Err(err) => {
                     eprintln!("refiner: could not copy the selection: {err}");
+                    #[cfg(target_os = "macos")]
                     platform::show_permission_help();
                 }
             });
@@ -85,6 +97,7 @@ pub fn init(cx: &mut App) {
     .detach();
 }
 
+#[cfg(target_os = "macos")]
 fn process_clipboard(cx: &mut App) {
     let text = cx
         .read_from_clipboard()

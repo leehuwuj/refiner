@@ -166,7 +166,7 @@ impl MainView {
     }
 
     fn on_hide(&mut self, _: &Hide, window: &mut Window, _: &mut Context<Self>) {
-        window.remove_window();
+        windows::close_panel(window);
     }
 
     /// Mode switcher, a drag area and the settings button.

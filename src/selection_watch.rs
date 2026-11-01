@@ -1,8 +1,10 @@
-//! Floating selection icon (macOS): after the user selects text with the
+//! Floating selection icon: after the user selects text with the
 //! mouse in another app, show a small button next to the cursor that opens
 //! the compact popup for that text.
 //!
-//! A global NSEvent monitor reports mouse and key events sent to other apps.
+//! Windows subscribes to UI Automation selection and focus events (see
+//! windows_selection_watch). On macOS a global NSEvent monitor reports mouse
+//! and key events sent to other apps.
 //! A mouse-up that ends a drag, a double/triple click or a shift-click may
 //! have selected text; we then read the selection through Accessibility.
 //! There is deliberately no ⌘C fallback here: that would overwrite the
@@ -15,11 +17,14 @@ use gpui_kit::*;
 pub fn init(cx: &mut App) {
     #[cfg(target_os = "macos")]
     macos::init(cx);
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "windows")]
+    crate::windows_selection_watch::init(cx);
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     let _ = cx;
 }
 
 /// Whether a mouse-up may have selected text.
+#[cfg(any(target_os = "macos", test))]
 fn may_select(down: Option<(f32, f32)>, up: (f32, f32), clicks: isize, shift: bool) -> bool {
     const DRAG_THRESHOLD: f32 = 4.;
     let dragged = down.is_some_and(|(x, y)| {

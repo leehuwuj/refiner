@@ -2,6 +2,7 @@
 
 pub mod main_view;
 pub mod popup_view;
+#[cfg(not(target_os = "windows"))]
 pub mod selection_icon;
 pub mod settings_view;
 
