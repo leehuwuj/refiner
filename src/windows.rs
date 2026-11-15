@@ -92,6 +92,8 @@ pub fn show_main(cx: &mut App) {
     }) {
         Ok((handle, _)) => {
             open_windows(cx).main = Some(handle);
+            #[cfg(target_os = "macos")]
+            native_open_animation::start(handle, cx);
             #[cfg(target_os = "windows")]
             let _ = handle.update(cx, |_, window, cx| {
                 window.defer(cx, |window, _| native_panel::activate(window))
@@ -177,6 +179,8 @@ pub fn show_popup(cx: &mut App) {
     }) {
         Ok((handle, _)) => {
             open_windows(cx).popup = Some(handle);
+            #[cfg(target_os = "macos")]
+            native_open_animation::start(handle, cx);
             #[cfg(target_os = "windows")]
             let _ = handle.update(cx, |_, window, cx| {
                 window.defer(cx, |window, _| native_panel::activate(window))
@@ -346,6 +350,91 @@ pub fn close_panel(window: &mut Window) {
     #[cfg(target_os = "windows")]
     native_panel::hide(window);
     window.remove_window();
+}
+
+#[cfg(target_os = "macos")]
+#[allow(unsafe_code)]
+mod native_open_animation {
+    use super::*;
+    use objc2::rc::Retained;
+    use objc2_app_kit::{NSView, NSWindow};
+    use objc2_foundation::NSPoint;
+    use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+    use std::time::{Duration, Instant};
+
+    const DURATION: f32 = 0.36;
+
+    fn native_window(window: &Window) -> Option<Retained<NSWindow>> {
+        let RawWindowHandle::AppKit(handle) =
+            HasWindowHandle::window_handle(window).ok()?.as_raw()
+        else {
+            return None;
+        };
+        // GPUI's AppKit handle points to the NSView owned by this window.
+        let view = unsafe { (handle.ns_view.as_ptr() as *const NSView).as_ref()? };
+        view.window()
+    }
+
+    fn smooth(t: f32) -> f32 {
+        t * t * (3. - 2. * t)
+    }
+
+    fn offset_at(t: f32) -> f32 {
+        if t < 0.58 {
+            18. - 24. * smooth(t / 0.58)
+        } else if t < 0.78 {
+            -6. + 8. * smooth((t - 0.58) / 0.20)
+        } else {
+            2. * (1. - smooth((t - 0.78) / 0.22))
+        }
+    }
+
+    pub fn start(handle: AnyWindowHandle, cx: &mut App) {
+        if cfg!(feature = "snapshot") || cx.reduce_motion() {
+            return;
+        }
+        let origin = handle
+            .update(cx, |_, window, _| {
+                let native = native_window(window)?;
+                let origin = native.frame().origin;
+                native.setFrameOrigin(NSPoint::new(
+                    origin.x,
+                    origin.y - f64::from(offset_at(0.)),
+                ));
+                native.setAlphaValue(0.);
+                Some((origin.x, origin.y))
+            })
+            .ok()
+            .flatten();
+        let Some((x, y)) = origin else {
+            return;
+        };
+
+        cx.spawn(async move |cx| {
+            let started = Instant::now();
+            loop {
+                let t = (started.elapsed().as_secs_f32() / DURATION).min(1.);
+                let alive = cx.update(|cx| {
+                    handle
+                        .update(cx, |_, window, _| {
+                            if let Some(native) = native_window(window) {
+                                native.setFrameOrigin(NSPoint::new(
+                                    x,
+                                    y - f64::from(offset_at(t)),
+                                ));
+                                native.setAlphaValue(f64::from(smooth((t / 0.45).min(1.))));
+                            }
+                        })
+                        .is_ok()
+                });
+                if !alive || t >= 1. {
+                    break;
+                }
+                cx.background_executor().timer(Duration::from_millis(16)).await;
+            }
+        })
+        .detach();
+    }
 }
 
 #[cfg(target_os = "windows")]
